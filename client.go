@@ -10,16 +10,16 @@ import (
 )
 
 var (
-	// ErrRequestCreation is returned by Client.CallCtx and Client.Call when the creation of the
-	// RPC request failes.
+	// ErrRequestCreation is returned by Client.CallCtx and Client.Call when the
+	// creation of the RPC request failes.
 	ErrRequestCreation = errors.New("w3: request creation failed")
 
-	// ErrResponseHandling is returned by Client.CallCtx and Client.Call when the handeling of the
-	// RPC response failes.
+	// ErrResponseHandling is returned by Client.CallCtx and Client.Call when
+	// the handeling of the RPC response failes.
 	ErrResponseHandling = errors.New("w3: response handling failed")
 )
 
-// Client represents a connection to an RPC server.
+// Client represents a connection to an RPC endpoint.
 type Client struct {
 	client *rpc.Client
 }
