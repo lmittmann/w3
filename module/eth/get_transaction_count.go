@@ -8,9 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-// GetTransactionCount requests the transaction count (nonce) of the given
-// common.Address addr.
-func GetTransactionCount(addr common.Address) *GetTransactionCountFactory {
+// Nonce requests the nonce of the given common.Address addr.
+func Nonce(addr common.Address) *GetTransactionCountFactory {
 	return &GetTransactionCountFactory{addr: addr}
 }
 

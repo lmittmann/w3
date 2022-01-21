@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-// GetCode requests the code of the given common.Address addr.
-func GetCode(addr common.Address) *GetCodeFactory {
+// Code requests the contract code of the given common.Address addr.
+func Code(addr common.Address) *GetCodeFactory {
 	return &GetCodeFactory{addr: addr}
 }
 

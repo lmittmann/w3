@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-// GetBalance requests the balance of the given common.Address addr.
-func GetBalance(addr common.Address) *GetBalanceFactory {
+// Balance requests the balance of the given common.Address addr.
+func Balance(addr common.Address) *GetBalanceFactory {
 	return &GetBalanceFactory{addr: addr}
 }
 

@@ -7,9 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-// GetStorageAt requests the storage of the given common.Address addr at the
+// StorageAt requests the storage of the given common.Address addr at the
 // given common.Hash slot.
-func GetStorageAt(addr common.Address, slot common.Hash) *GetStorageAtFactory {
+func StorageAt(addr common.Address, slot common.Hash) *GetStorageAtFactory {
 	return &GetStorageAtFactory{addr: addr, slot: slot}
 }
 
