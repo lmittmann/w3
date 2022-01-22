@@ -31,6 +31,14 @@ func ExampleI() {
 	// 31415000000 wei
 }
 
+func ExampleFromWei() {
+	wei := big.NewInt(1_230000000_000000000)
+	fmt.Printf("%s Ether\n", w3.FromWei(wei, 18))
+
+	// Output:
+	// 1.23 Ether
+}
+
 func ExampleNewFunc() {
 	// ABI binding to the balanceOf function of an ERC20 Token.
 	funcBalanceOf, _ := w3.NewFunc("balanceOf(address)", "uint256")

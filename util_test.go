@@ -79,3 +79,46 @@ func BenchmarkI(b *testing.B) {
 		})
 	}
 }
+
+func TestFromWei(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		Wei      *big.Int
+		Decimals uint8
+		Want     string
+	}{
+		{big.NewInt(0), 0, "0"},
+		{big.NewInt(1), 0, "1"},
+		{big.NewInt(0), 18, "0"},
+		{big.NewInt(1), 18, "0.000000000000000001"},
+		{big.NewInt(1000), 18, "0.000000000000001"},
+		{big.NewInt(1000000), 18, "0.000000000001"},
+		{big.NewInt(1000000000), 18, "0.000000001"},
+		{big.NewInt(1000000000000), 18, "0.000001"},
+		{big.NewInt(1000000000000000), 18, "0.001"},
+		{big.NewInt(1000000000000000000), 18, "1"},
+		{big.NewInt(-1), 18, "-0.000000000000000001"},
+		{big.NewInt(-1000), 18, "-0.000000000000001"},
+		{big.NewInt(-1000000), 18, "-0.000000000001"},
+		{big.NewInt(-1000000000), 18, "-0.000000001"},
+		{big.NewInt(-1000000000000), 18, "-0.000001"},
+		{big.NewInt(-1000000000000000), 18, "-0.001"},
+		{big.NewInt(-1000000000000000000), 18, "-1"},
+		{big.NewInt(1000000000000000000), 15, "1000"},
+		{big.NewInt(1000000000000000000), 12, "1000000"},
+		{big.NewInt(1000000000000000000), 9, "1000000000"},
+		{big.NewInt(1000000000000000000), 6, "1000000000000"},
+		{big.NewInt(1000000000000000000), 3, "1000000000000000"},
+		{big.NewInt(1000000000000000000), 0, "1000000000000000000"},
+	}
+
+	for i, test := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			got := FromWei(test.Wei, test.Decimals)
+			if got != test.Want {
+				t.Fatalf("%q != %q", got, test.Want)
+			}
+		})
+	}
+}

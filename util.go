@@ -1,6 +1,7 @@
 package w3
 
 import (
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -153,4 +154,26 @@ Outer:
 // Keccak returns the Keccak256 hash of data. It is short for crypto.Keccak256Hash(…)
 func Keccak(data []byte) common.Hash {
 	return crypto.Keccak256Hash(data)
+}
+
+// FromWei returns the given Wei as decimal with the given number of decimals.
+func FromWei(wei *big.Int, decimals uint8) string {
+	if wei == nil {
+		return fmt.Sprint(nil)
+	}
+
+	d := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
+
+	sign := ""
+	if wei.Sign() < 0 {
+		sign = "-"
+	}
+	wei = new(big.Int).Abs(wei)
+
+	z, m := new(big.Int).DivMod(wei, d, new(big.Int))
+	if m.Cmp(new(big.Int)) == 0 {
+		return sign + z.String()
+	}
+	s := strings.TrimRight(fmt.Sprintf("%0*s", decimals, m.String()), "0")
+	return sign + z.String() + "." + s
 }
