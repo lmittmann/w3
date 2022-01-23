@@ -6,12 +6,52 @@ import (
 	"strconv"
 	"testing"
 
-	_abi "github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3/core"
 )
+
+func TestNewFunc(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		Signature string
+		Returns   string
+		WantFunc  *Func
+	}{
+		{
+			Signature: "transfer(address,uint256)",
+			Returns:   "bool",
+			WantFunc: &Func{
+				Signature: "transfer(address,uint256)",
+				Selector:  [4]byte{0xa9, 0x05, 0x9c, 0xbb},
+			},
+		},
+		{
+			Signature: "transfer(address recipient, uint256 amount)",
+			Returns:   "bool success",
+			WantFunc: &Func{
+				Signature: "transfer(address,uint256)",
+				Selector:  [4]byte{0xa9, 0x05, 0x9c, 0xbb},
+			},
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			gotFunc, err := NewFunc(test.Signature, test.Returns)
+			if err != nil {
+				t.Fatalf("Failed to create new FUnc: %v", err)
+			}
+
+			if diff := cmp.Diff(test.WantFunc, gotFunc, cmpopts.IgnoreFields(Func{}, "Args", "Returns")); diff != "" {
+				t.Fatalf("(-want, +got)\n%s", diff)
+			}
+		})
+	}
+}
 
 func TestEncodeArgs(t *testing.T) {
 	t.Parallel()
@@ -242,23 +282,23 @@ func TestCopyValue(t *testing.T) {
 		WantErr error
 	}{
 		{
-			T:   _abi.UintTy,
+			T:   abi.UintTy,
 			Dst: new(big.Int),
 			Src: big.NewInt(42),
 		},
 		{
-			T:   _abi.UintTy,
+			T:   abi.UintTy,
 			Dst: new(big.Int),
 			Src: big.NewInt(42),
 		},
 		{
-			T:       _abi.UintTy,
+			T:       abi.UintTy,
 			Dst:     new(big.Int),
 			Src:     []byte{1, 2, 3},
 			WantErr: ErrInvalidType,
 		},
 		{
-			T:   _abi.BytesTy,
+			T:   abi.BytesTy,
 			Dst: &[]byte{},
 			Src: &[]byte{1, 2, 3},
 		},
