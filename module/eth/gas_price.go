@@ -18,8 +18,8 @@ type GasPriceFactory struct {
 	returns *big.Int
 }
 
-func (f *GasPriceFactory) Returns(blockNumber *big.Int) *GasPriceFactory {
-	f.returns = blockNumber
+func (f *GasPriceFactory) Returns(gasPrice *big.Int) *GasPriceFactory {
+	f.returns = gasPrice
 	return f
 }
 

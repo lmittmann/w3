@@ -1,0 +1,2 @@
+> [{"jsonrpc":"2.0","id":1,"method":"eth_getCode","params":["0x000000000000000000000000000000000000c0de","latest"]}]
+< [{"jsonrpc":"2.0","id":1,"result":"0xdeadbeef"}]

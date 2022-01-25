@@ -28,8 +28,8 @@ func (f *GetTransactionCountFactory) AtBlock(blockNumber *big.Int) *GetTransacti
 	return f
 }
 
-func (f *GetTransactionCountFactory) Returns(txCount *uint64) *GetTransactionCountFactory {
-	f.returns = txCount
+func (f *GetTransactionCountFactory) Returns(nonce *uint64) *GetTransactionCountFactory {
+	f.returns = nonce
 	return f
 }
 
