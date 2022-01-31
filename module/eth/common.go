@@ -1,9 +1,10 @@
-// Package eth implements RPC API bindings to methods in the "eth" namespace.
 package eth
 
 import (
+	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -16,6 +17,29 @@ func toBlockNumberArg(blockNumber *big.Int) string {
 		return "pending"
 	}
 	return hexutil.EncodeBig(blockNumber)
+}
+
+func toFilterArg(q ethereum.FilterQuery) (interface{}, error) {
+	arg := map[string]interface{}{
+		"topics": q.Topics,
+	}
+	if len(q.Addresses) > 0 {
+		arg["address"] = q.Addresses
+	}
+	if q.BlockHash != nil {
+		arg["blockHash"] = *q.BlockHash
+		if q.FromBlock != nil || q.ToBlock != nil {
+			return nil, fmt.Errorf("cannot specify both BlockHash and FromBlock/ToBlock")
+		}
+	} else {
+		if q.FromBlock == nil {
+			arg["fromBlock"] = "0x0"
+		} else {
+			arg["fromBlock"] = toBlockNumberArg(q.FromBlock)
+		}
+		arg["toBlock"] = toBlockNumberArg(q.ToBlock)
+	}
+	return arg, nil
 }
 
 type rpcBlock struct {
