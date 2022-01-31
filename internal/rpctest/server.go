@@ -81,9 +81,13 @@ func (srv *Server) readGolden() {
 
 		switch line[0] {
 		case '>':
-			srv.in = bytes.Trim(line, "> ")
+			trimedLine := bytes.Trim(line, "> ")
+			srv.in = make([]byte, len(trimedLine))
+			copy(srv.in, trimedLine)
 		case '<':
-			srv.out = bytes.Trim(line, "< ")
+			trimedLine := bytes.Trim(line, "< ")
+			srv.out = make([]byte, len(trimedLine))
+			copy(srv.out, trimedLine)
 		case '/': // ignore lines starting with "/"
 		default:
 			srv.t.Fatalf("Invalid line %q", scan.Text())
