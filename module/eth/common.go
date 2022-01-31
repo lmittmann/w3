@@ -4,7 +4,9 @@ package eth
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 func toBlockNumberArg(blockNumber *big.Int) string {
@@ -14,4 +16,10 @@ func toBlockNumberArg(blockNumber *big.Int) string {
 		return "pending"
 	}
 	return hexutil.EncodeBig(blockNumber)
+}
+
+type rpcBlock struct {
+	Hash         common.Hash          `json:"hash"`
+	Transactions []*types.Transaction `json:"transactions"`
+	UncleHashes  []common.Hash        `json:"uncles"`
 }
