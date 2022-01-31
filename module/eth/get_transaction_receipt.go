@@ -6,11 +6,11 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-func TransactionReceipt(hash common.Hash) *GetTransactionReceiptFactory {
-	return &GetTransactionReceiptFactory{hash: hash}
+func TransactionReceipt(hash common.Hash) *TransactionReceiptFactory {
+	return &TransactionReceiptFactory{hash: hash}
 }
 
-type GetTransactionReceiptFactory struct {
+type TransactionReceiptFactory struct {
 	// args
 	hash common.Hash
 
@@ -19,12 +19,12 @@ type GetTransactionReceiptFactory struct {
 	returns *types.Receipt
 }
 
-func (f *GetTransactionReceiptFactory) Returns(receipt *types.Receipt) *GetTransactionReceiptFactory {
+func (f *TransactionReceiptFactory) Returns(receipt *types.Receipt) *TransactionReceiptFactory {
 	f.returns = receipt
 	return f
 }
 
-func (f *GetTransactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *TransactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionReceipt",
 		Args:   []interface{}{f.hash},
@@ -32,7 +32,7 @@ func (f *GetTransactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
-func (f *GetTransactionReceiptFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *TransactionReceiptFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}

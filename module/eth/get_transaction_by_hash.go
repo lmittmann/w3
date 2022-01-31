@@ -6,11 +6,11 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-func TransactionByHash(hash common.Hash) *GetTransactionByHashFactory {
-	return &GetTransactionByHashFactory{hash: hash}
+func TransactionByHash(hash common.Hash) *TransactionByHashFactory {
+	return &TransactionByHashFactory{hash: hash}
 }
 
-type GetTransactionByHashFactory struct {
+type TransactionByHashFactory struct {
 	// args
 	hash common.Hash
 
@@ -19,12 +19,12 @@ type GetTransactionByHashFactory struct {
 	returns *types.Transaction
 }
 
-func (f *GetTransactionByHashFactory) Returns(tx *types.Transaction) *GetTransactionByHashFactory {
+func (f *TransactionByHashFactory) Returns(tx *types.Transaction) *TransactionByHashFactory {
 	f.returns = tx
 	return f
 }
 
-func (f *GetTransactionByHashFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *TransactionByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionByHash",
 		Args:   []interface{}{f.hash},
@@ -32,7 +32,7 @@ func (f *GetTransactionByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
-func (f *GetTransactionByHashFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *TransactionByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}

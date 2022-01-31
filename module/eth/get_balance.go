@@ -9,11 +9,11 @@ import (
 )
 
 // Balance requests the balance of the given common.Address addr.
-func Balance(addr common.Address) *GetBalanceFactory {
-	return &GetBalanceFactory{addr: addr}
+func Balance(addr common.Address) *BalanceFactory {
+	return &BalanceFactory{addr: addr}
 }
 
-type GetBalanceFactory struct {
+type BalanceFactory struct {
 	// args
 	addr    common.Address
 	atBlock *big.Int
@@ -23,17 +23,17 @@ type GetBalanceFactory struct {
 	returns *big.Int
 }
 
-func (f *GetBalanceFactory) AtBlock(blockNumber *big.Int) *GetBalanceFactory {
+func (f *BalanceFactory) AtBlock(blockNumber *big.Int) *BalanceFactory {
 	f.atBlock = blockNumber
 	return f
 }
 
-func (f *GetBalanceFactory) Returns(balance *big.Int) *GetBalanceFactory {
+func (f *BalanceFactory) Returns(balance *big.Int) *BalanceFactory {
 	f.returns = balance
 	return f
 }
 
-func (f *GetBalanceFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *BalanceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBalance",
 		Args:   []interface{}{f.addr, toBlockNumberArg(f.atBlock)},
@@ -41,7 +41,7 @@ func (f *GetBalanceFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
-func (f *GetBalanceFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *BalanceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}

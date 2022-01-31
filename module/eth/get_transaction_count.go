@@ -9,11 +9,11 @@ import (
 )
 
 // Nonce requests the nonce of the given common.Address addr.
-func Nonce(addr common.Address) *GetTransactionCountFactory {
-	return &GetTransactionCountFactory{addr: addr}
+func Nonce(addr common.Address) *NonceFactory {
+	return &NonceFactory{addr: addr}
 }
 
-type GetTransactionCountFactory struct {
+type NonceFactory struct {
 	// args
 	addr    common.Address
 	atBlock *big.Int
@@ -23,17 +23,17 @@ type GetTransactionCountFactory struct {
 	returns *uint64
 }
 
-func (f *GetTransactionCountFactory) AtBlock(blockNumber *big.Int) *GetTransactionCountFactory {
+func (f *NonceFactory) AtBlock(blockNumber *big.Int) *NonceFactory {
 	f.atBlock = blockNumber
 	return f
 }
 
-func (f *GetTransactionCountFactory) Returns(nonce *uint64) *GetTransactionCountFactory {
+func (f *NonceFactory) Returns(nonce *uint64) *NonceFactory {
 	f.returns = nonce
 	return f
 }
 
-func (f *GetTransactionCountFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *NonceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionCount",
 		Args:   []interface{}{f.addr, toBlockNumberArg(f.atBlock)},
@@ -41,7 +41,7 @@ func (f *GetTransactionCountFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
-func (f *GetTransactionCountFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *NonceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}

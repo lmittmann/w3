@@ -9,11 +9,11 @@ import (
 
 // StorageAt requests the storage of the given common.Address addr at the
 // given common.Hash slot.
-func StorageAt(addr common.Address, slot common.Hash) *GetStorageAtFactory {
-	return &GetStorageAtFactory{addr: addr, slot: slot}
+func StorageAt(addr common.Address, slot common.Hash) *StorageAtFactory {
+	return &StorageAtFactory{addr: addr, slot: slot}
 }
 
-type GetStorageAtFactory struct {
+type StorageAtFactory struct {
 	// args
 	addr    common.Address
 	slot    common.Hash
@@ -24,17 +24,17 @@ type GetStorageAtFactory struct {
 	returns *common.Hash
 }
 
-func (f *GetStorageAtFactory) AtBlock(blockNumber *big.Int) *GetStorageAtFactory {
+func (f *StorageAtFactory) AtBlock(blockNumber *big.Int) *StorageAtFactory {
 	f.atBlock = blockNumber
 	return f
 }
 
-func (f *GetStorageAtFactory) Returns(storage *common.Hash) *GetStorageAtFactory {
+func (f *StorageAtFactory) Returns(storage *common.Hash) *StorageAtFactory {
 	f.returns = storage
 	return f
 }
 
-func (f *GetStorageAtFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *StorageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getStorageAt",
 		Args:   []interface{}{f.addr, f.slot, toBlockNumberArg(f.atBlock)},
@@ -42,7 +42,7 @@ func (f *GetStorageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
-func (f *GetStorageAtFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *StorageAtFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}

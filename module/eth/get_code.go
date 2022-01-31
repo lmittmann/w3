@@ -9,11 +9,11 @@ import (
 )
 
 // Code requests the contract code of the given common.Address addr.
-func Code(addr common.Address) *GetCodeFactory {
-	return &GetCodeFactory{addr: addr}
+func Code(addr common.Address) *CodeFactory {
+	return &CodeFactory{addr: addr}
 }
 
-type GetCodeFactory struct {
+type CodeFactory struct {
 	// args
 	addr    common.Address
 	atBlock *big.Int
@@ -23,17 +23,17 @@ type GetCodeFactory struct {
 	returns *[]byte
 }
 
-func (f *GetCodeFactory) AtBlock(blockNumber *big.Int) *GetCodeFactory {
+func (f *CodeFactory) AtBlock(blockNumber *big.Int) *CodeFactory {
 	f.atBlock = blockNumber
 	return f
 }
 
-func (f *GetCodeFactory) Returns(code *[]byte) *GetCodeFactory {
+func (f *CodeFactory) Returns(code *[]byte) *CodeFactory {
 	f.returns = code
 	return f
 }
 
-func (f *GetCodeFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *CodeFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getCode",
 		Args:   []interface{}{f.addr, toBlockNumberArg(f.atBlock)},
@@ -41,7 +41,7 @@ func (f *GetCodeFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
-func (f *GetCodeFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *CodeFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
