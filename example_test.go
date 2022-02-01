@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
 )
@@ -23,7 +24,6 @@ func ExampleI() {
 	fmt.Printf("%v wei\n", w3.I("3141500000000000000"))
 	fmt.Printf("%v wei\n", w3.I("3.1415 ether"))
 	fmt.Printf("%v wei\n", w3.I("31.415 gwei"))
-
 	// Output:
 	// 3141500000000000000 wei
 	// 3141500000000000000 wei
@@ -34,7 +34,6 @@ func ExampleI() {
 func ExampleFromWei() {
 	wei := big.NewInt(1_230000000_000000000)
 	fmt.Printf("%s Ether\n", w3.FromWei(wei, 18))
-
 	// Output:
 	// 1.23 Ether
 }
@@ -65,7 +64,6 @@ func ExampleNewFunc() {
 	)
 	funcBalanceOf.DecodeReturns(output, amount)
 	fmt.Printf("balanceOf returns: %v\n", amount)
-
 	// Output:
 	// balanceOf input: 0x70a08231000000000000000000000000ab5801a7d398351b8be11c439e05c5b3259aec9b
 	// balanceOf args: 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B
@@ -104,4 +102,31 @@ func ExampleClient_Call() {
 	fmt.Printf("Combined balance: %v wei",
 		new(big.Int).Add(&ethBalance, &weth9Balance),
 	)
+}
+
+func ExampleEvent_DecodeArgs() {
+	var (
+		eventTransfer = w3.MustNewEvent("Transfer(address from, address to, uint256 value)")
+		log           = &types.Log{
+			Address: w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+			Topics: []common.Hash{
+				w3.H("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
+				w3.H("0x000000000000000000000000000000000000000000000000000000000000c0fe"),
+				w3.H("0x000000000000000000000000000000000000000000000000000000000000dead"),
+			},
+			Data: w3.B("0x0000000000000000000000000000000000000000000000001111d67bb1bb0000"),
+		}
+
+		from  common.Address
+		to    common.Address
+		value big.Int
+	)
+
+	if err := eventTransfer.DecodeArgs(log, &from, &to, &value); err != nil {
+		fmt.Printf("Failed to decode event log: %v\n", err)
+		return
+	}
+	fmt.Printf("Transferred %s WETH9 from %s to %s", w3.FromWei(&value, 18), from, to)
+	// Output:
+	// Transferred 1.23 WETH9 from 0x000000000000000000000000000000000000c0Fe to 0x000000000000000000000000000000000000dEaD
 }
