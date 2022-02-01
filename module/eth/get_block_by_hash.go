@@ -26,6 +26,7 @@ func (f *BlockByHashFactory) Returns(block *types.Block) *BlockByHashFactory {
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *BlockByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",
@@ -34,6 +35,7 @@ func (f *BlockByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *BlockByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
@@ -71,6 +73,7 @@ func (f *HeaderByHashFactory) Returns(header *types.Header) *HeaderByHashFactory
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *HeaderByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",
@@ -79,6 +82,7 @@ func (f *HeaderByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *HeaderByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err

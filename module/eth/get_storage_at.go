@@ -34,6 +34,7 @@ func (f *StorageAtFactory) Returns(storage *common.Hash) *StorageAtFactory {
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *StorageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getStorageAt",
@@ -42,6 +43,7 @@ func (f *StorageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *StorageAtFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err

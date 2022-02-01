@@ -33,6 +33,7 @@ func (f *NonceFactory) Returns(nonce *uint64) *NonceFactory {
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *NonceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionCount",
@@ -41,6 +42,7 @@ func (f *NonceFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *NonceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err

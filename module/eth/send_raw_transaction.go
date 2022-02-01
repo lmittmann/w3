@@ -32,6 +32,7 @@ func (f *SendRawTransactionFactory) Returns(hash *common.Hash) *SendRawTransacti
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *SendRawTransactionFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.tx != nil {
 		rawTx, err := f.tx.MarshalBinary()
@@ -48,6 +49,7 @@ func (f *SendRawTransactionFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *SendRawTransactionFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err

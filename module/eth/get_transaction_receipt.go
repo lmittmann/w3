@@ -24,6 +24,7 @@ func (f *TransactionReceiptFactory) Returns(receipt *types.Receipt) *Transaction
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *TransactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionReceipt",
@@ -32,6 +33,7 @@ func (f *TransactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *TransactionReceiptFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err

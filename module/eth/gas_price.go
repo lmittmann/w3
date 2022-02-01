@@ -23,6 +23,7 @@ func (f *GasPriceFactory) Returns(gasPrice *big.Int) *GasPriceFactory {
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *GasPriceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_gasPrice",
@@ -30,6 +31,7 @@ func (f *GasPriceFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *GasPriceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err

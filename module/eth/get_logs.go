@@ -24,6 +24,7 @@ func (f *LogsFactory) Returns(logs *[]types.Log) *LogsFactory {
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *LogsFactory) CreateRequest() (rpc.BatchElem, error) {
 	arg, err := toFilterArg(f.filterQuery)
 	if err != nil {
@@ -37,6 +38,7 @@ func (f *LogsFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *LogsFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err

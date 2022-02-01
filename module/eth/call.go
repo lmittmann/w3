@@ -35,6 +35,7 @@ func (f *CallFactory) Returns(output *[]byte) *CallFactory {
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *CallFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_call",
@@ -43,6 +44,7 @@ func (f *CallFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *CallFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
@@ -79,6 +81,7 @@ func (f *CallFuncFactory) Returns(returns ...interface{}) *CallFuncFactory {
 	return f
 }
 
+// CreateRequest implements the core.RequestCreater interface.
 func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	input, err := f.fn.EncodeArgs(f.args...)
 	if err != nil {
@@ -96,6 +99,7 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
+// HandleResponse implements the core.ResponseHandler interface.
 func (f *CallFuncFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
