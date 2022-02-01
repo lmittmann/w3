@@ -53,7 +53,7 @@ func TestNewFunc(t *testing.T) {
 	}
 }
 
-func TestEncodeArgs(t *testing.T) {
+func TestFuncEncodeArgs(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -127,7 +127,7 @@ func TestEncodeArgs(t *testing.T) {
 	}
 }
 
-func TestDecodeArgs(t *testing.T) {
+func TestFuncDecodeArgs(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -213,7 +213,7 @@ func TestDecodeArgs(t *testing.T) {
 	}
 }
 
-func TestDecodeReturns(t *testing.T) {
+func TestFuncDecodeReturns(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
