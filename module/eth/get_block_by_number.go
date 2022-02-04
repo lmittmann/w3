@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -31,7 +30,7 @@ func (f *BlockByNumberFactory) Returns(block *types.Block) *BlockByNumberFactory
 func (f *BlockByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBlockByNumber",
-		Args:   []interface{}{hexutil.EncodeBig(f.number), true},
+		Args:   []interface{}{toBlockNumberArg(f.number), true},
 		Result: &f.result,
 	}, nil
 }
@@ -78,7 +77,7 @@ func (f *HeaderByNumberFactory) Returns(header *types.Header) *HeaderByNumberFac
 func (f *HeaderByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBlockByNumber",
-		Args:   []interface{}{hexutil.EncodeBig(f.number), false},
+		Args:   []interface{}{toBlockNumberArg(f.number), false},
 		Result: &f.result,
 	}, nil
 }
