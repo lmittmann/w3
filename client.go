@@ -66,7 +66,7 @@ func (c *Client) Close() error {
 // CallCtx creates the final RPC request, sends it, and handles the RPC response.
 //
 // An error is returned if RPC request creation, networking, or RPC response handeling fails.
-func (c *Client) CallCtx(ctx context.Context, requests ...core.RequestCreaterResponseHandler) error {
+func (c *Client) CallCtx(ctx context.Context, requests ...core.RequestCreatorResponseHandler) error {
 	batchElems := make([]rpc.BatchElem, len(requests))
 	var err error
 
@@ -95,6 +95,6 @@ func (c *Client) CallCtx(ctx context.Context, requests ...core.RequestCreaterRes
 }
 
 // Call is like CallCtx with ctx equal to context.Background().
-func (c *Client) Call(requests ...core.RequestCreaterResponseHandler) error {
+func (c *Client) Call(requests ...core.RequestCreatorResponseHandler) error {
 	return c.CallCtx(context.Background(), requests...)
 }

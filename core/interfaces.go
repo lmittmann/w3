@@ -16,8 +16,8 @@ type Func interface {
 	DecodeReturns(output []byte, returns ...interface{}) (err error)
 }
 
-// RequestCreater is the interface that wraps the basic CreateRequest method.
-type RequestCreater interface {
+// RequestCreator is the interface that wraps the basic CreateRequest method.
+type RequestCreator interface {
 	CreateRequest() (elem rpc.BatchElem, err error)
 }
 
@@ -26,9 +26,9 @@ type ResponseHandler interface {
 	HandleResponse(elem rpc.BatchElem) (err error)
 }
 
-// RequestCreaterResponseHandler is the interface that groups the basic CreateRequest and
+// RequestCreatorResponseHandler is the interface that groups the basic CreateRequest and
 // HandleResponse methods.
-type RequestCreaterResponseHandler interface {
-	RequestCreater
+type RequestCreatorResponseHandler interface {
+	RequestCreator
 	ResponseHandler
 }

@@ -71,7 +71,7 @@ func BenchmarkCall_Balance100(b *testing.B) {
 
 	b.Run("Batch", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			requests := make([]core.RequestCreaterResponseHandler, len(addr100))
+			requests := make([]core.RequestCreatorResponseHandler, len(addr100))
 			for j := 0; j < len(requests); j++ {
 				requests[j] = eth.Balance(addr100[j]).Returns(balance)
 			}
@@ -108,7 +108,7 @@ func BenchmarkCall_Block100(b *testing.B) {
 
 	b.Run("Batch", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			requests := make([]core.RequestCreaterResponseHandler, len(block100))
+			requests := make([]core.RequestCreatorResponseHandler, len(block100))
 			for j := 0; j < len(requests); j++ {
 				requests[j] = eth.BlockByNumber(block100[j]).Returns(block)
 			}
