@@ -33,7 +33,7 @@ func (f *NonceFactory) Returns(nonce *uint64) *NonceFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *NonceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionCount",

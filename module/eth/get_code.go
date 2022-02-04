@@ -33,7 +33,7 @@ func (f *CodeFactory) Returns(code *[]byte) *CodeFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *CodeFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getCode",

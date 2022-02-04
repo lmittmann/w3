@@ -23,7 +23,7 @@ func (f *GasPriceFactory) Returns(gasPrice *big.Int) *GasPriceFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *GasPriceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_gasPrice",

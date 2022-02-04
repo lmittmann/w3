@@ -33,7 +33,7 @@ func (f *BalanceFactory) Returns(balance *big.Int) *BalanceFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *BalanceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBalance",

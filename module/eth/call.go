@@ -35,7 +35,7 @@ func (f *CallFactory) Returns(output *[]byte) *CallFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *CallFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_call",
@@ -81,7 +81,7 @@ func (f *CallFuncFactory) Returns(returns ...interface{}) *CallFuncFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	input, err := f.fn.EncodeArgs(f.args...)
 	if err != nil {

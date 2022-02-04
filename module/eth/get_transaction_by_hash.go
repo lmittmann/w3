@@ -24,7 +24,7 @@ func (f *TransactionByHashFactory) Returns(tx *types.Transaction) *TransactionBy
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *TransactionByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionByHash",

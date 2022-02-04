@@ -26,7 +26,7 @@ func (f *BlockByHashFactory) Returns(block *types.Block) *BlockByHashFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *BlockByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",
@@ -73,7 +73,7 @@ func (f *HeaderByHashFactory) Returns(header *types.Header) *HeaderByHashFactory
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *HeaderByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",

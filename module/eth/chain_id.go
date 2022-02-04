@@ -21,7 +21,7 @@ func (f *ChainIDFactory) Returns(chainID *uint64) *ChainIDFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *ChainIDFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_chainId",

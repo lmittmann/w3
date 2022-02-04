@@ -32,7 +32,7 @@ func (f *SendRawTransactionFactory) Returns(hash *common.Hash) *SendRawTransacti
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *SendRawTransactionFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.tx != nil {
 		rawTx, err := f.tx.MarshalBinary()

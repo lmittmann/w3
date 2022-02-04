@@ -23,7 +23,7 @@ func (f *BlockNumberFactory) Returns(blockNumber *big.Int) *BlockNumberFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *BlockNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_blockNumber",

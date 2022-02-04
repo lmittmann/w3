@@ -34,7 +34,7 @@ func (f *StorageAtFactory) Returns(storage *common.Hash) *StorageAtFactory {
 	return f
 }
 
-// CreateRequest implements the core.RequestCreater interface.
+// CreateRequest implements the core.RequestCreator interface.
 func (f *StorageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getStorageAt",
