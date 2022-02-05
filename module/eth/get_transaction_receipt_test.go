@@ -1,6 +1,7 @@
 package eth_test
 
 import (
+	"fmt"
 	"math/big"
 	"sync/atomic"
 	"testing"
@@ -63,5 +64,24 @@ func TestTransactionReceipt(t *testing.T) {
 		cmpopts.IgnoreFields(types.Transaction{}, "time"),
 		cmpopts.EquateEmpty()); diff != "" {
 		t.Fatalf("(-want, +got)\n%s", diff)
+	}
+}
+
+func TestTransactionReceipt_0x00(t *testing.T) {
+	t.Parallel()
+
+	srv := rpctest.NewFileServer(t, "testdata/get_transaction_receipt_0x00.golden")
+	defer srv.Close()
+
+	client := w3.MustDial(srv.URL())
+	defer client.Close()
+
+	var (
+		receipt = new(types.Receipt)
+		wantErr = fmt.Errorf("w3: response handling failed: not found")
+	)
+
+	if gotErr := client.Call(eth.TransactionReceipt(common.Hash{}).Returns(receipt)); wantErr.Error() != gotErr.Error() {
+		t.Fatalf("want %v, got %v", wantErr, gotErr)
 	}
 }

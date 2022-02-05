@@ -38,6 +38,10 @@ func (f *TransactionReceiptFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
+	if f.result == nil {
+		return errNotFound
+	}
+
 	*f.returns = *f.result
 	return nil
 }

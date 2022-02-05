@@ -40,6 +40,9 @@ func (f *BlockByNumberFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
+	if len(f.result) <= 4 { // empty or "null"
+		return errNotFound
+	}
 
 	var head *types.Header
 	var body rpcBlock

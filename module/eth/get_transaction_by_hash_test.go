@@ -1,10 +1,12 @@
 package eth_test
 
 import (
+	"fmt"
 	"math/big"
 	"sync/atomic"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -79,5 +81,24 @@ func TestTransactionByHash_Type2(t *testing.T) {
 		cmpopts.IgnoreFields(types.Transaction{}, "time"),
 		cmpopts.EquateEmpty()); diff != "" {
 		t.Fatalf("(-want, +got)\n%s", diff)
+	}
+}
+
+func TestTransactionByHash_0x00(t *testing.T) {
+	t.Parallel()
+
+	srv := rpctest.NewFileServer(t, "testdata/get_transaction_by_hash__0x00.golden")
+	defer srv.Close()
+
+	client := w3.MustDial(srv.URL())
+	defer client.Close()
+
+	var (
+		tx      = new(types.Transaction)
+		wantErr = fmt.Errorf("w3: response handling failed: not found")
+	)
+
+	if gotErr := client.Call(eth.TransactionByHash(common.Hash{}).Returns(tx)); wantErr.Error() != gotErr.Error() {
+		t.Fatalf("want %v, got %v", wantErr, gotErr)
 	}
 }

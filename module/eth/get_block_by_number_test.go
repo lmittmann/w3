@@ -1,6 +1,7 @@
 package eth_test
 
 import (
+	"fmt"
 	"math/big"
 	"sync/atomic"
 	"testing"
@@ -144,5 +145,24 @@ func TestHeaderByNumber__12965000(t *testing.T) {
 	if diff := cmp.Diff(wantHeader, header,
 		cmp.AllowUnexported(big.Int{})); diff != "" {
 		t.Fatalf("(-want, +got)\n%s", diff)
+	}
+}
+
+func TestBlockByNumber__999999999(t *testing.T) {
+	t.Parallel()
+
+	srv := rpctest.NewFileServer(t, "testdata/get_block_by_number__999999999.golden")
+	defer srv.Close()
+
+	client := w3.MustDial(srv.URL())
+	defer client.Close()
+
+	var (
+		block   = new(types.Block)
+		wantErr = fmt.Errorf("w3: response handling failed: not found")
+	)
+
+	if gotErr := client.Call(eth.BlockByNumber(big.NewInt(999999999)).Returns(block)); wantErr.Error() != gotErr.Error() {
+		t.Fatalf("want %v, got %v", wantErr, gotErr)
 	}
 }

@@ -10,6 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+var (
+	errNotFound = fmt.Errorf("not found")
+)
+
 func toBlockNumberArg(blockNumber *big.Int) string {
 	if blockNumber == nil {
 		return "latest"
