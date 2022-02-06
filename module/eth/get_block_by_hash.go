@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
+// BlockByHash requests the block with full transactions with the given hash.
 func BlockByHash(hash common.Hash) *BlockByHashFactory {
 	return &BlockByHashFactory{hash: hash}
 }
@@ -58,6 +59,7 @@ func (f *BlockByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 	return nil
 }
 
+// HeaderByHash requests the header with the given hash.
 func HeaderByHash(hash common.Hash) *HeaderByHashFactory {
 	return &HeaderByHashFactory{hash: hash}
 }

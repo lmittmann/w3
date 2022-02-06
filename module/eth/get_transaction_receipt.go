@@ -6,6 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
+// TransactionReceipt requests the receipt of the transaction with the given
+// hash.
 func TransactionReceipt(hash common.Hash) *TransactionReceiptFactory {
 	return &TransactionReceiptFactory{hash: hash}
 }

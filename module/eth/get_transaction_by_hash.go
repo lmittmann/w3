@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
+// TransactionByHash requests the transaction with the given hash.
 func TransactionByHash(hash common.Hash) *TransactionByHashFactory {
 	return &TransactionByHashFactory{hash: hash}
 }

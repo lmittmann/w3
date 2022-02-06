@@ -8,6 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
+// BlockByNumber requests the block with full transactions with the given
+// number.
 func BlockByNumber(number *big.Int) *BlockByNumberFactory {
 	return &BlockByNumberFactory{number: number}
 }
@@ -58,6 +60,7 @@ func (f *BlockByNumberFactory) HandleResponse(elem rpc.BatchElem) error {
 	return nil
 }
 
+// HeaderByNumber requests the header with the given number.
 func HeaderByNumber(number *big.Int) *HeaderByNumberFactory {
 	return &HeaderByNumberFactory{number: number}
 }

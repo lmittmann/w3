@@ -98,3 +98,25 @@ err := client.Call(
 	eth.CallFunc(funcBalanceOf, dai, addr).Returns(&daiBalance),
 )
 ```
+
+
+## RPC Methods
+
+List of supported RPC methods:
+
+Method                       | Go Code
+-----------------------------|---------
+`eth_blockNumber`            | `eth.BlockNumber().Returns(blockNumber *big.Int)`
+`eth_call`                   | `eth.Call(msg ethereum.CallMsg).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, to common.Address, args ...interface{}).Returns(returns ...interface{})`
+`eth_chainId`                | `eth.ChainID().Returns(chainID *uint64)`
+`eth_gasPrice`               | `eth.GasPrice().Returns(gasPrice *big.Int)`
+`eth_getBalance`             | `eth.Balance(addr common.Address).Returns(balance *big.Int)`
+`eth_getBlockByHash`         | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`
+`eth_getBlockByNumber`       | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`
+`eth_getCode`                | `eth.Code(addr common.Address).Returns(code *[]byte)`
+`eth_getLogs`                | `eth.Logs(q ethereum.FilterQuery).Returns(logs *[]types.Log)`
+`eth_getStorageAt`           | `eth.StorageAt(addr common.Address, slot common.Hash).Returns(storage *common.Hash)`
+`eth_getTransactionByHash`   | `eth.TransactionByHash(hash common.Hash).Returns(tx *types.Transaction)`
+`eth_getTransactionCount`    | `eth.Nonce(addr common.Address).Returns(nonce *uint64)`
+`eth_getTransactionReceipt`  | `eth.TransactionReceipt(hash common.Hash).Returns(receipt *types.Receipt)`
+`eth_sendRawTransaction`     | `eth.SendTransaction(tx *types.Transaction).Returns(hash *common.Hash)`<br>`eth.SendRawTransaction(rawTx []byte).Returns(hash *common.Hash)`

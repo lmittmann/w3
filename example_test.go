@@ -2,7 +2,6 @@ package w3_test
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -14,8 +13,14 @@ import (
 func ExampleDial() {
 	client, err := w3.Dial("https://cloudflare-eth.com")
 	if err != nil {
-		log.Fatalf("Failed to connect to RPC endpoint: %v", err)
+		fmt.Printf("Failed to connect to RPC endpoint: %v\n", err)
+		return
 	}
+	defer client.Close()
+}
+
+func ExampleMustDial() {
+	client := w3.MustDial("https://cloudflare-eth.com")
 	defer client.Close()
 }
 
@@ -80,7 +85,7 @@ func ExampleClient_Call() {
 		addr  = w3.A("0x000000000000000000000000000000000000dEaD")
 		weth9 = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
-		// Declare a Smart Contract function with Solidity syntax,
+		// Declare a Smart Contract function using Solidity syntax,
 		// no "abigen" and ABI JSON file needed.
 		balanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 
@@ -95,7 +100,7 @@ func ExampleClient_Call() {
 		eth.Balance(addr).Returns(&ethBalance),
 		eth.CallFunc(balanceOf, weth9, addr).Returns(&weth9Balance),
 	); err != nil {
-		fmt.Printf("Requst failed: %v\n", err)
+		fmt.Printf("Request failed: %v\n", err)
 		return
 	}
 
