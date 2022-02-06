@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/lmittmann/w3"
-	"github.com/lmittmann/w3/internal/rpctest"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestLogs(t *testing.T) {

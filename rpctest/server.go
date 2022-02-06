@@ -1,4 +1,4 @@
-// Package rpctest provides utilities for RPC testing.
+// Package rpctest provides utilities for testing RPC methods.
 package rpctest
 
 import (
@@ -13,6 +13,16 @@ import (
 	"testing"
 )
 
+// Server is a fake RPC endpoint that responds only to a single requests that
+// is definded in a golden-file.
+//
+// Request golden-files have the following format to define a single request
+// and the corresponding response:s
+//     // Comments and empty lines will be ignored.
+//     // Request starts with ">".
+//     > [{"jsonrpc":"2.0","id":1,"method":"eth_chainId"}]
+//     // Response starts with "<".
+//     < [{"jsonrpc":"2.0","id":1,"result":"0x1"}]
 type Server struct {
 	t *testing.T
 
@@ -24,6 +34,8 @@ type Server struct {
 	httptestSrv *httptest.Server
 }
 
+// NewServer returns a new instance of Server that serves the golden-file from
+// Reader r.
 func NewServer(t *testing.T, r io.Reader) *Server {
 	srv := &Server{t: t, reader: r}
 	httptestSrv := httptest.NewServer(srv)
@@ -32,6 +44,8 @@ func NewServer(t *testing.T, r io.Reader) *Server {
 	return srv
 }
 
+// NewFileServer returns a new instance of Server that serves the golden-file
+// from the given filename.
 func NewFileServer(t *testing.T, filename string) *Server {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -60,18 +74,21 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(srv.out)
 }
 
+// URL returns the servers RPC endpoint url.
 func (srv *Server) URL() string {
 	return srv.httptestSrv.URL
 }
 
+// Close shuts down the server.
 func (srv *Server) Close() {
 	srv.httptestSrv.Close()
-	if rc, ok := srv.reader.(io.ReadCloser); ok {
-		rc.Close()
-	}
 }
 
 func (srv *Server) readGolden() {
+	if rc, ok := srv.reader.(io.ReadCloser); ok {
+		defer rc.Close()
+	}
+
 	scan := bufio.NewScanner(srv.reader)
 	for scan.Scan() {
 		line := scan.Bytes()

@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/lmittmann/w3"
-	"github.com/lmittmann/w3/internal/rpctest"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestSendTransaction(t *testing.T) {

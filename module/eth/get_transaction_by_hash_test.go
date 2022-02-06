@@ -11,8 +11,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
-	"github.com/lmittmann/w3/internal/rpctest"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestTransactionByHash_Type0(t *testing.T) {

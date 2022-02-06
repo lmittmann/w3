@@ -5,8 +5,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/lmittmann/w3"
-	"github.com/lmittmann/w3/internal/rpctest"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestStorageAt(t *testing.T) {
