@@ -17,12 +17,12 @@ import (
 // is definded in a golden-file.
 //
 // Request golden-files have the following format to define a single request
-// and the corresponding response:s
+// and the corresponding response:
 //     // Comments and empty lines will be ignored.
 //     // Request starts with ">".
-//     > [{"jsonrpc":"2.0","id":1,"method":"eth_chainId"}]
+//     > {"jsonrpc":"2.0","id":1,"method":"eth_chainId"}
 //     // Response starts with "<".
-//     < [{"jsonrpc":"2.0","id":1,"result":"0x1"}]
+//     < {"jsonrpc":"2.0","id":1,"result":"0x1"}
 type Server struct {
 	t *testing.T
 
