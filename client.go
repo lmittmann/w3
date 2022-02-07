@@ -67,6 +67,11 @@ func (c *Client) Close() error {
 //
 // An error is returned if RPC request creation, networking, or RPC response handeling fails.
 func (c *Client) CallCtx(ctx context.Context, requests ...core.RequestCreatorResponseHandler) error {
+	// no requests = nothing to do
+	if len(requests) <= 0 {
+		return nil
+	}
+
 	batchElems := make([]rpc.BatchElem, len(requests))
 	var err error
 
@@ -79,9 +84,19 @@ func (c *Client) CallCtx(ctx context.Context, requests ...core.RequestCreatorRes
 	}
 
 	// do requests
-	err = c.client.BatchCallContext(ctx, batchElems)
-	if err != nil {
-		return err
+	if len(batchElems) > 1 {
+		// batch requests if >1 request
+		err = c.client.BatchCallContext(ctx, batchElems)
+		if err != nil {
+			return err
+		}
+	} else {
+		// non-batch requests if 1 request
+		batchElem := batchElems[0]
+		err = c.client.CallContext(ctx, batchElem.Result, batchElem.Method, batchElem.Args...)
+		if err != nil {
+			return err
+		}
 	}
 
 	// handle responses
