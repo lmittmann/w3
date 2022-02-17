@@ -3,6 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/lmittmann/w3.svg)](https://pkg.go.dev/github.com/lmittmann/w3)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lmittmann/w3)](https://goreportcard.com/report/github.com/lmittmann/w3)
 
+<img src="https://user-images.githubusercontent.com/3458786/153202258-24bf253e-5ab0-4efd-a0ed-43dc1bf093c9.png" align="right" alt="W3 Gopher" width="158" height="224">
 
 Package `w3` implements a modular and fast Ethereum JSON RPC client with
 first-class ABI support.
@@ -100,23 +101,40 @@ err := client.Call(
 ```
 
 
+## Custom RPC Methods
+
+Custom RPC methods can be called with the `w3` client by creating a
+[`core.Caller`](https://pkg.go.dev/github.com/lmittmann/w3/core#Caller)
+implementation.
+The `w3/module/eth` package can be used as implementation reference.
+
+
 ## RPC Methods
 
-List of supported RPC methods:
+List of supported RPC methods.
 
-Method                       | Go Code
------------------------------|---------
-`eth_blockNumber`            | `eth.BlockNumber().Returns(blockNumber *big.Int)`
-`eth_call`                   | `eth.Call(msg ethereum.CallMsg).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, to common.Address, args ...interface{}).Returns(returns ...interface{})`
-`eth_chainId`                | `eth.ChainID().Returns(chainID *uint64)`
-`eth_gasPrice`               | `eth.GasPrice().Returns(gasPrice *big.Int)`
-`eth_getBalance`             | `eth.Balance(addr common.Address).Returns(balance *big.Int)`
-`eth_getBlockByHash`         | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`
-`eth_getBlockByNumber`       | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`
-`eth_getCode`                | `eth.Code(addr common.Address).Returns(code *[]byte)`
-`eth_getLogs`                | `eth.Logs(q ethereum.FilterQuery).Returns(logs *[]types.Log)`
-`eth_getStorageAt`           | `eth.StorageAt(addr common.Address, slot common.Hash).Returns(storage *common.Hash)`
-`eth_getTransactionByHash`   | `eth.TransactionByHash(hash common.Hash).Returns(tx *types.Transaction)`
-`eth_getTransactionCount`    | `eth.Nonce(addr common.Address).Returns(nonce *uint64)`
-`eth_getTransactionReceipt`  | `eth.TransactionReceipt(hash common.Hash).Returns(receipt *types.Receipt)`
-`eth_sendRawTransaction`     | `eth.SendTransaction(tx *types.Transaction).Returns(hash *common.Hash)`<br>`eth.SendRawTransaction(rawTx []byte).Returns(hash *common.Hash)`
+### `eth`
+
+Method                      | Go Code
+:---------------------------|:--------
+`eth_blockNumber`           | `eth.BlockNumber().Returns(blockNumber *big.Int)`
+`eth_call`                  | `eth.Call(msg ethereum.CallMsg).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, contract common.Address, args ...interface{}).Returns(returns ...interface{})`
+`eth_chainId`               | `eth.ChainID().Returns(chainID *uint64)`
+`eth_gasPrice`              | `eth.GasPrice().Returns(gasPrice *big.Int)`
+`eth_getBalance`            | `eth.Balance(addr common.Address).Returns(balance *big.Int)`
+`eth_getBlockByHash`        | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`
+`eth_getBlockByNumber`      | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`
+`eth_getCode`               | `eth.Code(addr common.Address).Returns(code *[]byte)`
+`eth_getLogs`               | `eth.Logs(q ethereum.FilterQuery).Returns(logs *[]types.Log)`
+`eth_getStorageAt`          | `eth.StorageAt(addr common.Address, slot common.Hash).Returns(storage *common.Hash)`
+`eth_getTransactionByHash`  | `eth.TransactionByHash(hash common.Hash).Returns(tx *types.Transaction)`
+`eth_getTransactionCount`   | `eth.Nonce(addr common.Address).Returns(nonce *uint64)`
+`eth_getTransactionReceipt` | `eth.TransactionReceipt(hash common.Hash).Returns(receipt *types.Receipt)`
+`eth_sendRawTransaction`    | `eth.SendTransaction(tx *types.Transaction).Returns(hash *common.Hash)`<br>`eth.SendRawTransaction(rawTx []byte).Returns(hash *common.Hash)`
+
+
+### Third Party RPC Method Packages
+
+Package                                                                  | Description
+:------------------------------------------------------------------------|:------------
+[github.com/lmittmann/flashbots](https://github.com/lmittmann/flashbots) | Package `flashbots` implements RPC API bindings for the Flashbots relay and mev-geth.
