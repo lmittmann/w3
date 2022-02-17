@@ -26,9 +26,9 @@ type ResponseHandler interface {
 	HandleResponse(elem rpc.BatchElem) (err error)
 }
 
-// RequestCreatorResponseHandler is the interface that groups the basic CreateRequest and
+// Caller is the interface that groups the basic CreateRequest and
 // HandleResponse methods.
-type RequestCreatorResponseHandler interface {
+type Caller interface {
 	RequestCreator
 	ResponseHandler
 }

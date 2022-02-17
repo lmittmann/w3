@@ -31,11 +31,11 @@ func NewClient(client *rpc.Client) *Client {
 	}
 }
 
-// Dial returns a new Client connected to the URL rawurl. An error is returned if the connection
-// establishment failes.
+// Dial returns a new Client connected to the URL rawurl. An error is returned
+// if the connection establishment failes.
 //
-// The supported URL schemes are "http", "https", "ws" and "wss". If rawurl is a file name with no
-// URL scheme, a local IPC socket connection is established.
+// The supported URL schemes are "http", "https", "ws" and "wss". If rawurl is a
+// file name with no URL scheme, a local IPC socket connection is established.
 func Dial(rawurl string) (*Client, error) {
 	client, err := rpc.Dial(rawurl)
 	if err != nil {
@@ -63,20 +63,22 @@ func (c *Client) Close() error {
 	return nil
 }
 
-// CallCtx creates the final RPC request, sends it, and handles the RPC response.
+// CallCtx creates the final RPC request, sends it, and handles the RPC
+// response.
 //
-// An error is returned if RPC request creation, networking, or RPC response handeling fails.
-func (c *Client) CallCtx(ctx context.Context, requests ...core.RequestCreatorResponseHandler) error {
+// An error is returned if RPC request creation, networking, or RPC response
+// handeling fails.
+func (c *Client) CallCtx(ctx context.Context, calls ...core.Caller) error {
 	// no requests = nothing to do
-	if len(requests) <= 0 {
+	if len(calls) <= 0 {
 		return nil
 	}
 
-	batchElems := make([]rpc.BatchElem, len(requests))
+	batchElems := make([]rpc.BatchElem, len(calls))
 	var err error
 
 	// create requests
-	for i, req := range requests {
+	for i, req := range calls {
 		batchElems[i], err = req.CreateRequest()
 		if err != nil {
 			return fmt.Errorf("%w: %v", ErrRequestCreation, err)
@@ -100,7 +102,7 @@ func (c *Client) CallCtx(ctx context.Context, requests ...core.RequestCreatorRes
 	}
 
 	// handle responses
-	for i, req := range requests {
+	for i, req := range calls {
 		err = req.HandleResponse(batchElems[i])
 		if err != nil {
 			return fmt.Errorf("%w: %v", ErrResponseHandling, err)
@@ -110,6 +112,6 @@ func (c *Client) CallCtx(ctx context.Context, requests ...core.RequestCreatorRes
 }
 
 // Call is like CallCtx with ctx equal to context.Background().
-func (c *Client) Call(requests ...core.RequestCreatorResponseHandler) error {
-	return c.CallCtx(context.Background(), requests...)
+func (c *Client) Call(calls ...core.Caller) error {
+	return c.CallCtx(context.Background(), calls...)
 }
