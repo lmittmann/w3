@@ -53,18 +53,18 @@ func (f *CallFactory) HandleResponse(elem rpc.BatchElem) error {
 	return nil
 }
 
-// CallFunc requests the returns of Func fn at common.Address to with the given
-// args.
-func CallFunc(fn core.Func, to common.Address, args ...interface{}) *CallFuncFactory {
-	return &CallFuncFactory{fn: fn, to: to, args: args}
+// CallFunc requests the returns of Func fn at common.Address contract with the
+// given args.
+func CallFunc(fn core.Func, contract common.Address, args ...interface{}) *CallFuncFactory {
+	return &CallFuncFactory{fn: fn, contract: contract, args: args}
 }
 
 type CallFuncFactory struct {
 	// args
-	fn      core.Func
-	to      common.Address
-	args    []interface{}
-	atBlock *big.Int
+	fn       core.Func
+	contract common.Address
+	args     []interface{}
+	atBlock  *big.Int
 
 	// returns
 	result  hexutil.Bytes
@@ -89,7 +89,7 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	}
 
 	msg := ethereum.CallMsg{
-		To:   &f.to,
+		To:   &f.contract,
 		Data: input,
 	}
 	return rpc.BatchElem{

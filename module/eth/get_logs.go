@@ -6,8 +6,9 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-func Logs(filterQuery ethereum.FilterQuery) *LogsFactory {
-	return &LogsFactory{filterQuery: filterQuery}
+// Logs requests the logs of the given ethereum.FilterQuery q.
+func Logs(q ethereum.FilterQuery) *LogsFactory {
+	return &LogsFactory{filterQuery: q}
 }
 
 type LogsFactory struct {
