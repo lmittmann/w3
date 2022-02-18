@@ -17,8 +17,10 @@ type TransactionReceiptFactory struct {
 	hash common.Hash
 
 	// returns
-	result  *types.Receipt
-	returns *types.Receipt
+	result     *types.Receipt
+	returns    *types.Receipt
+	resultRAW  *RPCReceipt
+	returnsRAW *RPCReceipt
 }
 
 func (f *TransactionReceiptFactory) Returns(receipt *types.Receipt) *TransactionReceiptFactory {
@@ -26,12 +28,24 @@ func (f *TransactionReceiptFactory) Returns(receipt *types.Receipt) *Transaction
 	return f
 }
 
+func (f *TransactionReceiptFactory) ReturnsRAW(receipt *RPCReceipt) *TransactionReceiptFactory {
+	f.returnsRAW = receipt
+	return f
+}
+
 // CreateRequest implements the core.RequestCreator interface.
 func (f *TransactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
+	if f.returns != nil {
+		return rpc.BatchElem{
+			Method: "eth_getTransactionReceipt",
+			Args:   []interface{}{f.hash},
+			Result: &f.result,
+		}, nil
+	}
 	return rpc.BatchElem{
 		Method: "eth_getTransactionReceipt",
 		Args:   []interface{}{f.hash},
-		Result: &f.result,
+		Result: &f.resultRAW,
 	}, nil
 }
 
@@ -40,10 +54,14 @@ func (f *TransactionReceiptFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	if f.result == nil {
+	if f.returns != nil && f.result == nil || f.returnsRAW != nil && f.resultRAW == nil {
 		return errNotFound
 	}
 
-	*f.returns = *f.result
+	if f.returns != nil {
+		*f.returns = *f.result
+	} else {
+		*f.returnsRAW = *f.resultRAW
+	}
 	return nil
 }

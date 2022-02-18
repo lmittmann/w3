@@ -16,8 +16,10 @@ type TransactionByHashFactory struct {
 	hash common.Hash
 
 	// returns
-	result  *types.Transaction
-	returns *types.Transaction
+	result     *types.Transaction
+	returns    *types.Transaction
+	resultRAW  *RPCTransaction
+	returnsRAW *RPCTransaction
 }
 
 func (f *TransactionByHashFactory) Returns(tx *types.Transaction) *TransactionByHashFactory {
@@ -25,12 +27,24 @@ func (f *TransactionByHashFactory) Returns(tx *types.Transaction) *TransactionBy
 	return f
 }
 
+func (f *TransactionByHashFactory) ReturnsRAW(tx *RPCTransaction) *TransactionByHashFactory {
+	f.returnsRAW = tx
+	return f
+}
+
 // CreateRequest implements the core.RequestCreator interface.
 func (f *TransactionByHashFactory) CreateRequest() (rpc.BatchElem, error) {
+	if f.returns != nil {
+		return rpc.BatchElem{
+			Method: "eth_getTransactionByHash",
+			Args:   []interface{}{f.hash},
+			Result: &f.result,
+		}, nil
+	}
 	return rpc.BatchElem{
 		Method: "eth_getTransactionByHash",
 		Args:   []interface{}{f.hash},
-		Result: &f.result,
+		Result: &f.resultRAW,
 	}, nil
 }
 
@@ -39,10 +53,14 @@ func (f *TransactionByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	if f.result == nil {
+	if f.returns != nil && f.result == nil || f.returnsRAW != nil && f.resultRAW == nil {
 		return errNotFound
 	}
 
-	*f.returns = *f.result
+	if f.returns != nil {
+		*f.returns = *f.result
+	} else {
+		*f.returnsRAW = *f.resultRAW
+	}
 	return nil
 }

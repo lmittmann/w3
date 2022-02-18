@@ -14,7 +14,7 @@ import (
 	"github.com/lmittmann/w3/rpctest"
 )
 
-func TestBlockByNumber__1(t *testing.T) {
+func TestBlockByNumber_1(t *testing.T) {
 	t.Parallel()
 
 	srv := rpctest.NewFileServer(t, "testdata/get_block_by_number__1.golden")
@@ -44,17 +44,64 @@ func TestBlockByNumber__1(t *testing.T) {
 		})
 	)
 
-	if err := client.Call(eth.BlockByNumber(big.NewInt(1)).Returns(block)); err != nil {
+	if err := client.Call(
+		eth.BlockByNumber(big.NewInt(1)).Returns(block),
+	); err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
 	if diff := cmp.Diff(wantBlock, block,
 		cmp.AllowUnexported(big.Int{}, types.Block{}, atomic.Value{}),
-		cmpopts.EquateEmpty()); diff != "" {
+		cmpopts.EquateEmpty(),
+	); diff != "" {
 		t.Fatalf("(-want, +got)\n%s", diff)
 	}
 }
 
-func TestBlockByNumber__46147(t *testing.T) {
+func TestBlockByNumber_RPCBlock_1(t *testing.T) {
+	t.Parallel()
+
+	srv := rpctest.NewFileServer(t, "testdata/get_block_by_number__1.golden")
+	defer srv.Close()
+
+	client := w3.MustDial(srv.URL())
+	defer client.Close()
+
+	var (
+		block     = new(eth.RPCBlock)
+		wantBlock = &eth.RPCBlock{
+			Hash:        w3.H("0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6"),
+			ParentHash:  w3.H("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"),
+			UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
+			Coinbase:    w3.A("0x05a56E2D52c817161883f50c441c3228CFe54d9f"),
+			Root:        w3.H("0xd67e4d450343046425ae4271474353857ab860dbc0a1dde64b41b5cd3a532bf3"),
+			TxHash:      w3.H("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"),
+			ReceiptHash: w3.H("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"),
+			Bloom:       types.BytesToBloom(w3.B("0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")),
+			Difficulty:  w3.I("0x3ff800000"),
+			Number:      w3.I("0x1"),
+			GasLimit:    0x1388,
+			GasUsed:     0x0,
+			Time:        0x55ba4224,
+			Extra:       w3.B("0x476574682f76312e302e302f6c696e75782f676f312e342e32"),
+			MixDigest:   w3.H("0x969b900de27b6ac6a67742365dd65f55a0526c41fd18e1b16f1a1215c2e66f59"),
+			Nonce:       types.EncodeNonce(0x539bd4979fef1ec4),
+		}
+	)
+
+	if err := client.Call(
+		eth.BlockByNumber(big.NewInt(1)).ReturnsRAW(block),
+	); err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	if diff := cmp.Diff(wantBlock, block,
+		cmp.AllowUnexported(big.Int{}),
+		cmpopts.EquateEmpty(),
+	); diff != "" {
+		t.Fatalf("(-want, +got)\n%s", diff)
+	}
+}
+
+func TestBlockByNumber_46147(t *testing.T) {
 	t.Parallel()
 
 	srv := rpctest.NewFileServer(t, "testdata/get_block_by_number__46147.golden")
@@ -108,7 +155,70 @@ func TestBlockByNumber__46147(t *testing.T) {
 	}
 }
 
-func TestHeaderByNumber__12965000(t *testing.T) {
+func TestBlockByNumber_RPCBlock_46147(t *testing.T) {
+	t.Parallel()
+
+	srv := rpctest.NewFileServer(t, "testdata/get_block_by_number__46147.golden")
+	defer srv.Close()
+
+	client := w3.MustDial(srv.URL())
+	defer client.Close()
+
+	var (
+		block     = new(eth.RPCBlock)
+		wantBlock = &eth.RPCBlock{
+			Hash: w3.H("0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1bdd"),
+			Transactions: []eth.RPCTransaction{
+				{
+					BlockHash:        hPtr("0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1bdd"),
+					BlockNumber:      w3.I("0xb443"),
+					From:             w3.A("0xa1e4380a3b1f749673e270229993ee55f35663b4"),
+					Gas:              0x5208,
+					GasPrice:         w3.I("0x2d79883d2000"),
+					Hash:             w3.H("0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060"),
+					Nonce:            0x0,
+					To:               w3.APtr("0x5DF9B87991262F6BA471F09758CDE1c0FC1De734"),
+					TransactionIndex: uint64Ptr(0x0),
+					Value:            w3.I("0x7a69"),
+					Type:             0x0,
+					V:                w3.I("0x1c"),
+					R:                w3.I("0x88ff6cf0fefd94db46111149ae4bfc179e9b94721fffd821d38d16464b3f71d0"),
+					S:                w3.I("0x45e0aff800961cfce805daef7016b9b675c137a6a41a548f7b60a3484c06a33a"),
+				},
+			},
+			ParentHash:  w3.H("0x5a41d0e66b4120775176c09fcf39e7c0520517a13d2b57b18d33d342df038bfc"),
+			UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
+			Coinbase:    w3.A("0xe6A7a1d47ff21B6321162AEA7C6CB457D5476Bca"),
+			Root:        w3.H("0x0e0df2706b0a4fb8bd08c9246d472abbe850af446405d9eba1db41db18b4a169"),
+			TxHash:      w3.H("0x4513310fcb9f6f616972a3b948dc5d547f280849a87ebb5af0191f98b87be598"),
+			ReceiptHash: w3.H("0xfe2bf2a941abf41d72637e5b91750332a30283efd40c424dc522b77e6f0ed8c4"),
+			Bloom:       types.BytesToBloom(w3.B("0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")),
+			Difficulty:  w3.I("0x153886c1bbd"),
+			Number:      w3.I("0xb443"),
+			GasLimit:    0x520b,
+			GasUsed:     0x5208,
+			Time:        0x55c42659,
+			Extra:       w3.B("0x657468706f6f6c2e6f7267"),
+			MixDigest:   w3.H("0xb48c515a9dde8d346c3337ea520aa995a4738bb595495506125449c1149d6cf4"),
+			Nonce:       types.EncodeNonce(0xba4f8ecd18aab215),
+		}
+	)
+
+	if err := client.Call(
+		eth.BlockByNumber(big.NewInt(46147)).ReturnsRAW(block),
+	); err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	if diff := cmp.Diff(wantBlock, block,
+		cmp.AllowUnexported(big.Int{}, types.Block{}),
+		cmpopts.IgnoreFields(types.Transaction{}, "time"),
+		cmpopts.EquateEmpty(),
+	); diff != "" {
+		t.Fatalf("(-want, +got)\n%s", diff)
+	}
+}
+
+func TestHeaderByNumber_12965000(t *testing.T) {
 	t.Parallel()
 
 	srv := rpctest.NewFileServer(t, "testdata/get_block_by_number__12965000.golden")
@@ -139,16 +249,19 @@ func TestHeaderByNumber__12965000(t *testing.T) {
 		}
 	)
 
-	if err := client.Call(eth.HeaderByNumber(big.NewInt(12965000)).Returns(header)); err != nil {
+	if err := client.Call(
+		eth.HeaderByNumber(big.NewInt(12965000)).Returns(header),
+	); err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
 	if diff := cmp.Diff(wantHeader, header,
-		cmp.AllowUnexported(big.Int{})); diff != "" {
+		cmp.AllowUnexported(big.Int{}),
+	); diff != "" {
 		t.Fatalf("(-want, +got)\n%s", diff)
 	}
 }
 
-func TestBlockByNumber__999999999(t *testing.T) {
+func TestBlockByNumber_999999999(t *testing.T) {
 	t.Parallel()
 
 	srv := rpctest.NewFileServer(t, "testdata/get_block_by_number__999999999.golden")
@@ -163,6 +276,27 @@ func TestBlockByNumber__999999999(t *testing.T) {
 	)
 
 	if gotErr := client.Call(eth.BlockByNumber(big.NewInt(999999999)).Returns(block)); wantErr.Error() != gotErr.Error() {
+		t.Fatalf("want %v, got %v", wantErr, gotErr)
+	}
+}
+
+func TestBlockByNumber_RPCBlock_999999999(t *testing.T) {
+	t.Parallel()
+
+	srv := rpctest.NewFileServer(t, "testdata/get_block_by_number__999999999.golden")
+	defer srv.Close()
+
+	client := w3.MustDial(srv.URL())
+	defer client.Close()
+
+	var (
+		block   = new(eth.RPCBlock)
+		wantErr = fmt.Errorf("w3: response handling failed: not found")
+	)
+
+	if gotErr := client.Call(
+		eth.BlockByNumber(big.NewInt(999999999)).ReturnsRAW(block),
+	); wantErr.Error() != gotErr.Error() {
 		t.Fatalf("want %v, got %v", wantErr, gotErr)
 	}
 }

@@ -18,8 +18,10 @@ type BlockByHashFactory struct {
 	hash common.Hash
 
 	// returns
-	result  json.RawMessage
-	returns *types.Block
+	result     json.RawMessage
+	returns    *types.Block
+	resultRAW  *RPCBlock
+	returnsRAW *RPCBlock
 }
 
 func (f *BlockByHashFactory) Returns(block *types.Block) *BlockByHashFactory {
@@ -27,12 +29,24 @@ func (f *BlockByHashFactory) Returns(block *types.Block) *BlockByHashFactory {
 	return f
 }
 
+func (f *BlockByHashFactory) ReturnsRAW(block *RPCBlock) *BlockByHashFactory {
+	f.returnsRAW = block
+	return f
+}
+
 // CreateRequest implements the core.RequestCreator interface.
 func (f *BlockByHashFactory) CreateRequest() (rpc.BatchElem, error) {
+	if f.returns != nil {
+		return rpc.BatchElem{
+			Method: "eth_getBlockByHash",
+			Args:   []interface{}{f.hash, true},
+			Result: &f.result,
+		}, nil
+	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",
 		Args:   []interface{}{f.hash, true},
-		Result: &f.result,
+		Result: &f.resultRAW,
 	}, nil
 }
 
@@ -41,21 +55,25 @@ func (f *BlockByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	if len(f.result) <= 4 { // empty or "null"
+	if f.returns != nil && len(f.result) <= 4 || f.returnsRAW != nil && f.resultRAW == nil {
 		return errNotFound
 	}
 
-	var head *types.Header
-	var body rpcBlock
-	if err := json.Unmarshal(f.result, &head); err != nil {
-		return err
-	}
-	if err := json.Unmarshal(f.result, &body); err != nil {
-		return err
-	}
+	if f.returns != nil {
+		var head *types.Header
+		var body rpcBlock
+		if err := json.Unmarshal(f.result, &head); err != nil {
+			return err
+		}
+		if err := json.Unmarshal(f.result, &body); err != nil {
+			return err
+		}
 
-	block := types.NewBlockWithHeader(head).WithBody(body.Transactions, nil)
-	*f.returns = *block
+		block := types.NewBlockWithHeader(head).WithBody(body.Transactions, nil)
+		*f.returns = *block
+	} else {
+		*f.returnsRAW = *f.resultRAW
+	}
 	return nil
 }
 
@@ -69,8 +87,10 @@ type HeaderByHashFactory struct {
 	hash common.Hash
 
 	// returns
-	result  *types.Header
-	returns *types.Header
+	result     *types.Header
+	returns    *types.Header
+	resultRAW  *RPCHeader
+	returnsRAW *RPCHeader
 }
 
 func (f *HeaderByHashFactory) Returns(header *types.Header) *HeaderByHashFactory {
@@ -78,12 +98,24 @@ func (f *HeaderByHashFactory) Returns(header *types.Header) *HeaderByHashFactory
 	return f
 }
 
+func (f *HeaderByHashFactory) ReturnsRAW(header *RPCHeader) *HeaderByHashFactory {
+	f.returnsRAW = header
+	return f
+}
+
 // CreateRequest implements the core.RequestCreator interface.
 func (f *HeaderByHashFactory) CreateRequest() (rpc.BatchElem, error) {
+	if f.returns != nil {
+		return rpc.BatchElem{
+			Method: "eth_getBlockByHash",
+			Args:   []interface{}{f.hash, false},
+			Result: &f.result,
+		}, nil
+	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",
 		Args:   []interface{}{f.hash, false},
-		Result: &f.result,
+		Result: &f.resultRAW,
 	}, nil
 }
 
@@ -92,6 +124,14 @@ func (f *HeaderByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	*f.returns = *f.result
+	if f.returns != nil && f.result == nil || f.returnsRAW != nil && f.resultRAW == nil {
+		return errNotFound
+	}
+
+	if f.returns != nil {
+		*f.returns = *f.result
+	} else {
+		*f.returnsRAW = *f.resultRAW
+	}
 	return nil
 }
