@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // StorageAt requests the storage of the given common.Address addr at the
@@ -29,7 +30,7 @@ func (f *StorageAtFactory) AtBlock(blockNumber *big.Int) *StorageAtFactory {
 	return f
 }
 
-func (f *StorageAtFactory) Returns(storage *common.Hash) *StorageAtFactory {
+func (f *StorageAtFactory) Returns(storage *common.Hash) core.Caller {
 	f.returns = storage
 	return f
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // Balance requests the balance of the given common.Address addr.
@@ -28,7 +29,7 @@ func (f *BalanceFactory) AtBlock(blockNumber *big.Int) *BalanceFactory {
 	return f
 }
 
-func (f *BalanceFactory) Returns(balance *big.Int) *BalanceFactory {
+func (f *BalanceFactory) Returns(balance *big.Int) core.Caller {
 	f.returns = balance
 	return f
 }
