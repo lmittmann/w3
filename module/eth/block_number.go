@@ -5,26 +5,27 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // BlockNumber requests the number of the most recent block.
-func BlockNumber() *BlockNumberFactory {
-	return &BlockNumberFactory{}
+func BlockNumber() core.CallReturnsFactory[*big.Int] {
+	return &blockNumberFactory{}
 }
 
-type BlockNumberFactory struct {
+type blockNumberFactory struct {
 	// returns
 	result  hexutil.Big
 	returns *big.Int
 }
 
-func (f *BlockNumberFactory) Returns(blockNumber *big.Int) *BlockNumberFactory {
+func (f *blockNumberFactory) Returns(blockNumber *big.Int) core.Caller {
 	f.returns = blockNumber
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *BlockNumberFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *blockNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_blockNumber",
 		Result: &f.result,
@@ -32,7 +33,7 @@ func (f *BlockNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *BlockNumberFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *blockNumberFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}

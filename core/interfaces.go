@@ -32,3 +32,8 @@ type Caller interface {
 	RequestCreator
 	ResponseHandler
 }
+
+// CallReturnsFactory is the interface that wraps the basic Returns method.
+type CallReturnsFactory[T any] interface {
+	Returns(T) Caller
+}
