@@ -6,14 +6,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // BlockByHash requests the block with full transactions with the given hash.
-func BlockByHash(hash common.Hash) *BlockByHashFactory {
-	return &BlockByHashFactory{hash: hash}
+func BlockByHash(hash common.Hash) interface {
+	core.CallReturnsFactory[*types.Block]
+	core.CallReturnsRAWFactory[*RPCBlock]
+} {
+	return &blockByHashFactory{hash: hash}
 }
 
-type BlockByHashFactory struct {
+type blockByHashFactory struct {
 	// args
 	hash common.Hash
 
@@ -24,18 +28,18 @@ type BlockByHashFactory struct {
 	returnsRAW *RPCBlock
 }
 
-func (f *BlockByHashFactory) Returns(block *types.Block) *BlockByHashFactory {
+func (f *blockByHashFactory) Returns(block *types.Block) core.Caller {
 	f.returns = block
 	return f
 }
 
-func (f *BlockByHashFactory) ReturnsRAW(block *RPCBlock) *BlockByHashFactory {
+func (f *blockByHashFactory) ReturnsRAW(block *RPCBlock) core.Caller {
 	f.returnsRAW = block
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *BlockByHashFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *blockByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getBlockByHash",
@@ -51,7 +55,7 @@ func (f *BlockByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *BlockByHashFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *blockByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
@@ -78,11 +82,14 @@ func (f *BlockByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 }
 
 // HeaderByHash requests the header with the given hash.
-func HeaderByHash(hash common.Hash) *HeaderByHashFactory {
-	return &HeaderByHashFactory{hash: hash}
+func HeaderByHash(hash common.Hash) interface {
+	core.CallReturnsFactory[*types.Header]
+	core.CallReturnsRAWFactory[*RPCHeader]
+} {
+	return &headerByHashFactory{hash: hash}
 }
 
-type HeaderByHashFactory struct {
+type headerByHashFactory struct {
 	// args
 	hash common.Hash
 
@@ -93,18 +100,18 @@ type HeaderByHashFactory struct {
 	returnsRAW *RPCHeader
 }
 
-func (f *HeaderByHashFactory) Returns(header *types.Header) *HeaderByHashFactory {
+func (f *headerByHashFactory) Returns(header *types.Header) core.Caller {
 	f.returns = header
 	return f
 }
 
-func (f *HeaderByHashFactory) ReturnsRAW(header *RPCHeader) *HeaderByHashFactory {
+func (f *headerByHashFactory) ReturnsRAW(header *RPCHeader) core.Caller {
 	f.returnsRAW = header
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *HeaderByHashFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *headerByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getBlockByHash",
@@ -120,7 +127,7 @@ func (f *HeaderByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *HeaderByHashFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *headerByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}

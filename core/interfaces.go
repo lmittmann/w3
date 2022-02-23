@@ -37,3 +37,8 @@ type Caller interface {
 type CallReturnsFactory[T any] interface {
 	Returns(T) Caller
 }
+
+// CallReturnsRAWFactory is the interface that wraps the basic ReturnsRAW method.
+type CallReturnsRAWFactory[T any] interface {
+	ReturnsRAW(T) Caller
+}
