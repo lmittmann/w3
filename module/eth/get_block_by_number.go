@@ -6,15 +6,19 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // BlockByNumber requests the block with full transactions with the given
 // number.
-func BlockByNumber(number *big.Int) *BlockByNumberFactory {
-	return &BlockByNumberFactory{number: number}
+func BlockByNumber(number *big.Int) interface {
+	core.CallReturnsFactory[*types.Block]
+	core.CallReturnsRAWFactory[*RPCBlock]
+} {
+	return &blockByNumberFactory{number: number}
 }
 
-type BlockByNumberFactory struct {
+type blockByNumberFactory struct {
 	// args
 	number *big.Int
 
@@ -25,18 +29,18 @@ type BlockByNumberFactory struct {
 	returnsRAW *RPCBlock
 }
 
-func (f *BlockByNumberFactory) Returns(block *types.Block) *BlockByNumberFactory {
+func (f *blockByNumberFactory) Returns(block *types.Block) core.Caller {
 	f.returns = block
 	return f
 }
 
-func (f *BlockByNumberFactory) ReturnsRAW(block *RPCBlock) *BlockByNumberFactory {
+func (f *blockByNumberFactory) ReturnsRAW(block *RPCBlock) core.Caller {
 	f.returnsRAW = block
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *BlockByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *blockByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getBlockByNumber",
@@ -52,7 +56,7 @@ func (f *BlockByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *BlockByNumberFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *blockByNumberFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
@@ -80,11 +84,14 @@ func (f *BlockByNumberFactory) HandleResponse(elem rpc.BatchElem) error {
 }
 
 // HeaderByNumber requests the header with the given number.
-func HeaderByNumber(number *big.Int) *HeaderByNumberFactory {
-	return &HeaderByNumberFactory{number: number}
+func HeaderByNumber(number *big.Int) interface {
+	core.CallReturnsFactory[*types.Header]
+	core.CallReturnsRAWFactory[*RPCHeader]
+} {
+	return &headerByNumberFactory{number: number}
 }
 
-type HeaderByNumberFactory struct {
+type headerByNumberFactory struct {
 	// args
 	number *big.Int
 
@@ -95,18 +102,18 @@ type HeaderByNumberFactory struct {
 	returnsRAW *RPCHeader
 }
 
-func (f *HeaderByNumberFactory) Returns(header *types.Header) *HeaderByNumberFactory {
+func (f *headerByNumberFactory) Returns(header *types.Header) core.Caller {
 	f.returns = header
 	return f
 }
 
-func (f *HeaderByNumberFactory) ReturnsRAW(header *RPCHeader) *HeaderByNumberFactory {
+func (f *headerByNumberFactory) ReturnsRAW(header *RPCHeader) core.Caller {
 	f.returnsRAW = header
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *HeaderByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *headerByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getBlockByNumber",
@@ -122,7 +129,7 @@ func (f *HeaderByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *HeaderByNumberFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *headerByNumberFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}

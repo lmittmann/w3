@@ -4,15 +4,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // TransactionReceipt requests the receipt of the transaction with the given
 // hash.
-func TransactionReceipt(hash common.Hash) *TransactionReceiptFactory {
-	return &TransactionReceiptFactory{hash: hash}
+func TransactionReceipt(hash common.Hash) interface {
+	core.CallReturnsFactory[*types.Receipt]
+	core.CallReturnsRAWFactory[*RPCReceipt]
+} {
+	return &transactionReceiptFactory{hash: hash}
 }
 
-type TransactionReceiptFactory struct {
+type transactionReceiptFactory struct {
 	// args
 	hash common.Hash
 
@@ -23,18 +27,18 @@ type TransactionReceiptFactory struct {
 	returnsRAW *RPCReceipt
 }
 
-func (f *TransactionReceiptFactory) Returns(receipt *types.Receipt) *TransactionReceiptFactory {
+func (f *transactionReceiptFactory) Returns(receipt *types.Receipt) core.Caller {
 	f.returns = receipt
 	return f
 }
 
-func (f *TransactionReceiptFactory) ReturnsRAW(receipt *RPCReceipt) *TransactionReceiptFactory {
+func (f *transactionReceiptFactory) ReturnsRAW(receipt *RPCReceipt) core.Caller {
 	f.returnsRAW = receipt
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *TransactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *transactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getTransactionReceipt",
@@ -50,7 +54,7 @@ func (f *TransactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *TransactionReceiptFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *transactionReceiptFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
