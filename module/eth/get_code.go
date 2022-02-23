@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // Code requests the contract code of the given common.Address addr.
@@ -28,7 +29,7 @@ func (f *CodeFactory) AtBlock(blockNumber *big.Int) *CodeFactory {
 	return f
 }
 
-func (f *CodeFactory) Returns(code *[]byte) *CodeFactory {
+func (f *CodeFactory) Returns(code *[]byte) core.Caller {
 	f.returns = code
 	return f
 }

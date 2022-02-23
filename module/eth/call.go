@@ -30,7 +30,7 @@ func (f *CallFactory) AtBlock(blockNumber *big.Int) *CallFactory {
 	return f
 }
 
-func (f *CallFactory) Returns(output *[]byte) *CallFactory {
+func (f *CallFactory) Returns(output *[]byte) core.Caller {
 	f.returns = output
 	return f
 }
@@ -76,7 +76,7 @@ func (f *CallFuncFactory) AtBlock(blockNumber *big.Int) *CallFuncFactory {
 	return f
 }
 
-func (f *CallFuncFactory) Returns(returns ...interface{}) *CallFuncFactory {
+func (f *CallFuncFactory) Returns(returns ...interface{}) core.Caller {
 	f.returns = returns
 	return f
 }

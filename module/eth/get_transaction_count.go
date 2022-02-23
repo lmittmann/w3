@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // Nonce requests the nonce of the given common.Address addr.
@@ -28,7 +29,7 @@ func (f *NonceFactory) AtBlock(blockNumber *big.Int) *NonceFactory {
 	return f
 }
 
-func (f *NonceFactory) Returns(nonce *uint64) *NonceFactory {
+func (f *NonceFactory) Returns(nonce *uint64) core.Caller {
 	f.returns = nonce
 	return f
 }
