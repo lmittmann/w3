@@ -4,14 +4,15 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // Logs requests the logs of the given ethereum.FilterQuery q.
-func Logs(q ethereum.FilterQuery) *LogsFactory {
-	return &LogsFactory{filterQuery: q}
+func Logs(q ethereum.FilterQuery) core.CallReturnsFactory[*[]types.Log] {
+	return &logsFactory{filterQuery: q}
 }
 
-type LogsFactory struct {
+type logsFactory struct {
 	// args
 	filterQuery ethereum.FilterQuery
 
@@ -20,13 +21,13 @@ type LogsFactory struct {
 	returns *[]types.Log
 }
 
-func (f *LogsFactory) Returns(logs *[]types.Log) *LogsFactory {
+func (f *logsFactory) Returns(logs *[]types.Log) core.Caller {
 	f.returns = logs
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *LogsFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *logsFactory) CreateRequest() (rpc.BatchElem, error) {
 	arg, err := toFilterArg(f.filterQuery)
 	if err != nil {
 		return rpc.BatchElem{}, err
@@ -40,7 +41,7 @@ func (f *LogsFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *LogsFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *logsFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}

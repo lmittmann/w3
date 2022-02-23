@@ -5,19 +5,20 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/w3/core"
 )
 
 // SendTransaction sends a signed transaction to the network.
-func SendTransaction(tx *types.Transaction) *SendRawTransactionFactory {
-	return &SendRawTransactionFactory{tx: tx}
+func SendTransaction(tx *types.Transaction) core.CallReturnsFactory[*common.Hash] {
+	return &sendRawTransactionFactory{tx: tx}
 }
 
 // SendRawTransaction sends a raw transaction to the network.
-func SendRawTransaction(rawTx []byte) *SendRawTransactionFactory {
-	return &SendRawTransactionFactory{rawTx: rawTx}
+func SendRawTransaction(rawTx []byte) core.CallReturnsFactory[*common.Hash] {
+	return &sendRawTransactionFactory{rawTx: rawTx}
 }
 
-type SendRawTransactionFactory struct {
+type sendRawTransactionFactory struct {
 	// args
 	tx    *types.Transaction
 	rawTx []byte
@@ -27,13 +28,13 @@ type SendRawTransactionFactory struct {
 	returns *common.Hash
 }
 
-func (f *SendRawTransactionFactory) Returns(hash *common.Hash) *SendRawTransactionFactory {
+func (f *sendRawTransactionFactory) Returns(hash *common.Hash) core.Caller {
 	f.returns = hash
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *SendRawTransactionFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *sendRawTransactionFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.tx != nil {
 		rawTx, err := f.tx.MarshalBinary()
 		if err != nil {
@@ -50,7 +51,7 @@ func (f *SendRawTransactionFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *SendRawTransactionFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *sendRawTransactionFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
