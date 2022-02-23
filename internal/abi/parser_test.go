@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	typeUint256, _ = abi.NewType("uint256", "", nil)
-	typeAddress, _ = abi.NewType("address", "", nil)
+	typeUint256 = abi.Type{T: abi.UintTy, Size: 256}
+	typeAddress = abi.Type{T: abi.AddressTy, Size: 20}
 )
 
 func TestParser(t *testing.T) {
@@ -37,6 +37,28 @@ func TestParser(t *testing.T) {
 		{
 			Input:    "address recipient, uint256 amount",
 			WantArgs: abi.Arguments{{Type: typeAddress, Name: "recipient"}, {Type: typeUint256, Name: "amount"}},
+		},
+		{
+			Input:    "uint256[]",
+			WantArgs: abi.Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.SliceTy}}},
+		},
+		{
+			Input: "uint256[][]",
+			WantArgs: abi.Arguments{{
+				Type: abi.Type{
+					Elem: &abi.Type{Elem: &typeUint256, T: abi.SliceTy},
+					T:    abi.SliceTy,
+				},
+			}},
+		},
+		{
+			Input: "uint256[3][]",
+			WantArgs: abi.Arguments{{
+				Type: abi.Type{
+					Elem: &abi.Type{Elem: &typeUint256, T: abi.ArrayTy, Size: 3},
+					T:    abi.SliceTy,
+				},
+			}},
 		},
 		{
 			Input:    "transfer(address,uint256)",
