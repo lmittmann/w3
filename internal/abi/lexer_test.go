@@ -42,6 +42,11 @@ func TestLexer(t *testing.T) {
 		{"uint256[X", []item{{itemError, "unexpected token 'X', want ']'"}}},
 		{"uint256[7]", []item{{itemTyp, "uint256[7]"}, iEOF}},
 
+		// multi-dimensional array type
+		{"uint256[][]", []item{{itemTyp, "uint256[][]"}, iEOF}},
+		{"uint256[][", []item{{itemError, "unexpected EOF, want ']'"}}},
+		{"uint256[3][]", []item{{itemTyp, "uint256[3][]"}, iEOF}},
+
 		// multiple types
 		{"address,int,uint", []item{{itemTyp, "address"}, iDelim, {itemTyp, "int256"}, iDelim, {itemTyp, "uint256"}, iEOF}},
 		{"address, int,  uint", []item{{itemTyp, "address"}, iDelim, {itemTyp, "int256"}, iDelim, {itemTyp, "uint256"}, iEOF}},

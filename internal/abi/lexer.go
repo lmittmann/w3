@@ -199,7 +199,7 @@ func lexType(l *lexer) stateFn {
 	l.ignore()
 
 	// optionally accept array
-	if l.peek() == '[' {
+	for l.peek() == '[' {
 		l.accept("[")
 		l.acceptRun(number)
 		switch peek := l.peek(); peek {
