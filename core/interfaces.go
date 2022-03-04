@@ -33,12 +33,12 @@ type Caller interface {
 	ResponseHandler
 }
 
-// CallReturnsFactory is the interface that wraps the basic Returns method.
-type CallReturnsFactory[T any] interface {
+// CallFactoryReturns is the interface that wraps the basic Returns method.
+type CallFactoryReturns[T any] interface {
 	Returns(T) Caller
 }
 
-// CallReturnsRAWFactory is the interface that wraps the basic ReturnsRAW method.
-type CallReturnsRAWFactory[T any] interface {
+// CallFactoryReturnsRAW is the interface that wraps the basic ReturnsRAW method.
+type CallFactoryReturnsRAW[T any] interface {
 	ReturnsRAW(T) Caller
 }

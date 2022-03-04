@@ -7,7 +7,7 @@ import (
 )
 
 // ChainID requests the chains ID.
-func ChainID() core.CallReturnsFactory[*uint64] {
+func ChainID() core.CallFactoryReturns[*uint64] {
 	return &chainIDFactory{}
 }
 
