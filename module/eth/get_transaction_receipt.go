@@ -10,8 +10,8 @@ import (
 // TransactionReceipt requests the receipt of the transaction with the given
 // hash.
 func TransactionReceipt(hash common.Hash) interface {
-	core.CallReturnsFactory[*types.Receipt]
-	core.CallReturnsRAWFactory[*RPCReceipt]
+	core.CallFactoryReturns[*types.Receipt]
+	core.CallFactoryReturnsRAW[*RPCReceipt]
 } {
 	return &transactionReceiptFactory{hash: hash}
 }

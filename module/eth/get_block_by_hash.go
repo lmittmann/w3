@@ -11,8 +11,8 @@ import (
 
 // BlockByHash requests the block with full transactions with the given hash.
 func BlockByHash(hash common.Hash) interface {
-	core.CallReturnsFactory[*types.Block]
-	core.CallReturnsRAWFactory[*RPCBlock]
+	core.CallFactoryReturns[*types.Block]
+	core.CallFactoryReturnsRAW[*RPCBlock]
 } {
 	return &blockByHashFactory{hash: hash}
 }
@@ -83,8 +83,8 @@ func (f *blockByHashFactory) HandleResponse(elem rpc.BatchElem) error {
 
 // HeaderByHash requests the header with the given hash.
 func HeaderByHash(hash common.Hash) interface {
-	core.CallReturnsFactory[*types.Header]
-	core.CallReturnsRAWFactory[*RPCHeader]
+	core.CallFactoryReturns[*types.Header]
+	core.CallFactoryReturnsRAW[*RPCHeader]
 } {
 	return &headerByHashFactory{hash: hash}
 }

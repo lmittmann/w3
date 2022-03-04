@@ -9,7 +9,7 @@ import (
 )
 
 // BlockNumber requests the number of the most recent block.
-func BlockNumber() core.CallReturnsFactory[*big.Int] {
+func BlockNumber() core.CallFactoryReturns[*big.Int] {
 	return &blockNumberFactory{}
 }
 
