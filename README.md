@@ -2,6 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/lmittmann/w3.svg)](https://pkg.go.dev/github.com/lmittmann/w3)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lmittmann/w3)](https://goreportcard.com/report/github.com/lmittmann/w3)
+[![Latest Release](https://img.shields.io/github/v/release/lmittmann/w3?color=007d9c)](https://github.com/lmittmann/w3/releases)
 
 <img src="https://user-images.githubusercontent.com/3458786/153202258-24bf253e-5ab0-4efd-a0ed-43dc1bf093c9.png" align="right" alt="W3 Gopher" width="158" height="224">
 
@@ -23,7 +24,7 @@ or [`types.Transaction`](https://pkg.go.dev/github.com/ethereum/go-ethereum/core
 ## Install
 
 ```
-go get github.com/lmittmann/w3@latest
+go get github.com/lmittmann/w3
 ```
 
 
@@ -37,6 +38,7 @@ or [`MustDial`](https://pkg.go.dev/github.com/lmittmann/w3#MustDial).
 client := w3.MustDial("https://cloudflare-eth.com")
 defer client.Close()
 ```
+
 
 ## Batch Requests
 
