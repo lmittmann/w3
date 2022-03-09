@@ -9,12 +9,12 @@ import (
 )
 
 // SendTransaction sends a signed transaction to the network.
-func SendTransaction(tx *types.Transaction) core.CallFactoryReturns[*common.Hash] {
+func SendTransaction(tx *types.Transaction) core.CallFactoryReturns[common.Hash] {
 	return &sendRawTransactionFactory{tx: tx}
 }
 
 // SendRawTransaction sends a raw transaction to the network.
-func SendRawTransaction(rawTx []byte) core.CallFactoryReturns[*common.Hash] {
+func SendRawTransaction(rawTx []byte) core.CallFactoryReturns[common.Hash] {
 	return &sendRawTransactionFactory{rawTx: rawTx}
 }
 

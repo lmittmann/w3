@@ -35,10 +35,10 @@ type Caller interface {
 
 // CallFactoryReturns is the interface that wraps the basic Returns method.
 type CallFactoryReturns[T any] interface {
-	Returns(T) Caller
+	Returns(*T) Caller
 }
 
 // CallFactoryReturnsRAW is the interface that wraps the basic ReturnsRAW method.
 type CallFactoryReturnsRAW[T any] interface {
-	ReturnsRAW(T) Caller
+	ReturnsRAW(*T) Caller
 }

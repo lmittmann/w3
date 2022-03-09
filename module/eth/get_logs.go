@@ -8,7 +8,7 @@ import (
 )
 
 // Logs requests the logs of the given ethereum.FilterQuery q.
-func Logs(q ethereum.FilterQuery) core.CallFactoryReturns[*[]types.Log] {
+func Logs(q ethereum.FilterQuery) core.CallFactoryReturns[[]types.Log] {
 	return &logsFactory{filterQuery: q}
 }
 

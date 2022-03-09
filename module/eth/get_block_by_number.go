@@ -12,8 +12,8 @@ import (
 // BlockByNumber requests the block with full transactions with the given
 // number.
 func BlockByNumber(number *big.Int) interface {
-	core.CallFactoryReturns[*types.Block]
-	core.CallFactoryReturnsRAW[*RPCBlock]
+	core.CallFactoryReturns[types.Block]
+	core.CallFactoryReturnsRAW[RPCBlock]
 } {
 	return &blockByNumberFactory{number: number}
 }
@@ -85,8 +85,8 @@ func (f *blockByNumberFactory) HandleResponse(elem rpc.BatchElem) error {
 
 // HeaderByNumber requests the header with the given number.
 func HeaderByNumber(number *big.Int) interface {
-	core.CallFactoryReturns[*types.Header]
-	core.CallFactoryReturnsRAW[*RPCHeader]
+	core.CallFactoryReturns[types.Header]
+	core.CallFactoryReturnsRAW[RPCHeader]
 } {
 	return &headerByNumberFactory{number: number}
 }
