@@ -9,8 +9,8 @@ import (
 
 // TransactionByHash requests the transaction with the given hash.
 func TransactionByHash(hash common.Hash) interface {
-	core.CallFactoryReturns[*types.Transaction]
-	core.CallFactoryReturnsRAW[*RPCTransaction]
+	core.CallFactoryReturns[types.Transaction]
+	core.CallFactoryReturnsRAW[RPCTransaction]
 } {
 	return &transactionByHashFactory{hash: hash}
 }
