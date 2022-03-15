@@ -17,8 +17,9 @@ func Call(msg ethereum.CallMsg) *CallFactory {
 
 type CallFactory struct {
 	// args
-	msg     ethereum.CallMsg
-	atBlock *big.Int
+	msg       ethereum.CallMsg
+	atBlock   *big.Int
+	overrides AccountOverrides
 
 	// returns
 	result  hexutil.Bytes
@@ -30,6 +31,11 @@ func (f *CallFactory) AtBlock(blockNumber *big.Int) *CallFactory {
 	return f
 }
 
+func (f *CallFactory) Overrides(overrides AccountOverrides) *CallFactory {
+	f.overrides = overrides
+	return f
+}
+
 func (f *CallFactory) Returns(output *[]byte) core.Caller {
 	f.returns = output
 	return f
@@ -37,6 +43,13 @@ func (f *CallFactory) Returns(output *[]byte) core.Caller {
 
 // CreateRequest implements the core.RequestCreator interface.
 func (f *CallFactory) CreateRequest() (rpc.BatchElem, error) {
+	if f.overrides != nil {
+		return rpc.BatchElem{
+			Method: "eth_call",
+			Args:   []any{toCallArg(f.msg), toBlockNumberArg(f.atBlock), f.overrides},
+			Result: &f.result,
+		}, nil
+	}
 	return rpc.BatchElem{
 		Method: "eth_call",
 		Args:   []any{toCallArg(f.msg), toBlockNumberArg(f.atBlock)},
@@ -61,10 +74,12 @@ func CallFunc(fn core.Func, contract common.Address, args ...any) *CallFuncFacto
 
 type CallFuncFactory struct {
 	// args
-	fn       core.Func
-	contract common.Address
-	args     []any
-	atBlock  *big.Int
+	fn        core.Func
+	contract  common.Address
+	args      []any
+	from      *common.Address
+	atBlock   *big.Int
+	overrides AccountOverrides
 
 	// returns
 	result  hexutil.Bytes
@@ -81,6 +96,16 @@ func (f *CallFuncFactory) Returns(returns ...any) core.Caller {
 	return f
 }
 
+func (f *CallFuncFactory) From(from common.Address) *CallFuncFactory {
+	f.from = &from
+	return f
+}
+
+func (f *CallFuncFactory) Overrides(overrides AccountOverrides) *CallFuncFactory {
+	f.overrides = overrides
+	return f
+}
+
 // CreateRequest implements the core.RequestCreator interface.
 func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	input, err := f.fn.EncodeArgs(f.args...)
@@ -91,6 +116,16 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	msg := ethereum.CallMsg{
 		To:   &f.contract,
 		Data: input,
+	}
+	if f.from != nil {
+		msg.From = *f.from
+	}
+	if f.overrides != nil {
+		return rpc.BatchElem{
+			Method: "eth_call",
+			Args:   []any{toCallArg(msg), toBlockNumberArg(f.atBlock), f.overrides},
+			Result: &f.result,
+		}, nil
 	}
 	return rpc.BatchElem{
 		Method: "eth_call",
@@ -113,8 +148,10 @@ func (f *CallFuncFactory) HandleResponse(elem rpc.BatchElem) error {
 
 func toCallArg(msg ethereum.CallMsg) any {
 	arg := map[string]any{
-		"from": msg.From,
-		"to":   msg.To,
+		"to": msg.To,
+	}
+	if msg.From.Hash().Big().Sign() > 0 {
+		arg["from"] = msg.From
 	}
 	if len(msg.Data) > 0 {
 		arg["data"] = hexutil.Bytes(msg.Data)
