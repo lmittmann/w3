@@ -109,6 +109,28 @@ func ExampleClient_Call() {
 	)
 }
 
+func ExampleClient_Call_nonceAndBalance() {
+	client := w3.MustDial("https://cloudflare-eth.com")
+	defer client.Close()
+
+	var (
+		addr = w3.A("0x000000000000000000000000000000000000c0Fe")
+
+		nonce   uint64
+		balance big.Int
+	)
+
+	if err := client.Call(
+		eth.Nonce(addr).Returns(&nonce),
+		eth.Balance(addr).Returns(&balance),
+	); err != nil {
+		fmt.Printf("Request failed: %v\n", err)
+		return
+	}
+
+	fmt.Printf("%s: Nonce: %d, Balance: ♦%s\n", addr, nonce, w3.FromWei(&balance, 18))
+}
+
 func ExampleEvent_DecodeArgs() {
 	var (
 		eventTransfer = w3.MustNewEvent("Transfer(address from, address to, uint256 value)")

@@ -6,15 +6,15 @@
 
 <img src="https://user-images.githubusercontent.com/3458786/153202258-24bf253e-5ab0-4efd-a0ed-43dc1bf093c9.png" align="right" alt="W3 Gopher" width="158" height="224">
 
-Package `w3` implements a modular and fast Ethereum JSON RPC client with
+Package `w3` implements a blazing fast and modular Ethereum JSON RPC client with
 first-class ABI support.
 
-* **Modular** API allows to create custom RPC method integrations that can be
-  used alongside the methods implemented by the package.
 * **Batch request** support significantly reduces the duration of requests to
   both remote and local endpoints.
 * **ABI** bindings are specified for individual functions using Solidity syntax.
   No need for `abigen` and ABI JSON files.
+* **Modular** API allows to create custom RPC method integrations that can be
+  used alongside the methods implemented by the package.
 
 `w3` is closely linked to [go-ethereum](https://github.com/ethereum/go-ethereum)
 and uses a variety of its types, such as [`common.Address`](https://pkg.go.dev/github.com/ethereum/go-ethereum/common#Address)
@@ -117,26 +117,25 @@ List of supported RPC methods.
 
 ### `eth`
 
-Method                      | Go Code
-:---------------------------|:--------
-`eth_blockNumber`           | `eth.BlockNumber().Returns(blockNumber *big.Int)`
-`eth_call`                  | `eth.Call(msg ethereum.CallMsg).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, contract common.Address, args ...interface{}).Returns(returns ...interface{})`
-`eth_chainId`               | `eth.ChainID().Returns(chainID *uint64)`
-`eth_gasPrice`              | `eth.GasPrice().Returns(gasPrice *big.Int)`
-`eth_getBalance`            | `eth.Balance(addr common.Address).Returns(balance *big.Int)`
-`eth_getBlockByHash`        | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br>`eth.BlockByHash(hash common.Hash).ReturnsRAW(block *eth.RPCBlock)` <br>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`<br>`eth.HeaderByHash(hash common.Hash).ReturnsRAW(header *eth.RPCHeader)`
-`eth_getBlockByNumber`      | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br>`eth.BlockByNumber(number *big.Int).ReturnsRAW(block *eth.RPCBlock)`<br>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`<br>`eth.HeaderByNumber(number *big.Int).ReturnsRAW(header *eth.RAWHeader)`
-`eth_getCode`               | `eth.Code(addr common.Address).Returns(code *[]byte)`
-`eth_getLogs`               | `eth.Logs(q ethereum.FilterQuery).Returns(logs *[]types.Log)`
-`eth_getStorageAt`          | `eth.StorageAt(addr common.Address, slot common.Hash).Returns(storage *common.Hash)`
-`eth_getTransactionByHash`  | `eth.TransactionByHash(hash common.Hash).Returns(tx *types.Transaction)`<br>`eth.TransactionByHash(hash common.Hash).ReturnsRAW(tx *eth.RPCTransaction)`
-`eth_getTransactionCount`   | `eth.Nonce(addr common.Address).Returns(nonce *uint64)`
-`eth_getTransactionReceipt` | `eth.TransactionReceipt(hash common.Hash).Returns(receipt *types.Receipt)`<br>`eth.TransactionReceipt(hash common.Hash).ReturnsRAW(receipt *eth.RPCReceipt)`
-`eth_sendRawTransaction`    | `eth.SendTransaction(tx *types.Transaction).Returns(hash *common.Hash)`<br>`eth.SendRawTransaction(rawTx []byte).Returns(hash *common.Hash)`
-
+| Method                      | Go Code
+| :-------------------------- | :-------
+| `eth_blockNumber`           | `eth.BlockNumber().Returns(blockNumber *big.Int)`
+| `eth_call`                  | `eth.Call(msg ethereum.CallMsg).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, contract common.Address, args ...interface{}).Returns(returns ...interface{})`
+| `eth_chainId`               | `eth.ChainID().Returns(chainID *uint64)`
+| `eth_gasPrice`              | `eth.GasPrice().Returns(gasPrice *big.Int)`
+| `eth_getBalance`            | `eth.Balance(addr common.Address).Returns(balance *big.Int)`
+| `eth_getBlockByHash`        | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br>`eth.BlockByHash(hash common.Hash).ReturnsRAW(block *eth.RPCBlock)` <br>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`<br>`eth.HeaderByHash(hash common.Hash).ReturnsRAW(header *eth.RPCHeader)`
+| `eth_getBlockByNumber`      | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br>`eth.BlockByNumber(number *big.Int).ReturnsRAW(block *eth.RPCBlock)`<br>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`<br>`eth.HeaderByNumber(number *big.Int).ReturnsRAW(header *eth.RAWHeader)`
+| `eth_getCode`               | `eth.Code(addr common.Address).Returns(code *[]byte)`
+| `eth_getLogs`               | `eth.Logs(q ethereum.FilterQuery).Returns(logs *[]types.Log)`
+| `eth_getStorageAt`          | `eth.StorageAt(addr common.Address, slot common.Hash).Returns(storage *common.Hash)`
+| `eth_getTransactionByHash`  | `eth.TransactionByHash(hash common.Hash).Returns(tx *types.Transaction)`<br>`eth.TransactionByHash(hash common.Hash).ReturnsRAW(tx *eth.RPCTransaction)`
+| `eth_getTransactionCount`   | `eth.Nonce(addr common.Address).Returns(nonce *uint64)`
+| `eth_getTransactionReceipt` | `eth.TransactionReceipt(hash common.Hash).Returns(receipt *types.Receipt)`<br>`eth.TransactionReceipt(hash common.Hash).ReturnsRAW(receipt *eth.RPCReceipt)`
+| `eth_sendRawTransaction`    | `eth.SendTransaction(tx *types.Transaction).Returns(hash *common.Hash)`<br>`eth.SendRawTransaction(rawTx []byte).Returns(hash *common.Hash)`
 
 ### Third Party RPC Method Packages
 
-Package                                                                  | Description
-:------------------------------------------------------------------------|:------------
-[github.com/lmittmann/flashbots](https://github.com/lmittmann/flashbots) | Package `flashbots` implements RPC API bindings for the Flashbots relay and mev-geth.
+| Package                                                                  | Description
+| :----------------------------------------------------------------------- | :-----------
+| [github.com/lmittmann/flashbots](https://github.com/lmittmann/flashbots) | Package `flashbots` implements RPC API bindings for the Flashbots relay and mev-geth.
