@@ -35,7 +35,7 @@ func (f *logsFactory) CreateRequest() (rpc.BatchElem, error) {
 
 	return rpc.BatchElem{
 		Method: "eth_getLogs",
-		Args:   []interface{}{arg},
+		Args:   []any{arg},
 		Result: &f.result,
 	}, nil
 }

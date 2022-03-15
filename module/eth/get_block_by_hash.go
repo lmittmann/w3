@@ -43,13 +43,13 @@ func (f *blockByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getBlockByHash",
-			Args:   []interface{}{f.hash, true},
+			Args:   []any{f.hash, true},
 			Result: &f.result,
 		}, nil
 	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",
-		Args:   []interface{}{f.hash, true},
+		Args:   []any{f.hash, true},
 		Result: &f.resultRAW,
 	}, nil
 }
@@ -115,13 +115,13 @@ func (f *headerByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getBlockByHash",
-			Args:   []interface{}{f.hash, false},
+			Args:   []any{f.hash, false},
 			Result: &f.result,
 		}, nil
 	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",
-		Args:   []interface{}{f.hash, false},
+		Args:   []any{f.hash, false},
 		Result: &f.resultRAW,
 	}, nil
 }

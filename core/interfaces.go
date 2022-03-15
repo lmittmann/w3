@@ -7,13 +7,13 @@ type Func interface {
 
 	// EncodeArgs ABI-encodes the given args and prepends the Func's 4-byte
 	// selector.
-	EncodeArgs(args ...interface{}) (input []byte, err error)
+	EncodeArgs(args ...any) (input []byte, err error)
 
 	// DecodeArgs ABI-decodes the given input to the given args.
-	DecodeArgs(input []byte, args ...interface{}) (err error)
+	DecodeArgs(input []byte, args ...any) (err error)
 
 	// DecodeReturns ABI-decodes the given output to the given returns.
-	DecodeReturns(output []byte, returns ...interface{}) (err error)
+	DecodeReturns(output []byte, returns ...any) (err error)
 }
 
 // RequestCreator is the interface that wraps the basic CreateRequest method.

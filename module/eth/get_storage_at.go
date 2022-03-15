@@ -39,7 +39,7 @@ func (f *StorageAtFactory) Returns(storage *common.Hash) core.Caller {
 func (f *StorageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getStorageAt",
-		Args:   []interface{}{f.addr, f.slot, toBlockNumberArg(f.atBlock)},
+		Args:   []any{f.addr, f.slot, toBlockNumberArg(f.atBlock)},
 		Result: &f.result,
 	}, nil
 }

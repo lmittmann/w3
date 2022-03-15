@@ -38,7 +38,7 @@ func (f *NonceFactory) Returns(nonce *uint64) core.Caller {
 func (f *NonceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionCount",
-		Args:   []interface{}{f.addr, toBlockNumberArg(f.atBlock)},
+		Args:   []any{f.addr, toBlockNumberArg(f.atBlock)},
 		Result: &f.result,
 	}, nil
 }

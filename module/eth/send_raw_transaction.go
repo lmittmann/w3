@@ -45,7 +45,7 @@ func (f *sendRawTransactionFactory) CreateRequest() (rpc.BatchElem, error) {
 
 	return rpc.BatchElem{
 		Method: "eth_sendRawTransaction",
-		Args:   []interface{}{hexutil.Encode(f.rawTx)},
+		Args:   []any{hexutil.Encode(f.rawTx)},
 		Result: &f.result,
 	}, nil
 }

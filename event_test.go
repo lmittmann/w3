@@ -70,8 +70,8 @@ func TestEventDecodeArgs(t *testing.T) {
 	tests := []struct {
 		Event    *Event
 		Log      *types.Log
-		Args     []interface{}
-		WantArgs []interface{}
+		Args     []any
+		WantArgs []any
 	}{
 		{
 			Event: MustNewEvent("Transfer(address,address,uint256)"),
@@ -84,8 +84,8 @@ func TestEventDecodeArgs(t *testing.T) {
 					"000000000000000000000000000000000000000000000000000000000000dead" +
 					"000000000000000000000000000000000000000000000000000000000000002a"),
 			},
-			Args: []interface{}{new(common.Address), new(common.Address), new(big.Int)},
-			WantArgs: []interface{}{
+			Args: []any{new(common.Address), new(common.Address), new(big.Int)},
+			WantArgs: []any{
 				APtr("0x000000000000000000000000000000000000c0Fe"),
 				APtr("0x000000000000000000000000000000000000dEaD"),
 				big.NewInt(42),
@@ -102,8 +102,8 @@ func TestEventDecodeArgs(t *testing.T) {
 					"000000000000000000000000000000000000000000000000000000000000dead" +
 					"000000000000000000000000000000000000000000000000000000000000002a"),
 			},
-			Args: []interface{}{new(common.Address), new(common.Address), new(big.Int)},
-			WantArgs: []interface{}{
+			Args: []any{new(common.Address), new(common.Address), new(big.Int)},
+			WantArgs: []any{
 				APtr("0x000000000000000000000000000000000000c0Fe"),
 				APtr("0x000000000000000000000000000000000000dEaD"),
 				big.NewInt(42),
@@ -119,8 +119,8 @@ func TestEventDecodeArgs(t *testing.T) {
 				},
 				Data: B("0x000000000000000000000000000000000000000000000000000000000000002a"),
 			},
-			Args: []interface{}{new(common.Address), new(common.Address), new(big.Int)},
-			WantArgs: []interface{}{
+			Args: []any{new(common.Address), new(common.Address), new(big.Int)},
+			WantArgs: []any{
 				APtr("0x000000000000000000000000000000000000c0Fe"),
 				APtr("0x000000000000000000000000000000000000dEaD"),
 				big.NewInt(42),
@@ -136,8 +136,8 @@ func TestEventDecodeArgs(t *testing.T) {
 					H("0x000000000000000000000000000000000000000000000000000000000000002a"),
 				},
 			},
-			Args: []interface{}{new(common.Address), new(common.Address), new(big.Int)},
-			WantArgs: []interface{}{
+			Args: []any{new(common.Address), new(common.Address), new(big.Int)},
+			WantArgs: []any{
 				APtr("0x000000000000000000000000000000000000c0Fe"),
 				APtr("0x000000000000000000000000000000000000dEaD"),
 				big.NewInt(42),

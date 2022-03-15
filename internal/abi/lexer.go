@@ -107,7 +107,7 @@ func (l *lexer) emitVal(typ itemType, val string) {
 
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state.
-func (l *lexer) errorf(format string, args ...interface{}) stateFn {
+func (l *lexer) errorf(format string, args ...any) stateFn {
 	l.itemCh <- item{itemError, fmt.Sprintf(format, args...)}
 	return nil
 }

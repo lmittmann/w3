@@ -44,13 +44,13 @@ func (f *blockByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getBlockByNumber",
-			Args:   []interface{}{toBlockNumberArg(f.number), true},
+			Args:   []any{toBlockNumberArg(f.number), true},
 			Result: &f.result,
 		}, nil
 	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByNumber",
-		Args:   []interface{}{toBlockNumberArg(f.number), true},
+		Args:   []any{toBlockNumberArg(f.number), true},
 		Result: &f.resultRAW,
 	}, nil
 }
@@ -117,13 +117,13 @@ func (f *headerByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getBlockByNumber",
-			Args:   []interface{}{toBlockNumberArg(f.number), false},
+			Args:   []any{toBlockNumberArg(f.number), false},
 			Result: &f.result,
 		}, nil
 	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByNumber",
-		Args:   []interface{}{toBlockNumberArg(f.number), false},
+		Args:   []any{toBlockNumberArg(f.number), false},
 		Result: &f.resultRAW,
 	}, nil
 }

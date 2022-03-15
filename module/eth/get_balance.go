@@ -38,7 +38,7 @@ func (f *BalanceFactory) Returns(balance *big.Int) core.Caller {
 func (f *BalanceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBalance",
-		Args:   []interface{}{f.addr, toBlockNumberArg(f.atBlock)},
+		Args:   []any{f.addr, toBlockNumberArg(f.atBlock)},
 		Result: &f.result,
 	}, nil
 }

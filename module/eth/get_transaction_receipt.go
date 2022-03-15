@@ -42,13 +42,13 @@ func (f *transactionReceiptFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getTransactionReceipt",
-			Args:   []interface{}{f.hash},
+			Args:   []any{f.hash},
 			Result: &f.result,
 		}, nil
 	}
 	return rpc.BatchElem{
 		Method: "eth_getTransactionReceipt",
-		Args:   []interface{}{f.hash},
+		Args:   []any{f.hash},
 		Result: &f.resultRAW,
 	}, nil
 }

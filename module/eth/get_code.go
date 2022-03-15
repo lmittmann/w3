@@ -38,7 +38,7 @@ func (f *CodeFactory) Returns(code *[]byte) core.Caller {
 func (f *CodeFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getCode",
-		Args:   []interface{}{f.addr, toBlockNumberArg(f.atBlock)},
+		Args:   []any{f.addr, toBlockNumberArg(f.atBlock)},
 		Result: &f.result,
 	}, nil
 }

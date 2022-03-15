@@ -23,8 +23,8 @@ func toBlockNumberArg(blockNumber *big.Int) string {
 	return hexutil.EncodeBig(blockNumber)
 }
 
-func toFilterArg(q ethereum.FilterQuery) (interface{}, error) {
-	arg := map[string]interface{}{
+func toFilterArg(q ethereum.FilterQuery) (any, error) {
+	arg := map[string]any{
 		"topics": q.Topics,
 	}
 	if len(q.Addresses) > 0 {

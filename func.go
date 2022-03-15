@@ -75,7 +75,7 @@ func MustNewFunc(signature, returns string) *Func {
 
 // EncodeArgs ABI-encodes the given args and prepends the Func's 4-byte
 // selector.
-func (f *Func) EncodeArgs(args ...interface{}) ([]byte, error) {
+func (f *Func) EncodeArgs(args ...any) ([]byte, error) {
 	if len(f.Args) != len(args) {
 		return nil, fmt.Errorf("%w: expected %d arguments, got %d", ErrArgumentMismatch, len(f.Args), len(args))
 	}
@@ -89,7 +89,7 @@ func (f *Func) EncodeArgs(args ...interface{}) ([]byte, error) {
 }
 
 // DecodeArgs ABI-decodes the given input to the given args.
-func (f *Func) DecodeArgs(input []byte, args ...interface{}) error {
+func (f *Func) DecodeArgs(input []byte, args ...any) error {
 	if len(f.Args) != len(args) {
 		return fmt.Errorf("%w: expected %d arguments, got %d", ErrArgumentMismatch, len(f.Args), len(args))
 	}
@@ -108,7 +108,7 @@ func (f *Func) DecodeArgs(input []byte, args ...interface{}) error {
 }
 
 // DecodeReturns ABI-decodes the given output to the given returns.
-func (f *Func) DecodeReturns(output []byte, returns ...interface{}) error {
+func (f *Func) DecodeReturns(output []byte, returns ...any) error {
 	if len(f.Returns) != len(returns) {
 		return fmt.Errorf("%w: expected %d returns, got %d", ErrReturnsMismatch, len(f.Returns), len(returns))
 	}
@@ -147,7 +147,7 @@ func (f *Func) DecodeReturns(output []byte, returns ...interface{}) error {
 	return nil
 }
 
-func copyVal(t byte, dst, src interface{}) (err error) {
+func copyVal(t byte, dst, src any) (err error) {
 	// skip copying if dst is nil
 	if dst == nil {
 		return

@@ -39,7 +39,7 @@ func (f *CallFactory) Returns(output *[]byte) core.Caller {
 func (f *CallFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_call",
-		Args:   []interface{}{toCallArg(f.msg), toBlockNumberArg(f.atBlock)},
+		Args:   []any{toCallArg(f.msg), toBlockNumberArg(f.atBlock)},
 		Result: &f.result,
 	}, nil
 }
@@ -55,7 +55,7 @@ func (f *CallFactory) HandleResponse(elem rpc.BatchElem) error {
 
 // CallFunc requests the returns of Func fn at common.Address contract with the
 // given args.
-func CallFunc(fn core.Func, contract common.Address, args ...interface{}) *CallFuncFactory {
+func CallFunc(fn core.Func, contract common.Address, args ...any) *CallFuncFactory {
 	return &CallFuncFactory{fn: fn, contract: contract, args: args}
 }
 
@@ -63,12 +63,12 @@ type CallFuncFactory struct {
 	// args
 	fn       core.Func
 	contract common.Address
-	args     []interface{}
+	args     []any
 	atBlock  *big.Int
 
 	// returns
 	result  hexutil.Bytes
-	returns []interface{}
+	returns []any
 }
 
 func (f *CallFuncFactory) AtBlock(blockNumber *big.Int) *CallFuncFactory {
@@ -76,7 +76,7 @@ func (f *CallFuncFactory) AtBlock(blockNumber *big.Int) *CallFuncFactory {
 	return f
 }
 
-func (f *CallFuncFactory) Returns(returns ...interface{}) core.Caller {
+func (f *CallFuncFactory) Returns(returns ...any) core.Caller {
 	f.returns = returns
 	return f
 }
@@ -94,7 +94,7 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	}
 	return rpc.BatchElem{
 		Method: "eth_call",
-		Args:   []interface{}{toCallArg(msg), toBlockNumberArg(f.atBlock)},
+		Args:   []any{toCallArg(msg), toBlockNumberArg(f.atBlock)},
 		Result: &f.result,
 	}, nil
 }
@@ -111,8 +111,8 @@ func (f *CallFuncFactory) HandleResponse(elem rpc.BatchElem) error {
 	return nil
 }
 
-func toCallArg(msg ethereum.CallMsg) interface{} {
-	arg := map[string]interface{}{
+func toCallArg(msg ethereum.CallMsg) any {
+	arg := map[string]any{
 		"from": msg.From,
 		"to":   msg.To,
 	}

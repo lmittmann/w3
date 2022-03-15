@@ -41,13 +41,13 @@ func (f *transactionByHashFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.returns != nil {
 		return rpc.BatchElem{
 			Method: "eth_getTransactionByHash",
-			Args:   []interface{}{f.hash},
+			Args:   []any{f.hash},
 			Result: &f.result,
 		}, nil
 	}
 	return rpc.BatchElem{
 		Method: "eth_getTransactionByHash",
-		Args:   []interface{}{f.hash},
+		Args:   []any{f.hash},
 		Result: &f.resultRAW,
 	}, nil
 }

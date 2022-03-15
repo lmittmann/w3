@@ -120,7 +120,7 @@ List of supported RPC methods.
 | Method                      | Go Code
 | :-------------------------- | :-------
 | `eth_blockNumber`           | `eth.BlockNumber().Returns(blockNumber *big.Int)`
-| `eth_call`                  | `eth.Call(msg ethereum.CallMsg).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, contract common.Address, args ...interface{}).Returns(returns ...interface{})`
+| `eth_call`                  | `eth.Call(msg ethereum.CallMsg).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, contract common.Address, args ...any).Returns(returns ...any)`
 | `eth_chainId`               | `eth.ChainID().Returns(chainID *uint64)`
 | `eth_gasPrice`              | `eth.GasPrice().Returns(gasPrice *big.Int)`
 | `eth_getBalance`            | `eth.Balance(addr common.Address).Returns(balance *big.Int)`
