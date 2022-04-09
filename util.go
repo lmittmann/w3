@@ -1,6 +1,7 @@
 package w3
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strings"
@@ -18,35 +19,83 @@ var (
 	BigEther = big.NewInt(1_000000000_000000000)
 )
 
-var addrZero = common.Address{} // zero address 0x00…00
-
-// A returns an address from a hexstring. It is short for common.HexToAddress(…).
+// A returns an address from a hexstring or panics if the hexstring does not
+// represent a valid checksum encoded address.
+//
+// Use go-ethereum's common.HexToAddress("0x…") to get the address from a
+// hexstring without panicking.
 func A(hexAddress string) common.Address {
-	return common.HexToAddress(hexAddress)
+	if !has0xPrefix(hexAddress) {
+		panic(fmt.Sprintf("hex address %q must have 0x prefix", hexAddress))
+	}
+	if !isHex(hexAddress[2:]) {
+		panic(fmt.Sprintf("hex address %q must be hex", hexAddress))
+	}
+	if len(hexAddress) != 42 {
+		panic(fmt.Sprintf("hex address %q must have 20 bytes", hexAddress))
+	}
+
+	var addr common.Address
+	b, _ := hex.DecodeString(hexAddress[2:])
+	copy(addr[:], b)
+
+	if hexAddress != addr.Hex() {
+		panic(fmt.Sprintf("hex address %q must be checksum encoded", hexAddress))
+	}
+	return addr
 }
 
-// APtr returns an address pointer from a hexstring. The returned address is nil, if the hexstring
-// address equals the zero address 0x00…00.
+// APtr returns an address pointer from a hexstring or panics if the hexstring
+// does not represent a valid checksum encoded address.
 func APtr(hexAddress string) *common.Address {
 	addr := A(hexAddress)
-	if addr == addrZero {
-		return nil
-	}
 	return &addr
 }
 
-// B returns a byte slice from a hexstring. It is short for common.FromHex(…).
+// B returns a byte slice from a hexstring or panics if the hexstring does not
+// represent a vaild byte slice.
+//
+// Use go-ethereum's common.FromHex("0x…") to get the byte slice from a
+//hexstring without panicking.
 func B(hexBytes string) []byte {
-	return common.FromHex(hexBytes)
+	if !has0xPrefix(hexBytes) {
+		panic(fmt.Sprintf("hex bytes %q must have 0x prefix", hexBytes))
+	}
+	if !isHex(hexBytes[2:]) {
+		panic(fmt.Sprintf("hex bytes %q must be hex", hexBytes))
+	}
+	if len(hexBytes)%2 != 0 {
+		panic(fmt.Sprintf("hex bytes %q must have even number of hex chars", hexBytes))
+	}
+
+	bytes, _ := hex.DecodeString(hexBytes[2:])
+	return bytes
 }
 
-// H returns a hash from a hexstring. It is short for common.HexToHash(…).
+// H returns a hash from a hexstring or panics if the hexstring does not
+// represent a valid hash.
+//
+// Use go-ethereum's common.HexToHash("0x…") to get the hash from a hexstring
+// without panicking.
 func H(hexHash string) common.Hash {
-	return common.HexToHash(hexHash)
+	if !has0xPrefix(hexHash) {
+		panic(fmt.Sprintf("hex hash %q must have 0x prefix", hexHash))
+	}
+	if !isHex(hexHash[2:]) {
+		panic(fmt.Sprintf("hex hash %q must be hex", hexHash))
+	}
+	if len(hexHash) != 66 {
+		panic(fmt.Sprintf("hex hash %q must have 32 bytes", hexHash))
+	}
+
+	var hash common.Hash
+	b, _ := hex.DecodeString(hexHash[2:])
+	copy(hash[:], b)
+	return hash
 }
 
-// I returns a big.Int from a number string in decimal or hex format. Nil is
-// returned if the number parsing fails.
+// I returns a big.Int from a hexstring or decimal number string (with optional
+// unit) or panics if the parsing fails.
 //
 // I supports the units "ether" or "eth" and "gwei" for decimal number strings.
 // E.g.:
@@ -57,98 +106,53 @@ func H(hexHash string) common.Hash {
 // are ignored. E.g.:
 //     w3.I("0.000000123456 gwei") -> 123
 func I(strInt string) *big.Int {
-	if len(strInt) >= 2 && strInt[0] == '0' && (strInt[1] == 'x' || strInt[1] == 'X') {
-		// hex int
-		bigint, ok := new(big.Int).SetString(strInt[2:], 16)
-		if !ok {
-			return nil
-		}
-		return bigint
+	if has0xPrefix(strInt) {
+		return parseHexBig(strInt)
 	}
-
-	// decimal int
 	return parseDecimal(strInt)
 }
 
-func parseDecimal(s string) *big.Int {
-	var (
-		state int // parse state: 0=int, 1=frac
-
-		intEnd    int
-		fracStart int
-		fracEnd   int
-		unitStart int
-
-		decimals int
-		intPart  = new(big.Int)
-		fracPart = new(big.Int)
-	)
-
-	// find ranges of int, frac, and unit parts
-Outer:
-	for i, c := range s {
-		switch state {
-		case 0:
-			if c == '.' {
-				fracStart = i + 1
-				fracEnd = i + 1
-				state++
-				break
-			} else if c == ' ' {
-				unitStart = i + 1
-				break Outer
-			} else if c < '0' || '9' < c {
-				return nil // invalid char
-			}
-			intEnd = i + 1
-		case 1:
-			if c == ' ' {
-				unitStart = i + 1
-				break Outer
-			} else if c < '0' || '9' < c {
-				return nil // invalid char
-			}
-			fracEnd = i + 1
-		}
+func parseHexBig(hexBig string) *big.Int {
+	if !isHex(hexBig[2:]) {
+		panic(fmt.Sprintf("hex big %q must be hex", hexBig))
 	}
-	// set parts
-	if unitStart < len(s) && unitStart > fracEnd {
-		switch unitPart := strings.ToLower(s[unitStart:]); unitPart {
-		case "ether", "eth":
-			decimals = 18
-		case "gwei":
-			decimals = 9
-		case "":
-		default:
-			return nil
-		}
+	bigInt, _ := new(big.Int).SetString(hexBig[2:], 16)
+	return bigInt
+}
+
+var (
+	multiplierEth  = new(big.Float).SetInt(BigEther)
+	multiplierGwei = new(big.Float).SetInt(BigGwei)
+)
+
+func parseDecimal(strBig string) *big.Int {
+	slice := strings.SplitN(strBig, " ", 2)
+	f, _, err := new(big.Float).Parse(slice[0], 10)
+	if err != nil {
+		panic(fmt.Sprintf("invalid str big %q: %v", strBig, err))
 	}
 
-	if _, ok := intPart.SetString(s[:intEnd], 10); !ok && intEnd > 0 {
-		return nil
+	// len = 1
+	if len(slice) == 1 {
+		if f.IsInt() {
+			big, _ := f.Int(nil)
+			return big
+		}
+		panic(fmt.Sprintf("invalid str big %q: must be an integer", strBig))
 	}
 
-	if decimals > 0 {
-		intPart.Mul(
-			intPart,
-			new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil),
-		)
-
-		var ok bool
-		if fracDigits := fracEnd - fracStart; fracDigits > decimals {
-			fracEnd = fracStart + decimals
-			_, ok = fracPart.SetString(s[fracStart:fracEnd], 10)
-		} else if fracDigits < decimals {
-			_, ok = fracPart.SetString(s[fracStart:fracEnd]+strings.Repeat("0", decimals-fracDigits), 10)
-		} else {
-			_, ok = fracPart.SetString(s[fracStart:fracEnd], 10)
-		}
-		if !ok {
-			return nil
-		}
+	// len = 2
+	switch unit := strings.ToLower(slice[1]); unit {
+	case "ether", "eth":
+		f.Mul(f, multiplierEth)
+	case "gwei":
+		f.Mul(f, multiplierGwei)
+	default:
+		panic(fmt.Sprintf("invalid str big %q: unknown unit %q", strBig, unit))
 	}
 
-	return new(big.Int).Add(intPart, fracPart)
+	big, _ := f.Int(nil)
+	return big
 }
 
 // Keccak returns the Keccak256 hash of data. It is short for crypto.Keccak256Hash(…)
@@ -176,4 +180,24 @@ func FromWei(wei *big.Int, decimals uint8) string {
 	}
 	s := strings.TrimRight(fmt.Sprintf("%0*s", decimals, m.String()), "0")
 	return sign + z.String() + "." + s
+}
+
+// has0xPrefix validates hexStr begins with '0x' or '0X'.
+func has0xPrefix(hexStr string) bool {
+	return len(hexStr) >= 2 && hexStr[0] == '0' && hexStr[1] == 'x'
+}
+
+// isHexCharacter returns bool of c being a valid hexadecimal.
+func isHexCharacter(c rune) bool {
+	return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')
+}
+
+// isHex validates whether each byte is valid hexadecimal string.
+func isHex(str string) bool {
+	for _, c := range str {
+		if !isHexCharacter(c) {
+			return false
+		}
+	}
+	return true
 }
