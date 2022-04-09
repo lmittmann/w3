@@ -144,7 +144,7 @@ func TestTransactionByHash_RPCTransaction_Type2(t *testing.T) {
 		wantTx = &eth.RPCTransaction{
 			BlockHash:        hPtr("0xa32d159805750cbe428b799a49b85dcb2300f61d806786f317260e721727d162"),
 			BlockNumber:      w3.I("0xc5d489"),
-			From:             w3.A("0x2e419a06feb47d5f640636a55a814757fa10edf9"),
+			From:             w3.A("0x2E419a06fEB47d5f640636a55A814757Fa10eDf9"),
 			Gas:              0xb886,
 			GasPrice:         w3.I("0x755d7a88e"),
 			GasFeeCap:        w3.I("0x789ff9700"),
@@ -152,7 +152,7 @@ func TestTransactionByHash_RPCTransaction_Type2(t *testing.T) {
 			Hash:             w3.H("0xed382cb554ad10e94921d263a56c670669d6c380bbdacdbf96fed625b7132a1d"),
 			Input:            w3.B("0x095ea7b30000000000000000000000007645eec8bb51862a5aa855c40971b2877dae81afffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
 			Nonce:            0x105,
-			To:               w3.APtr("0x491d6b7d6822d5d4bc88a1264e1b47791fd8e904"),
+			To:               w3.APtr("0x491D6b7D6822d5d4BC88a1264E1b47791Fd8E904"),
 			TransactionIndex: uint64Ptr(0x62),
 			Value:            w3.Big0,
 			Type:             0x2,

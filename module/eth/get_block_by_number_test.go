@@ -172,7 +172,7 @@ func TestBlockByNumber_RPCBlock_46147(t *testing.T) {
 				{
 					BlockHash:        hPtr("0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1bdd"),
 					BlockNumber:      w3.I("0xb443"),
-					From:             w3.A("0xa1e4380a3b1f749673e270229993ee55f35663b4"),
+					From:             w3.A("0xA1E4380A3B1f749673E270229993eE55F35663b4"),
 					Gas:              0x5208,
 					GasPrice:         w3.I("0x2d79883d2000"),
 					Hash:             w3.H("0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060"),
@@ -232,7 +232,7 @@ func TestHeaderByNumber_12965000(t *testing.T) {
 		wantHeader = &types.Header{
 			ParentHash:  w3.H("0x3de6bb3849a138e6ab0b83a3a00dc7433f1e83f7fd488e4bba78f2fe2631a633"),
 			UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
-			Coinbase:    w3.A("0x7777788200b672a42421017f65ede4fc759564c8"),
+			Coinbase:    w3.A("0x7777788200B672A42421017F65EDE4Fc759564C8"),
 			Root:        w3.H("0x41cf6e8e60fd087d2b00360dc29e5bfb21959bce1f4c242fd1ad7c4da968eb87"),
 			TxHash:      w3.H("0xdfcb68d3a3c41096f4a77569db7956e0a0e750fad185948e54789ea0e51779cb"),
 			ReceiptHash: w3.H("0x8a8865cd785e2e9dfce7da83aca010b10b9af2abbd367114b236f149534c821d"),
