@@ -120,39 +120,59 @@ func parseHexBig(hexBig string) *big.Int {
 	return bigInt
 }
 
-var (
-	multiplierEth  = new(big.Float).SetInt(BigEther)
-	multiplierGwei = new(big.Float).SetInt(BigGwei)
-)
-
 func parseDecimal(strBig string) *big.Int {
-	slice := strings.SplitN(strBig, " ", 2)
-	f, _, err := new(big.Float).Parse(slice[0], 10)
-	if err != nil {
-		panic(fmt.Sprintf("invalid str big %q: %v", strBig, err))
+	numberUnit := strings.SplitN(strBig, " ", 2)
+	integerFraction := strings.SplitN(numberUnit[0], ".", 2)
+	integer, ok := new(big.Int).SetString(integerFraction[0], 10)
+	if !ok {
+		panic(fmt.Sprintf("str big %q must be number", strBig))
 	}
 
-	// len = 1
-	if len(slice) == 1 {
-		if f.IsInt() {
-			big, _ := f.Int(nil)
-			return big
+	// len == 1
+	if len(numberUnit) == 1 {
+		if len(integerFraction) > 1 {
+			panic(fmt.Sprintf("str big %q without unit must be integer", strBig))
 		}
-		panic(fmt.Sprintf("invalid str big %q: must be an integer", strBig))
+		return integer
 	}
 
-	// len = 2
-	switch unit := strings.ToLower(slice[1]); unit {
+	// len == 2
+	unit := strings.ToLower(numberUnit[1])
+	switch unit {
 	case "ether", "eth":
-		f.Mul(f, multiplierEth)
+		integer.Mul(integer, BigEther)
 	case "gwei":
-		f.Mul(f, multiplierGwei)
+		integer.Mul(integer, BigGwei)
 	default:
-		panic(fmt.Sprintf("invalid str big %q: unknown unit %q", strBig, unit))
+		panic(fmt.Sprintf("str big %q has invalid unit %q", strBig, unit))
 	}
 
-	big, _ := f.Int(nil)
-	return big
+	// integer
+	if len(integerFraction) == 1 {
+		return integer
+	}
+
+	// float
+	fraction, ok := new(big.Int).SetString(integerFraction[1], 10)
+	if !ok {
+		panic(fmt.Sprintf("str big %q must be number", strBig))
+	}
+
+	decimals := len(integerFraction[1])
+	switch unit {
+	case "ether", "eth":
+		if fraction.Cmp(BigEther) >= 0 {
+			panic(fmt.Sprintf("str big %q exceeds precision", strBig))
+		}
+		fraction.Mul(fraction, new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(18-decimals)), nil))
+	case "gwei":
+		if fraction.Cmp(BigGwei) >= 0 {
+			panic(fmt.Sprintf("str big %q exceeds precision", strBig))
+		}
+		fraction.Mul(fraction, new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(9-decimals)), nil))
+	}
+
+	return integer.Add(integer, fraction)
 }
 
 // Keccak returns the Keccak256 hash of data. It is short for crypto.Keccak256Hash(…)
