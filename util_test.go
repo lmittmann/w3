@@ -140,6 +140,7 @@ func TestI(t *testing.T) {
 		{StrInt: "1", WantBig: big.NewInt(1)},
 		{StrInt: "255", WantBig: big.NewInt(255)},
 		{StrInt: "X", WantPanic: `invalid str big "X": number has no digits`},
+		{StrInt: "888916043834286157872", WantBig: strBig("888916043834286157872")},
 
 		// unit big's
 		{StrInt: "0 ether", WantBig: big.NewInt(0)},
@@ -191,6 +192,27 @@ func TestI(t *testing.T) {
 			}
 		})
 	}
+}
+
+func strBig(s string) *big.Int {
+	big, _ := new(big.Int).SetString(s, 10)
+	return big
+}
+
+func FuzzI(f *testing.F) {
+	f.Add([]byte{0x2a})
+	f.Fuzz(func(t *testing.T, b []byte) {
+		wantBig := new(big.Int).SetBytes(b)
+		bigStr := wantBig.String()
+		if gotBig := I(bigStr); wantBig.Cmp(gotBig) != 0 {
+			t.Fatalf("want %v, got %v", wantBig, gotBig)
+		}
+
+		bigHexstr := wantBig.Text(16)
+		if gotBig := I("0x" + bigHexstr); wantBig.Cmp(gotBig) != 0 {
+			t.Fatalf("want %v, got %v", wantBig, gotBig)
+		}
+	})
 }
 
 func BenchmarkI(b *testing.B) {
