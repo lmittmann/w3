@@ -2,7 +2,8 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/lmittmann/w3.svg)](https://pkg.go.dev/github.com/lmittmann/w3)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lmittmann/w3)](https://goreportcard.com/report/github.com/lmittmann/w3)
-[![Latest Release](https://img.shields.io/github/v/release/lmittmann/w3?color=007d9c)](https://github.com/lmittmann/w3/releases)
+[![Coverage Status](https://coveralls.io/repos/github/lmittmann/w3/badge.svg?branch=main)](https://coveralls.io/github/lmittmann/w3?branch=main)
+[![Latest Release](https://img.shields.io/github/v/release/lmittmann/w3)](https://github.com/lmittmann/w3/releases)
 
 <img src="https://user-images.githubusercontent.com/3458786/153202258-24bf253e-5ab0-4efd-a0ed-43dc1bf093c9.png" align="right" alt="W3 Gopher" width="158" height="224">
 
@@ -109,6 +110,25 @@ Custom RPC methods can be called with the `w3` client by creating a
 [`core.Caller`](https://pkg.go.dev/github.com/lmittmann/w3/core#Caller)
 implementation.
 The `w3/module/eth` package can be used as implementation reference.
+
+
+## Utils
+
+Static addresses, hashes, hex byte slices or `big.Int`'s can be parsed from
+strings with the following utility functions.
+
+```go
+var (
+	addr  = w3.A("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")
+	hash  = w3.H("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
+	bytes = w3.B("0x27c5342c")
+	big   = w3.I("12.34 ether")
+)
+```
+
+Note that these functions panic if the string cannot be parsed. Use
+[go-ethereum/common](https://pkg.go.dev/github.com/ethereum/go-ethereum/common)
+to parse strings that may not be valid instead.
 
 
 ## RPC Methods
