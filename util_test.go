@@ -241,6 +241,7 @@ func TestFromWei(t *testing.T) {
 		Decimals uint8
 		Want     string
 	}{
+		{nil, 0, "<nil>"},
 		{big.NewInt(0), 0, "0"},
 		{big.NewInt(1), 0, "1"},
 		{big.NewInt(0), 18, "0"},
