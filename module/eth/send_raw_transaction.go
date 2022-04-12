@@ -55,7 +55,8 @@ func (f *sendRawTransactionFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-
-	*f.returns = *f.result
+	if f.returns != nil {
+		*f.returns = *f.result
+	}
 	return nil
 }

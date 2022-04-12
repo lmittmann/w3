@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/inline"
 	"github.com/lmittmann/w3/core"
 )
 
@@ -41,17 +42,10 @@ func (f *blockByNumberFactory) ReturnsRAW(block *RPCBlock) core.Caller {
 
 // CreateRequest implements the core.RequestCreator interface.
 func (f *blockByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
-	if f.returns != nil {
-		return rpc.BatchElem{
-			Method: "eth_getBlockByNumber",
-			Args:   []any{toBlockNumberArg(f.number), true},
-			Result: &f.result,
-		}, nil
-	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByNumber",
 		Args:   []any{toBlockNumberArg(f.number), true},
-		Result: &f.resultRAW,
+		Result: inline.If[any](f.returns != nil, &f.result, &f.resultRAW),
 	}, nil
 }
 
@@ -114,17 +108,10 @@ func (f *headerByNumberFactory) ReturnsRAW(header *RPCHeader) core.Caller {
 
 // CreateRequest implements the core.RequestCreator interface.
 func (f *headerByNumberFactory) CreateRequest() (rpc.BatchElem, error) {
-	if f.returns != nil {
-		return rpc.BatchElem{
-			Method: "eth_getBlockByNumber",
-			Args:   []any{toBlockNumberArg(f.number), false},
-			Result: &f.result,
-		}, nil
-	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByNumber",
 		Args:   []any{toBlockNumberArg(f.number), false},
-		Result: &f.resultRAW,
+		Result: inline.If[any](f.returns != nil, &f.result, &f.resultRAW),
 	}, nil
 }
 

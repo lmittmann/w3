@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/inline"
 	"github.com/lmittmann/w3/core"
 )
 
@@ -40,17 +41,10 @@ func (f *blockByHashFactory) ReturnsRAW(block *RPCBlock) core.Caller {
 
 // CreateRequest implements the core.RequestCreator interface.
 func (f *blockByHashFactory) CreateRequest() (rpc.BatchElem, error) {
-	if f.returns != nil {
-		return rpc.BatchElem{
-			Method: "eth_getBlockByHash",
-			Args:   []any{f.hash, true},
-			Result: &f.result,
-		}, nil
-	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",
 		Args:   []any{f.hash, true},
-		Result: &f.resultRAW,
+		Result: inline.If[any](f.returns != nil, &f.result, &f.resultRAW),
 	}, nil
 }
 
@@ -112,17 +106,10 @@ func (f *headerByHashFactory) ReturnsRAW(header *RPCHeader) core.Caller {
 
 // CreateRequest implements the core.RequestCreator interface.
 func (f *headerByHashFactory) CreateRequest() (rpc.BatchElem, error) {
-	if f.returns != nil {
-		return rpc.BatchElem{
-			Method: "eth_getBlockByHash",
-			Args:   []any{f.hash, false},
-			Result: &f.result,
-		}, nil
-	}
 	return rpc.BatchElem{
 		Method: "eth_getBlockByHash",
 		Args:   []any{f.hash, false},
-		Result: &f.resultRAW,
+		Result: inline.If[any](f.returns != nil, &f.result, &f.resultRAW),
 	}, nil
 }
 
