@@ -103,6 +103,45 @@ err := client.Call(
 )
 ```
 
+### Writing Contracts
+
+Sending a transaction to a contract requires three steps.
+
+1. Encode the transaction input data using [`Func.EncodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.EncodeArgs).
+
+```go
+var funcTransfer = w3.MustNewFunc("transfer(address,uint256)", "bool")
+
+input, err := funcTransfer.EncodeArgs(w3.A("0x…"), w3.I("1 ether"))
+```
+
+2. Create a signed transaction to the contract using [go-ethereum/types](https://github.com/ethereum/go-ethereum).
+
+```go
+var (
+	signer = types.LatestSignerForChainID(params.MainnetChainConfig.ChainID)
+	weth9  = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+)
+
+tx, err := types.SignNewTx(privKey, signer, &types.DynamicFeeTx{
+	To:        weth9,
+	Nonce:     0,
+	Data:      input,
+	Gas:       w3.I("75000"),
+	GasFeeCap: w3.I("100 gwei"),
+	GasTipCap: w3.I("1 gwei"),
+})
+```
+
+3. Send the signed transaction.
+
+```go
+var txHash common.Hash
+err := client.Call(
+	eth.SendTransaction(tx).Returns(&txHash),
+)
+```
+
 
 ## Custom RPC Methods
 
@@ -153,6 +192,13 @@ List of supported RPC methods.
 | `eth_getTransactionCount`   | `eth.Nonce(addr common.Address, blockNumber *big.Int).Returns(nonce *uint64)`
 | `eth_getTransactionReceipt` | `eth.TransactionReceipt(hash common.Hash).Returns(receipt *types.Receipt)`<br>`eth.TransactionReceipt(hash common.Hash).ReturnsRAW(receipt *eth.RPCReceipt)`
 | `eth_sendRawTransaction`    | `eth.SendTransaction(tx *types.Transaction).Returns(hash *common.Hash)`<br>`eth.SendRawTransaction(rawTx []byte).Returns(hash *common.Hash)`
+
+### `debug`
+
+| Method                   | Go Code
+| :----------------------- | :-------
+| `debug_traceCall`        | `debug.TraceCall(msg ethereum.CallMsg).Returns(blockNumber *big.Int)`
+| `debug_traceTransaction` | `debug.TraceTransaction(hash common.Hash).Returns(blockNumber *big.Int)`
 
 ### Third Party RPC Method Packages
 
