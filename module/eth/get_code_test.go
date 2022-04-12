@@ -22,7 +22,9 @@ func TestCode(t *testing.T) {
 		code     []byte
 		wantCode = w3.B("0xdeadbeef")
 	)
-	if err := client.Call(eth.Code(w3.A("0x000000000000000000000000000000000000c0DE")).Returns(&code)); err != nil {
+	if err := client.Call(
+		eth.Code(w3.A("0x000000000000000000000000000000000000c0DE"), nil).Returns(&code),
+	); err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
 	if !bytes.Equal(wantCode, code) {
