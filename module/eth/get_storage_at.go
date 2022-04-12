@@ -9,12 +9,13 @@ import (
 )
 
 // StorageAt requests the storage of the given common.Address addr at the
-// given common.Hash slot.
-func StorageAt(addr common.Address, slot common.Hash) *StorageAtFactory {
-	return &StorageAtFactory{addr: addr, slot: slot}
+// given common.Hash slot at the given blockNumber. If block number is nil, the
+// slot at the latest known block is requested.
+func StorageAt(addr common.Address, slot common.Hash, blockNumber *big.Int) core.CallFactoryReturns[common.Hash] {
+	return &storageAtFactory{addr: addr, slot: slot, atBlock: blockNumber}
 }
 
-type StorageAtFactory struct {
+type storageAtFactory struct {
 	// args
 	addr    common.Address
 	slot    common.Hash
@@ -25,18 +26,13 @@ type StorageAtFactory struct {
 	returns *common.Hash
 }
 
-func (f *StorageAtFactory) AtBlock(blockNumber *big.Int) *StorageAtFactory {
-	f.atBlock = blockNumber
-	return f
-}
-
-func (f *StorageAtFactory) Returns(storage *common.Hash) core.Caller {
+func (f *storageAtFactory) Returns(storage *common.Hash) core.Caller {
 	f.returns = storage
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *StorageAtFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *storageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getStorageAt",
 		Args:   []any{f.addr, f.slot, toBlockNumberArg(f.atBlock)},
@@ -45,11 +41,12 @@ func (f *StorageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *StorageAtFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *storageAtFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-
-	*f.returns = (common.Hash)(f.result)
+	if f.returns != nil {
+		*f.returns = (common.Hash)(f.result)
+	}
 	return nil
 }

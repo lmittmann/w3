@@ -22,7 +22,9 @@ func TestNonce(t *testing.T) {
 		wantNonce uint64 = 1
 	)
 
-	if err := client.Call(eth.Nonce(w3.A("0x000000000000000000000000000000000000c0Fe")).Returns(&nonce)); err != nil {
+	if err := client.Call(
+		eth.Nonce(w3.A("0x000000000000000000000000000000000000c0Fe"), nil).Returns(&nonce),
+	); err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
 	if wantNonce != nonce {

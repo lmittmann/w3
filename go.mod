@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/ethereum/go-ethereum v1.10.17
 	github.com/google/go-cmp v0.5.7
+	github.com/lmittmann/inline v1.0.0
 )
 
 require (

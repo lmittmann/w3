@@ -7,15 +7,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lmittmann/inline"
 	"github.com/lmittmann/w3/core"
 )
 
-// Call requests the output data of the given message.
-func Call(msg ethereum.CallMsg) *CallFactory {
-	return &CallFactory{msg: msg}
+// Call requests the output data of the given message at the given blockNumber.
+// If blockNumber is nil, the output of the message at the latest known block is
+// requested.
+func Call(msg ethereum.CallMsg, blockNumber *big.Int, overrides AccountOverrides) core.CallFactoryReturns[[]byte] {
+	return &callFactory{msg: msg, atBlock: blockNumber, overrides: overrides}
 }
 
-type CallFactory struct {
+type callFactory struct {
 	// args
 	msg       ethereum.CallMsg
 	atBlock   *big.Int
@@ -26,39 +29,25 @@ type CallFactory struct {
 	returns *[]byte
 }
 
-func (f *CallFactory) AtBlock(blockNumber *big.Int) *CallFactory {
-	f.atBlock = blockNumber
-	return f
-}
-
-func (f *CallFactory) Overrides(overrides AccountOverrides) *CallFactory {
-	f.overrides = overrides
-	return f
-}
-
-func (f *CallFactory) Returns(output *[]byte) core.Caller {
+func (f *callFactory) Returns(output *[]byte) core.Caller {
 	f.returns = output
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *CallFactory) CreateRequest() (rpc.BatchElem, error) {
-	if f.overrides != nil {
-		return rpc.BatchElem{
-			Method: "eth_call",
-			Args:   []any{toCallArg(f.msg), toBlockNumberArg(f.atBlock), f.overrides},
-			Result: &f.result,
-		}, nil
-	}
+func (f *callFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_call",
-		Args:   []any{toCallArg(f.msg), toBlockNumberArg(f.atBlock)},
+		Args: inline.If(f.overrides == nil,
+			[]any{toCallArg(f.msg), toBlockNumberArg(f.atBlock)},
+			[]any{toCallArg(f.msg), toBlockNumberArg(f.atBlock), f.overrides},
+		),
 		Result: &f.result,
 	}, nil
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *CallFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *callFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
@@ -120,16 +109,13 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	if f.from != nil {
 		msg.From = *f.from
 	}
-	if f.overrides != nil {
-		return rpc.BatchElem{
-			Method: "eth_call",
-			Args:   []any{toCallArg(msg), toBlockNumberArg(f.atBlock), f.overrides},
-			Result: &f.result,
-		}, nil
-	}
+
 	return rpc.BatchElem{
 		Method: "eth_call",
-		Args:   []any{toCallArg(msg), toBlockNumberArg(f.atBlock)},
+		Args: inline.If(f.overrides == nil,
+			[]any{toCallArg(msg), toBlockNumberArg(f.atBlock)},
+			[]any{toCallArg(msg), toBlockNumberArg(f.atBlock), f.overrides},
+		),
 		Result: &f.result,
 	}, nil
 }

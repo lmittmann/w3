@@ -9,12 +9,14 @@ import (
 	"github.com/lmittmann/w3/core"
 )
 
-// Balance requests the balance of the given common.Address addr.
-func Balance(addr common.Address) *BalanceFactory {
-	return &BalanceFactory{addr: addr}
+// Balance requests the balance of the given common.Address addr at the given
+// blockNumber. If blockNumber is nil, the balance at the latest known block is
+// requested.
+func Balance(addr common.Address, blockNumber *big.Int) core.CallFactoryReturns[big.Int] {
+	return &balanceFactory{addr: addr, atBlock: blockNumber}
 }
 
-type BalanceFactory struct {
+type balanceFactory struct {
 	// args
 	addr    common.Address
 	atBlock *big.Int
@@ -24,18 +26,13 @@ type BalanceFactory struct {
 	returns *big.Int
 }
 
-func (f *BalanceFactory) AtBlock(blockNumber *big.Int) *BalanceFactory {
-	f.atBlock = blockNumber
-	return f
-}
-
-func (f *BalanceFactory) Returns(balance *big.Int) core.Caller {
+func (f *balanceFactory) Returns(balance *big.Int) core.Caller {
 	f.returns = balance
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *BalanceFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *balanceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBalance",
 		Args:   []any{f.addr, toBlockNumberArg(f.atBlock)},
@@ -44,10 +41,12 @@ func (f *BalanceFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *BalanceFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *balanceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	f.returns.Set((*big.Int)(&f.result))
+	if f.returns != nil {
+		f.returns.Set(f.result.ToInt())
+	}
 	return nil
 }

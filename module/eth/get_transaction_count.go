@@ -9,12 +9,14 @@ import (
 	"github.com/lmittmann/w3/core"
 )
 
-// Nonce requests the nonce of the given common.Address addr.
-func Nonce(addr common.Address) *NonceFactory {
-	return &NonceFactory{addr: addr}
+// Nonce requests the nonce of the given common.Address addr at the given
+// blockNumber. If blockNumber is nil, the nonce at the latest known block is
+// requested.
+func Nonce(addr common.Address, blockNumber *big.Int) core.CallFactoryReturns[uint64] {
+	return &nonceFactory{addr: addr, atBlock: blockNumber}
 }
 
-type NonceFactory struct {
+type nonceFactory struct {
 	// args
 	addr    common.Address
 	atBlock *big.Int
@@ -24,18 +26,13 @@ type NonceFactory struct {
 	returns *uint64
 }
 
-func (f *NonceFactory) AtBlock(blockNumber *big.Int) *NonceFactory {
-	f.atBlock = blockNumber
-	return f
-}
-
-func (f *NonceFactory) Returns(nonce *uint64) core.Caller {
+func (f *nonceFactory) Returns(nonce *uint64) core.Caller {
 	f.returns = nonce
 	return f
 }
 
 // CreateRequest implements the core.RequestCreator interface.
-func (f *NonceFactory) CreateRequest() (rpc.BatchElem, error) {
+func (f *nonceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionCount",
 		Args:   []any{f.addr, toBlockNumberArg(f.atBlock)},
@@ -44,10 +41,12 @@ func (f *NonceFactory) CreateRequest() (rpc.BatchElem, error) {
 }
 
 // HandleResponse implements the core.ResponseHandler interface.
-func (f *NonceFactory) HandleResponse(elem rpc.BatchElem) error {
+func (f *nonceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	*f.returns = uint64(f.result)
+	if f.returns != nil {
+		*f.returns = uint64(f.result)
+	}
 	return nil
 }

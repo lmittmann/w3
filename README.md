@@ -140,17 +140,17 @@ List of supported RPC methods.
 | Method                      | Go Code
 | :-------------------------- | :-------
 | `eth_blockNumber`           | `eth.BlockNumber().Returns(blockNumber *big.Int)`
-| `eth_call`                  | `eth.Call(msg ethereum.CallMsg).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, contract common.Address, args ...any).Returns(returns ...any)`
+| `eth_call`                  | `eth.Call(msg ethereum.CallMsg, blockNumber *big.Int).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, contract common.Address, args ...any).Returns(returns ...any)`
 | `eth_chainId`               | `eth.ChainID().Returns(chainID *uint64)`
 | `eth_gasPrice`              | `eth.GasPrice().Returns(gasPrice *big.Int)`
-| `eth_getBalance`            | `eth.Balance(addr common.Address).Returns(balance *big.Int)`
+| `eth_getBalance`            | `eth.Balance(addr common.Address, blockNumber *big.Int).Returns(balance *big.Int)`
 | `eth_getBlockByHash`        | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br>`eth.BlockByHash(hash common.Hash).ReturnsRAW(block *eth.RPCBlock)` <br>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`<br>`eth.HeaderByHash(hash common.Hash).ReturnsRAW(header *eth.RPCHeader)`
 | `eth_getBlockByNumber`      | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br>`eth.BlockByNumber(number *big.Int).ReturnsRAW(block *eth.RPCBlock)`<br>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`<br>`eth.HeaderByNumber(number *big.Int).ReturnsRAW(header *eth.RAWHeader)`
-| `eth_getCode`               | `eth.Code(addr common.Address).Returns(code *[]byte)`
+| `eth_getCode`               | `eth.Code(addr common.Address, blockNumber *big.Int).Returns(code *[]byte)`
 | `eth_getLogs`               | `eth.Logs(q ethereum.FilterQuery).Returns(logs *[]types.Log)`
-| `eth_getStorageAt`          | `eth.StorageAt(addr common.Address, slot common.Hash).Returns(storage *common.Hash)`
+| `eth_getStorageAt`          | `eth.StorageAt(addr common.Address, slot common.Hash, blockNumber *big.Int).Returns(storage *common.Hash)`
 | `eth_getTransactionByHash`  | `eth.TransactionByHash(hash common.Hash).Returns(tx *types.Transaction)`<br>`eth.TransactionByHash(hash common.Hash).ReturnsRAW(tx *eth.RPCTransaction)`
-| `eth_getTransactionCount`   | `eth.Nonce(addr common.Address).Returns(nonce *uint64)`
+| `eth_getTransactionCount`   | `eth.Nonce(addr common.Address, blockNumber *big.Int).Returns(nonce *uint64)`
 | `eth_getTransactionReceipt` | `eth.TransactionReceipt(hash common.Hash).Returns(receipt *types.Receipt)`<br>`eth.TransactionReceipt(hash common.Hash).ReturnsRAW(receipt *eth.RPCReceipt)`
 | `eth_sendRawTransaction`    | `eth.SendTransaction(tx *types.Transaction).Returns(hash *common.Hash)`<br>`eth.SendRawTransaction(rawTx []byte).Returns(hash *common.Hash)`
 

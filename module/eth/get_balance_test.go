@@ -19,14 +19,16 @@ func TestBalance(t *testing.T) {
 	defer client.Close()
 
 	var (
-		balance     = new(big.Int)
+		balance     big.Int
 		wantBalance = w3.I("1 ether")
 	)
-	if err := client.Call(eth.Balance(w3.A("0x000000000000000000000000000000000000c0Fe")).Returns(balance)); err != nil {
+	if err := client.Call(
+		eth.Balance(w3.A("0x000000000000000000000000000000000000c0Fe"), nil).Returns(&balance),
+	); err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
-	if wantBalance.Cmp(balance) != 0 {
-		t.Fatalf("want %v, got %v", wantBalance, balance)
+	if wantBalance.Cmp(&balance) != 0 {
+		t.Fatalf("want %v, got %v", wantBalance, &balance)
 	}
 }
 
@@ -40,13 +42,15 @@ func TestBalance_AtBlock(t *testing.T) {
 	defer client.Close()
 
 	var (
-		balance     = new(big.Int)
+		balance     big.Int
 		wantBalance = w3.I("0.1 ether")
 	)
-	if err := client.Call(eth.Balance(w3.A("0x000000000000000000000000000000000000c0Fe")).AtBlock(big.NewInt(255)).Returns(balance)); err != nil {
+	if err := client.Call(
+		eth.Balance(w3.A("0x000000000000000000000000000000000000c0Fe"), big.NewInt(255)).Returns(&balance),
+	); err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
-	if wantBalance.Cmp(balance) != 0 {
+	if wantBalance.Cmp(&balance) != 0 {
 		t.Fatalf("want %v, got %v", wantBalance, balance)
 	}
 }

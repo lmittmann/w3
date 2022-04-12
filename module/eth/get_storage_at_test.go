@@ -23,7 +23,9 @@ func TestStorageAt(t *testing.T) {
 		wantStorage = w3.H("0x0000000000000000000000000000000000000000000000000000000000000042")
 	)
 
-	if err := client.Call(eth.StorageAt(w3.A("0x000000000000000000000000000000000000c0DE"), w3.H("0x0000000000000000000000000000000000000000000000000000000000000001")).Returns(&storage)); err != nil {
+	if err := client.Call(
+		eth.StorageAt(w3.A("0x000000000000000000000000000000000000c0DE"), w3.H("0x0000000000000000000000000000000000000000000000000000000000000001"), nil).Returns(&storage),
+	); err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
 	if wantStorage != storage {
