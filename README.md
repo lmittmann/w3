@@ -59,8 +59,8 @@ var (
 )
 
 err := client.Call(
-	eth.Nonce(addr).Returns(&nonce),
-	eth.Balance(addr).Returns(&balance),
+	eth.Nonce(addr, nil).Returns(&nonce),
+	eth.Balance(addr, nil).Returns(&balance),
 )
 ```
 
