@@ -37,8 +37,8 @@ func BenchmarkCall_BalanceNonce(b *testing.B) {
 	b.Run("Batch", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			w3Client.Call(
-				eth.Nonce(addr).Returns(&nonce),
-				eth.Balance(addr).Returns(balance),
+				eth.Nonce(addr, nil).Returns(&nonce),
+				eth.Balance(addr, nil).Returns(balance),
 			)
 		}
 	})
@@ -73,7 +73,7 @@ func BenchmarkCall_Balance100(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			requests := make([]core.Caller, len(addr100))
 			for j := 0; j < len(requests); j++ {
-				requests[j] = eth.Balance(addr100[j]).Returns(balance)
+				requests[j] = eth.Balance(addr100[j], nil).Returns(balance)
 			}
 			w3Client.Call(requests...)
 		}

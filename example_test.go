@@ -97,7 +97,7 @@ func ExampleClient_Call() {
 	// Do batch request (both RPC requests are send in the same
 	// HTTP request).
 	if err := client.Call(
-		eth.Balance(addr).Returns(&ethBalance),
+		eth.Balance(addr, nil).Returns(&ethBalance),
 		eth.CallFunc(balanceOf, weth9, addr).Returns(&weth9Balance),
 	); err != nil {
 		fmt.Printf("Request failed: %v\n", err)
@@ -121,8 +121,8 @@ func ExampleClient_Call_nonceAndBalance() {
 	)
 
 	if err := client.Call(
-		eth.Nonce(addr).Returns(&nonce),
-		eth.Balance(addr).Returns(&balance),
+		eth.Nonce(addr, nil).Returns(&nonce),
+		eth.Balance(addr, nil).Returns(&balance),
 	); err != nil {
 		fmt.Printf("Request failed: %v\n", err)
 		return
