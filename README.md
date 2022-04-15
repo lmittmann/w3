@@ -197,8 +197,8 @@ List of supported RPC methods.
 
 | Method                   | Go Code
 | :----------------------- | :-------
-| `debug_traceCall`        | `debug.TraceCall(msg ethereum.CallMsg).Returns(blockNumber *big.Int)`
-| `debug_traceTransaction` | `debug.TraceTransaction(hash common.Hash).Returns(blockNumber *big.Int)`
+| `debug_traceCall`        | TODO <!-- `debug.TraceCall(msg ethereum.CallMsg).Returns(blockNumber *big.Int)` -->
+| `debug_traceTransaction` | TODO <!--`debug.TraceTransaction(hash common.Hash).Returns(blockNumber *big.Int)` -->
 
 ### Third Party RPC Method Packages
 
