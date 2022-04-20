@@ -22,7 +22,6 @@ type storageAtFactory struct {
 	atBlock *big.Int
 
 	// returns
-	result  common.Hash
 	returns *common.Hash
 }
 
@@ -36,7 +35,7 @@ func (f *storageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getStorageAt",
 		Args:   []any{f.addr, f.slot, toBlockNumberArg(f.atBlock)},
-		Result: &f.result,
+		Result: f.returns,
 	}, nil
 }
 
@@ -44,9 +43,6 @@ func (f *storageAtFactory) CreateRequest() (rpc.BatchElem, error) {
 func (f *storageAtFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
-	}
-	if f.returns != nil {
-		*f.returns = (common.Hash)(f.result)
 	}
 	return nil
 }

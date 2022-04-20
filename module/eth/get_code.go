@@ -22,7 +22,6 @@ type codeFactory struct {
 	atBlock *big.Int
 
 	// returns
-	result  hexutil.Bytes
 	returns *[]byte
 }
 
@@ -36,7 +35,7 @@ func (f *codeFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getCode",
 		Args:   []any{f.addr, toBlockNumberArg(f.atBlock)},
-		Result: &f.result,
+		Result: (*hexutil.Bytes)(f.returns),
 	}, nil
 }
 
@@ -45,6 +44,5 @@ func (f *codeFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	*f.returns = f.result
 	return nil
 }

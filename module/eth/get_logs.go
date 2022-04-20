@@ -17,7 +17,6 @@ type logsFactory struct {
 	filterQuery ethereum.FilterQuery
 
 	// returns
-	result  []types.Log
 	returns *[]types.Log
 }
 
@@ -36,7 +35,7 @@ func (f *logsFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getLogs",
 		Args:   []any{arg},
-		Result: &f.result,
+		Result: f.returns,
 	}, nil
 }
 
@@ -45,6 +44,5 @@ func (f *logsFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	*f.returns = f.result
 	return nil
 }

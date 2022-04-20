@@ -22,7 +22,6 @@ type nonceFactory struct {
 	atBlock *big.Int
 
 	// returns
-	result  hexutil.Uint64
 	returns *uint64
 }
 
@@ -36,7 +35,7 @@ func (f *nonceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getTransactionCount",
 		Args:   []any{f.addr, toBlockNumberArg(f.atBlock)},
-		Result: &f.result,
+		Result: (*hexutil.Uint64)(f.returns),
 	}, nil
 }
 
@@ -44,9 +43,6 @@ func (f *nonceFactory) CreateRequest() (rpc.BatchElem, error) {
 func (f *nonceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
-	}
-	if f.returns != nil {
-		*f.returns = uint64(f.result)
 	}
 	return nil
 }

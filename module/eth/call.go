@@ -25,7 +25,6 @@ type callFactory struct {
 	overrides AccountOverrides
 
 	// returns
-	result  hexutil.Bytes
 	returns *[]byte
 }
 
@@ -42,7 +41,7 @@ func (f *callFactory) CreateRequest() (rpc.BatchElem, error) {
 			[]any{toCallArg(f.msg), toBlockNumberArg(f.atBlock)},
 			[]any{toCallArg(f.msg), toBlockNumberArg(f.atBlock), f.overrides},
 		),
-		Result: &f.result,
+		Result: (*hexutil.Bytes)(f.returns),
 	}, nil
 }
 
@@ -51,7 +50,6 @@ func (f *callFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	*f.returns = []byte(f.result)
 	return nil
 }
 

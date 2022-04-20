@@ -22,7 +22,6 @@ type balanceFactory struct {
 	atBlock *big.Int
 
 	// returns
-	result  hexutil.Big
 	returns *big.Int
 }
 
@@ -36,7 +35,7 @@ func (f *balanceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_getBalance",
 		Args:   []any{f.addr, toBlockNumberArg(f.atBlock)},
-		Result: &f.result,
+		Result: (*hexutil.Big)(f.returns),
 	}, nil
 }
 
@@ -44,9 +43,6 @@ func (f *balanceFactory) CreateRequest() (rpc.BatchElem, error) {
 func (f *balanceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
-	}
-	if f.returns != nil {
-		f.returns.Set(f.result.ToInt())
 	}
 	return nil
 }

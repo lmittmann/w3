@@ -24,7 +24,6 @@ type sendRawTransactionFactory struct {
 	rawTx []byte
 
 	// returns
-	result  *common.Hash
 	returns *common.Hash
 }
 
@@ -46,7 +45,7 @@ func (f *sendRawTransactionFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_sendRawTransaction",
 		Args:   []any{hexutil.Encode(f.rawTx)},
-		Result: &f.result,
+		Result: f.returns,
 	}, nil
 }
 
@@ -54,9 +53,6 @@ func (f *sendRawTransactionFactory) CreateRequest() (rpc.BatchElem, error) {
 func (f *sendRawTransactionFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
-	}
-	if f.returns != nil {
-		*f.returns = *f.result
 	}
 	return nil
 }

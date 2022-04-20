@@ -15,7 +15,6 @@ func GasPrice() core.CallFactoryReturns[big.Int] {
 
 type gasPriceFactory struct {
 	// returns
-	result  hexutil.Big
 	returns *big.Int
 }
 
@@ -28,7 +27,7 @@ func (f *gasPriceFactory) Returns(gasPrice *big.Int) core.Caller {
 func (f *gasPriceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_gasPrice",
-		Result: &f.result,
+		Result: (*hexutil.Big)(f.returns),
 	}, nil
 }
 
@@ -37,6 +36,5 @@ func (f *gasPriceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	f.returns.Set((*big.Int)(&f.result))
 	return nil
 }

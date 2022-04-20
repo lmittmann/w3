@@ -15,7 +15,6 @@ func BlockNumber() core.CallFactoryReturns[big.Int] {
 
 type blockNumberFactory struct {
 	// returns
-	result  hexutil.Big
 	returns *big.Int
 }
 
@@ -28,7 +27,7 @@ func (f *blockNumberFactory) Returns(blockNumber *big.Int) core.Caller {
 func (f *blockNumberFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_blockNumber",
-		Result: &f.result,
+		Result: (*hexutil.Big)(f.returns),
 	}, nil
 }
 
@@ -37,6 +36,5 @@ func (f *blockNumberFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	f.returns.Set((*big.Int)(&f.result))
 	return nil
 }
