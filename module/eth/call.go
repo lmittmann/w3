@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/lmittmann/inline"
 	"github.com/lmittmann/w3/core"
+	"github.com/lmittmann/w3/internal/inline"
 )
 
 // Call requests the output data of the given message at the given blockNumber.
