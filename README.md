@@ -127,7 +127,7 @@ tx, err := types.SignNewTx(privKey, signer, &types.DynamicFeeTx{
 	To:        weth9,
 	Nonce:     0,
 	Data:      input,
-	Gas:       w3.I("75000"),
+	Gas:       75000,
 	GasFeeCap: w3.I("100 gwei"),
 	GasTipCap: w3.I("1 gwei"),
 })
