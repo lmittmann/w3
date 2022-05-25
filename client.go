@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/lmittmann/w3/core"
@@ -97,7 +98,12 @@ func (c *Client) CallCtx(ctx context.Context, calls ...core.Caller) error {
 		batchElem := batchElems[0]
 		err = c.client.CallContext(ctx, batchElem.Result, batchElem.Method, batchElem.Args...)
 		if err != nil {
-			return err
+			switch reflect.TypeOf(err).String() {
+			case "*rpc.jsonError":
+				batchElems[0].Error = err
+			default:
+				return err
+			}
 		}
 	}
 
