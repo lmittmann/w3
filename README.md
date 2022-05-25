@@ -200,6 +200,12 @@ List of supported RPC methods.
 | `debug_traceCall`        | TODO <!-- `debug.TraceCall(msg ethereum.CallMsg).Returns(blockNumber *big.Int)` -->
 | `debug_traceTransaction` | TODO <!--`debug.TraceTransaction(hash common.Hash).Returns(blockNumber *big.Int)` -->
 
+### `web3`
+
+| Method               | Go Code
+| :------------------- | :-------
+| `web3_clientVersion` | `web3.ClientVersion().Returns(clientVersion *string)`
+
 ### Third Party RPC Method Packages
 
 | Package                                                                  | Description
