@@ -22,18 +22,19 @@ type Event struct {
 //
 // An error is returned if the signature parsing fails.
 func NewEvent(signature string) (*Event, error) {
-	args, err := _abi.Parse(signature)
+	name, args, err := _abi.Parse(signature)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidABI, err)
 	}
-	if args.FuncName == "" {
+	if name == "" {
 		return nil, fmt.Errorf("%w: missing event name", ErrInvalidABI)
 	}
 
+	sig := args.SignatureWithName(name)
 	return &Event{
-		Signature: args.Sig,
-		Topic0:    crypto.Keccak256Hash([]byte(args.Sig)),
-		Args:      args.Args,
+		Signature: sig,
+		Topic0:    crypto.Keccak256Hash([]byte(sig)),
+		Args:      abi.Arguments(args),
 	}, nil
 }
 
@@ -66,15 +67,5 @@ func (e *Event) DecodeArgs(log *types.Log, args ...any) error {
 	}
 	copy(data[i*32:], log.Data)
 
-	values, err := e.Args.UnpackValues(data)
-	if err != nil {
-		return err
-	}
-	for i, val := range values {
-		if err := copyVal(e.Args[i].Type.T, args[i], val); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return _abi.Arguments(e.Args).Decode(data, args...)
 }

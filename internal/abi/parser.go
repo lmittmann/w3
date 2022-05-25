@@ -7,27 +7,20 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-type ABI struct {
-	Sig      string
-	FuncName string
-	Args     abi.Arguments
-}
-
-func Parse(input string) (*ABI, error) {
+func parse(s string) (name string, args abi.Arguments, err error) {
 	itemCh := make(chan item, 1)
-	l := newLexer(input, itemCh)
+	l := newLexer(s, itemCh)
 	go l.run()
 
 	p := newParser(itemCh)
-	if err := p.run(); err != nil {
-		return nil, err
+	err = p.run()
+	if err != nil {
+		return
 	}
 
-	ps := &ABI{
-		Args: p.args,
-	}
-	ps.Sig, ps.FuncName = p.singnature()
-	return ps, nil
+	args = p.args
+	name = p.fnName
+	return
 }
 
 type parser struct {
@@ -60,18 +53,6 @@ func (p *parser) run() (err error) {
 	case itemEOF:
 	default:
 		p.err = fmt.Sprintf(`unexpected item %q`, peek)
-	}
-	return
-}
-
-func (p *parser) singnature() (sig string, funcName string) {
-	for i, item := range p.items {
-		if i == 0 && item.Typ == itemID {
-			sig += item.Val
-			funcName = item.Val
-		} else if item.Typ == itemTyp || item.Typ == itemDelim || item.Typ == itemLeftParen || item.Typ == itemRightParen {
-			sig += item.Val
-		}
 	}
 	return
 }

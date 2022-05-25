@@ -1,12 +1,14 @@
 package abi
 
 import (
+	"errors"
 	"strconv"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/lmittmann/w3/internal"
 )
 
 var (
@@ -18,12 +20,21 @@ func TestParser(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		Input    string
-		WantArgs abi.Arguments
-		WantErr  error
+		Input        string
+		WantArgs     abi.Arguments
+		WantFuncName string
+		WantErr      error
 	}{
 		{
+			Input:    "",
+			WantArgs: abi.Arguments{},
+		},
+		{
 			Input:    "uint256",
+			WantArgs: abi.Arguments{{Type: typeUint256}},
+		},
+		{
+			Input:    "uint",
 			WantArgs: abi.Arguments{{Type: typeUint256}},
 		},
 		{
@@ -61,16 +72,19 @@ func TestParser(t *testing.T) {
 			}},
 		},
 		{
-			Input:    "transfer(address,uint256)",
-			WantArgs: abi.Arguments{{Type: typeAddress}, {Type: typeUint256}},
+			Input:        "transfer(address,uint256)",
+			WantArgs:     abi.Arguments{{Type: typeAddress}, {Type: typeUint256}},
+			WantFuncName: "transfer",
 		},
 		{
-			Input:    "transfer(address recipient, uint256 amount)",
-			WantArgs: abi.Arguments{{Type: typeAddress, Name: "recipient"}, {Type: typeUint256, Name: "amount"}},
+			Input:        "transfer(address recipient, uint256 amount)",
+			WantArgs:     abi.Arguments{{Type: typeAddress, Name: "recipient"}, {Type: typeUint256, Name: "amount"}},
+			WantFuncName: "transfer",
 		},
 		{
-			Input:    "fee()",
-			WantArgs: nil,
+			Input:        "fee()",
+			WantArgs:     nil,
+			WantFuncName: "fee",
 		},
 		{
 			Input: "exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params)",
@@ -89,35 +103,37 @@ func TestParser(t *testing.T) {
 					Name: "params",
 				},
 			},
+			WantFuncName: "exactInputSingle",
+		},
+		{
+			Input:   "xxx",
+			WantErr: errors.New(`lex error: unknown type "xxx"`),
+		},
+		{
+			Input:   "f(",
+			WantErr: errors.New(`unexpected EOF after '('`),
 		},
 	}
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotArgs, gotErr := parse(test.Input)
-			if diff := cmp.Diff(test.WantErr, gotErr); diff != "" {
+			gotName, gotArgs, gotErr := parse(test.Input)
+			if diff := cmp.Diff(test.WantErr, gotErr,
+				internal.EquateErrors(),
+			); diff != "" {
 				t.Fatalf("Err (-want, +got):\n%s", diff)
 			}
+			if test.WantFuncName != gotName {
+				t.Errorf("FuncName want: %s, got: %s", test.WantFuncName, gotName)
+			}
 			if diff := cmp.Diff(test.WantArgs, gotArgs,
+				cmpopts.EquateEmpty(),
 				cmpopts.IgnoreUnexported(abi.Type{}),
 				cmpopts.IgnoreFields(abi.Type{}, "TupleType")); diff != "" {
-				t.Fatalf("Args (-want, +got):\n%s", diff)
+				t.Errorf("Args (-want, +got):\n%s", diff)
 			}
 		})
 	}
-}
-
-func parse(input string) (abi.Arguments, error) {
-	itemCh := make(chan item, 1)
-	l := newLexer(input, itemCh)
-	go l.run()
-
-	p := newParser(itemCh)
-	if err := p.run(); err != nil {
-		return nil, err
-	}
-
-	return p.args, nil
 }
 
 func tuple(types ...abi.ArgumentMarshaling) abi.Type {
@@ -126,65 +142,4 @@ func tuple(types ...abi.ArgumentMarshaling) abi.Type {
 		panic(err.Error())
 	}
 	return typ
-}
-
-func TestParserSingnature(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		Parser       *parser
-		WantSig      string
-		WantFuncName string
-	}{
-		{
-			Parser:  &parser{items: []item{{itemTyp, "uint256"}, iEOF}},
-			WantSig: "uint256",
-		},
-		{
-			Parser:  &parser{items: []item{{itemTyp, "uint256"}, {itemID, "balance"}, iEOF}},
-			WantSig: "uint256",
-		},
-		{
-			Parser:  &parser{items: []item{{itemTyp, "address"}, iDelim, {itemTyp, "uint256"}, iEOF}},
-			WantSig: "address,uint256",
-		},
-		{
-			Parser:  &parser{items: []item{{itemTyp, "address"}, {itemID, "who"}, iDelim, {itemTyp, "uint256"}, {itemID, "balance"}, iEOF}},
-			WantSig: "address,uint256",
-		},
-		{
-			Parser:  &parser{items: []item{iLeftParen, iRightParen, iEOF}},
-			WantSig: "()",
-		},
-		{
-			Parser:  &parser{items: []item{iLeftParen, {itemTyp, "uint256"}, iRightParen, iEOF}},
-			WantSig: "(uint256)",
-		},
-		{
-			Parser:  &parser{items: []item{iLeftParen, {itemTyp, "uint256"}, {itemID, "balance"}, iRightParen, iEOF}},
-			WantSig: "(uint256)",
-		},
-		{
-			Parser:       &parser{items: []item{{itemID, "balanceOf"}, iLeftParen, {itemTyp, "address"}, iRightParen, iEOF}},
-			WantSig:      "balanceOf(address)",
-			WantFuncName: "balanceOf",
-		},
-		{
-			Parser:       &parser{items: []item{{itemID, "balanceOf"}, iLeftParen, {itemTyp, "address"}, {itemID, "who"}, iRightParen, iEOF}},
-			WantSig:      "balanceOf(address)",
-			WantFuncName: "balanceOf",
-		},
-	}
-
-	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotSig, gotFuncName := test.Parser.singnature()
-			if test.WantSig != gotSig {
-				t.Fatalf("Sig: want %s, got %s", gotSig, test.WantSig)
-			}
-			if test.WantFuncName != gotFuncName {
-				t.Fatalf("FuncName: want %s, got %s", gotFuncName, test.WantFuncName)
-			}
-		})
-	}
 }

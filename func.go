@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -19,6 +18,7 @@ var (
 	ErrEvmRevert        = errors.New("w3: evm reverted")
 
 	revertSelector       = selector("Error(string)")
+	outputSuccess        = B("0x0000000000000000000000000000000000000000000000000000000000000001")
 	approveSelector      = selector("approve(address,uint256)")
 	transferSelector     = selector("transfer(address,uint256)")
 	transferFromSelector = selector("transferFrom(address,address,uint256)")
@@ -30,8 +30,10 @@ var (
 type Func struct {
 	Signature string        // Function signature
 	Selector  [4]byte       // 4-byte selector
-	Args      abi.Arguments // Input arguments
-	Returns   abi.Arguments // Output returns
+	Args      abi.Arguments // Arguments (input)
+	Returns   abi.Arguments // Returns (output)
+
+	name string // Function name
 }
 
 // NewFunc returns a new Smart Contract function ABI binding from the given
@@ -39,27 +41,29 @@ type Func struct {
 //
 // An error is returned if the signature or returns parsing fails.
 func NewFunc(signature, returns string) (*Func, error) {
-	args, err := _abi.Parse(signature)
+	name, args, err := _abi.Parse(signature)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidABI, err)
 	}
-	if args.FuncName == "" {
+	if name == "" {
 		return nil, fmt.Errorf("%w: missing function name", ErrInvalidABI)
 	}
 
-	returnArgs, err := _abi.Parse(returns)
+	returnsName, returnArgs, err := _abi.Parse(returns)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidABI, err)
 	}
-	if returnArgs.FuncName != "" {
+	if returnsName != "" {
 		return nil, fmt.Errorf("%w: returns must not have a function name", ErrInvalidABI)
 	}
 
+	sig := args.SignatureWithName(name)
 	return &Func{
-		Signature: args.Sig,
-		Selector:  selector(args.Sig),
-		Args:      args.Args,
-		Returns:   returnArgs.Args,
+		Signature: sig,
+		Selector:  selector(sig),
+		Args:      abi.Arguments(args),
+		Returns:   abi.Arguments(returnArgs),
+		name:      name,
 	}, nil
 }
 
@@ -76,43 +80,16 @@ func MustNewFunc(signature, returns string) *Func {
 // EncodeArgs ABI-encodes the given args and prepends the Func's 4-byte
 // selector.
 func (f *Func) EncodeArgs(args ...any) ([]byte, error) {
-	if len(f.Args) != len(args) {
-		return nil, fmt.Errorf("%w: expected %d arguments, got %d", ErrArgumentMismatch, len(f.Args), len(args))
-	}
-
-	input, err := f.Args.PackValues(args)
-	if err != nil {
-		return nil, err
-	}
-
-	return append(f.Selector[:], input...), nil
+	return _abi.Arguments(f.Args).EncodeWithSelector(f.Selector, args...)
 }
 
 // DecodeArgs ABI-decodes the given input to the given args.
 func (f *Func) DecodeArgs(input []byte, args ...any) error {
-	if len(f.Args) != len(args) {
-		return fmt.Errorf("%w: expected %d arguments, got %d", ErrArgumentMismatch, len(f.Args), len(args))
-	}
-
-	values, err := f.Args.UnpackValues(input[4:])
-	if err != nil {
-		return err
-	}
-	for i, val := range values {
-		if err := copyVal(f.Args[i].Type.T, args[i], val); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return _abi.Arguments(f.Args).Decode(input[4:], args...)
 }
 
 // DecodeReturns ABI-decodes the given output to the given returns.
 func (f *Func) DecodeReturns(output []byte, returns ...any) error {
-	if len(f.Returns) != len(returns) {
-		return fmt.Errorf("%w: expected %d returns, got %d", ErrReturnsMismatch, len(f.Returns), len(returns))
-	}
-
 	// check the output for a revert reason
 	if bytes.HasPrefix(output, revertSelector[:]) {
 		if reason, err := abi.UnpackRevert(output); err != nil {
@@ -127,78 +104,10 @@ func (f *Func) DecodeReturns(output []byte, returns ...any) error {
 		(f.Selector == approveSelector ||
 			f.Selector == transferSelector ||
 			f.Selector == transferFromSelector) {
-
-		if err := copyVal(abi.BoolTy, returns[0], true); err != nil {
-			return err
-		}
-		return nil
+		output = outputSuccess
 	}
 
-	values, err := f.Returns.UnpackValues(output)
-	if err != nil {
-		return err
-	}
-	for i, val := range values {
-		if err := copyVal(f.Returns[i].Type.T, returns[i], val); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func copyVal(t byte, dst, src any) (err error) {
-	// skip copying if dst is nil
-	if dst == nil {
-		return
-	}
-
-	rDst := reflect.ValueOf(dst)
-	rSrc := reflect.ValueOf(src)
-
-	switch t {
-	case abi.TupleTy:
-		err = copyTuple(rDst, rSrc)
-	default:
-		err = copyNonTuple(rDst, rSrc)
-	}
-	return
-}
-
-func copyNonTuple(rDst, rSrc reflect.Value) error {
-	if rDst.Kind() != reflect.Ptr {
-		return fmt.Errorf("%w: can not copy to non-pointer value", ErrInvalidType)
-	}
-	if rDst.IsNil() {
-		return fmt.Errorf("%w: requires non-nil pointer", ErrInvalidType)
-	}
-
-	if !(rDst.Type().AssignableTo(rSrc.Type()) ||
-		rDst.Elem().Type().AssignableTo(rSrc.Type())) {
-		return fmt.Errorf("%w: can not copy %v to %v", ErrInvalidType, rSrc.Type(), rDst.Type())
-	}
-
-	if rSrc.Kind() == reflect.Ptr {
-		rDst.Elem().Set(rSrc.Elem())
-	} else {
-		rDst.Elem().Set(rSrc)
-	}
-	return nil
-}
-
-func copyTuple(rDst, rSrc reflect.Value) error {
-	if !(rDst.Kind() == reflect.Ptr && rDst.Elem().Kind() == reflect.Struct) {
-		return fmt.Errorf("%w: can not copy to non-pointer value", ErrInvalidType)
-	}
-	if rSrc.Kind() != reflect.Struct {
-		return fmt.Errorf("%w: tuple is no struct", ErrInvalidType)
-	}
-
-	for i := 0; i < rSrc.NumField(); i++ {
-		fieldName := rSrc.Type().Field(i).Name
-		rDst.Elem().FieldByName(fieldName).Set(rSrc.Field(i))
-	}
-	return nil
+	return _abi.Arguments(f.Returns).Decode(output, returns...)
 }
 
 // selector returns the 4-byte selector of the given signature.

@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -46,7 +45,9 @@ func TestNewFunc(t *testing.T) {
 				t.Fatalf("Failed to create new FUnc: %v", err)
 			}
 
-			if diff := cmp.Diff(test.WantFunc, gotFunc, cmpopts.IgnoreFields(Func{}, "Args", "Returns")); diff != "" {
+			if diff := cmp.Diff(test.WantFunc, gotFunc,
+				cmpopts.IgnoreFields(Func{}, "Args", "Returns", "name"),
+			); diff != "" {
 				t.Fatalf("(-want, +got)\n%s", diff)
 			}
 		})
@@ -121,7 +122,7 @@ func TestFuncEncodeArgs(t *testing.T) {
 			}
 
 			if !bytes.Equal(test.Want, encodedInput) {
-				t.Fatalf("(-want +got):\n-%x\n+%x", test.Want, encodedInput)
+				t.Fatalf("(-want, +got)\n-%x\n+%x", test.Want, encodedInput)
 			}
 		})
 	}
@@ -266,54 +267,6 @@ func TestFuncDecodeReturns(t *testing.T) {
 				t.Fatalf("Failed to decode returns: %v", err)
 			}
 			if diff := cmp.Diff(test.WantReturns, test.Returns, cmp.AllowUnexported(big.Int{})); diff != "" {
-				t.Fatalf("(-want, +got)\n%s", diff)
-			}
-		})
-	}
-}
-
-func TestCopyValue(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		T       byte
-		Dst     any
-		Src     any
-		WantErr error
-	}{
-		{
-			T:   abi.UintTy,
-			Dst: new(big.Int),
-			Src: big.NewInt(42),
-		},
-		{
-			T:   abi.UintTy,
-			Dst: new(big.Int),
-			Src: big.NewInt(42),
-		},
-		{
-			T:       abi.UintTy,
-			Dst:     new(big.Int),
-			Src:     []byte{1, 2, 3},
-			WantErr: ErrInvalidType,
-		},
-		{
-			T:   abi.BytesTy,
-			Dst: &[]byte{},
-			Src: &[]byte{1, 2, 3},
-		},
-	}
-
-	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			err := copyVal(test.T, test.Dst, test.Src)
-			if diff := cmp.Diff(test.WantErr, err, cmpopts.EquateErrors()); diff != "" {
-				t.Fatalf("(-want, +got)\n%s", diff)
-			} else if err != nil {
-				return
-			}
-
-			if diff := cmp.Diff(test.Dst, test.Src, cmp.AllowUnexported(big.Int{})); diff != "" {
 				t.Fatalf("(-want, +got)\n%s", diff)
 			}
 		})
