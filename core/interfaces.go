@@ -33,7 +33,15 @@ type Caller interface {
 	ResponseHandler
 }
 
-// CallFactoryReturns is the interface that wraps the basic Returns method.
+// CallerFactory is the interface that wraps the basic Returns method.
+type CallerFactory[T any] interface {
+
+	// Returns given argument points to the variable in which to store the
+	// calls result.
+	Returns(*T) Caller
+}
+
+// Deprecated: CallFactoryReturns is the interface that wraps the basic Returns method.
 type CallFactoryReturns[T any] interface {
 
 	// Returns given argument points to the variable in which to store the
@@ -41,7 +49,7 @@ type CallFactoryReturns[T any] interface {
 	Returns(*T) Caller
 }
 
-// CallFactoryReturnsRAW is the interface that wraps the basic ReturnsRAW method.
+// Deprecated: CallFactoryReturnsRAW is the interface that wraps the basic ReturnsRAW method.
 type CallFactoryReturnsRAW[T any] interface {
 
 	// ReturnsRAW given argument points to the variable in which to store the
