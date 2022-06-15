@@ -57,7 +57,6 @@ var (
 	nonce   uint64
 	balance big.Int
 )
-
 err := client.Call(
 	eth.Nonce(addr, nil).Returns(&nonce),
 	eth.Balance(addr, nil).Returns(&balance),
@@ -118,13 +117,9 @@ input, err := funcTransfer.EncodeArgs(w3.A("0x…"), w3.I("1 ether"))
 2. Create a signed transaction to the contract using [go-ethereum/types](https://github.com/ethereum/go-ethereum).
 
 ```go
-var (
-	signer = types.LatestSignerForChainID(params.MainnetChainConfig.ChainID)
-	weth9  = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
-)
-
-tx, err := types.SignNewTx(privKey, signer, &types.DynamicFeeTx{
-	To:        weth9,
+signer := types.LatestSigner(params.MainnetChainConfig)
+tx := types.MustSignNewTx(privKey, signer, &types.DynamicFeeTx{
+	To:        w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 	Nonce:     0,
 	Data:      input,
 	Gas:       75000,
