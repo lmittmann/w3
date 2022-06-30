@@ -3,7 +3,7 @@ module github.com/lmittmann/w3
 go 1.18
 
 require (
-	github.com/ethereum/go-ethereum v1.10.19
+	github.com/ethereum/go-ethereum v1.10.20
 	github.com/google/go-cmp v0.5.8
 )
 
@@ -19,6 +19,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
 	github.com/tklauser/numcpus v0.2.2 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654 // indirect
+	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
