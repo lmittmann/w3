@@ -9,7 +9,7 @@ import (
 )
 
 // GasPrice requests the current gas price in wei.
-func GasPrice() core.CallFactoryReturns[big.Int] {
+func GasPrice() core.CallerFactory[big.Int] {
 	return &gasPriceFactory{}
 }
 

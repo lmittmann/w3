@@ -12,7 +12,7 @@ import (
 // Balance requests the balance of the given common.Address addr at the given
 // blockNumber. If blockNumber is nil, the balance at the latest known block is
 // requested.
-func Balance(addr common.Address, blockNumber *big.Int) core.CallFactoryReturns[big.Int] {
+func Balance(addr common.Address, blockNumber *big.Int) core.CallerFactory[big.Int] {
 	return &balanceFactory{addr: addr, atBlock: blockNumber}
 }
 

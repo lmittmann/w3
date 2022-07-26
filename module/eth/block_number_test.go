@@ -19,15 +19,15 @@ func TestBlockNumber(t *testing.T) {
 	defer client.Close()
 
 	var (
-		blockNumber     = new(big.Int)
+		blockNumber     big.Int
 		wantBlockNumber = w3.I("0xc0fe")
 	)
 	if err := client.Call(
-		eth.BlockNumber().Returns(blockNumber),
+		eth.BlockNumber().Returns(&blockNumber),
 	); err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
-	if wantBlockNumber.Cmp(blockNumber) != 0 {
-		t.Fatalf("want %d, got %d", wantBlockNumber, blockNumber)
+	if wantBlockNumber.Cmp(&blockNumber) != 0 {
+		t.Fatalf("want %v, got %v", wantBlockNumber, blockNumber)
 	}
 }
