@@ -6,26 +6,20 @@ import (
 
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
-	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestGasPrice(t *testing.T) {
 	t.Parallel()
 
-	srv := rpctest.NewFileServer(t, "testdata/gas_price.golden")
-	defer srv.Close()
-
-	client := w3.MustDial(srv.URL())
-	defer client.Close()
-
-	var (
-		gasPrice     = new(big.Int)
-		wantGasPrice = w3.I("0xc0fe")
-	)
-	if err := client.Call(eth.GasPrice().Returns(gasPrice)); err != nil {
-		t.Fatalf("Request failed: %v", err)
+	tests := []testCase[big.Int]{
+		{
+			Golden:  "gas_price",
+			Call:    eth.GasPrice(),
+			WantRet: *w3.I("0xc0fe"),
+		},
 	}
-	if wantGasPrice.Cmp(gasPrice) != 0 {
-		t.Fatalf("want %v, got %v", wantGasPrice, gasPrice)
+
+	for _, test := range tests {
+		t.Run(test.Golden, runTestCase(t, test))
 	}
 }

@@ -3,28 +3,21 @@ package eth_test
 import (
 	"testing"
 
-	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
-	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestChainID(t *testing.T) {
 	t.Parallel()
 
-	srv := rpctest.NewFileServer(t, "testdata/chain_id.golden")
-	defer srv.Close()
-
-	client := w3.MustDial(srv.URL())
-	defer client.Close()
-
-	var (
-		chainID     uint64
-		wantChainID uint64 = 1
-	)
-	if err := client.Call(eth.ChainID().Returns(&chainID)); err != nil {
-		t.Fatalf("Request failed: %v", err)
+	tests := []testCase[uint64]{
+		{
+			Golden:  "chain_id",
+			Call:    eth.ChainID(),
+			WantRet: 1,
+		},
 	}
-	if wantChainID != chainID {
-		t.Fatalf("want %d, got %d", wantChainID, chainID)
+
+	for _, test := range tests {
+		t.Run(test.Golden, runTestCase(t, test))
 	}
 }

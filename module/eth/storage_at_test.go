@@ -6,29 +6,20 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
-	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestStorageAt(t *testing.T) {
 	t.Parallel()
 
-	srv := rpctest.NewFileServer(t, "testdata/get_storage_at.golden")
-	defer srv.Close()
-
-	client := w3.MustDial(srv.URL())
-	defer client.Close()
-
-	var (
-		storage     common.Hash
-		wantStorage = w3.H("0x0000000000000000000000000000000000000000000000000000000000000042")
-	)
-
-	if err := client.Call(
-		eth.StorageAt(w3.A("0x000000000000000000000000000000000000c0DE"), w3.H("0x0000000000000000000000000000000000000000000000000000000000000001"), nil).Returns(&storage),
-	); err != nil {
-		t.Fatalf("Request failed: %v", err)
+	tests := []testCase[common.Hash]{
+		{
+			Golden:  "get_storage_at",
+			Call:    eth.StorageAt(w3.A("0x000000000000000000000000000000000000c0DE"), w3.H("0x0000000000000000000000000000000000000000000000000000000000000001"), nil),
+			WantRet: w3.H("0x0000000000000000000000000000000000000000000000000000000000000042"),
+		},
 	}
-	if wantStorage != storage {
-		t.Fatalf("want %v, got %v", wantStorage, storage)
+
+	for _, test := range tests {
+		t.Run(test.Golden, runTestCase(t, test))
 	}
 }
