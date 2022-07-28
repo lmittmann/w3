@@ -39,6 +39,7 @@ var (
 )
 
 func main() {
+	// parse flags
 	flag.TextVar(&addrAcc, "acc", w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"), "Account address")
 	flag.TextVar(&addrToken, "token", w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"), "Token address")
 	flag.Usage = func() {
@@ -47,9 +48,11 @@ func main() {
 	}
 	flag.Parse()
 
+	// connect to RPC endpoint
 	client := w3.MustDial("https://rpc.ankr.com/eth")
 	defer client.Close()
 
+	// fetch token details and account balance
 	var (
 		name, symbol string
 		decimals     uint8

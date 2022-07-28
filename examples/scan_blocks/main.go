@@ -34,6 +34,7 @@ var (
 )
 
 func main() {
+	// parse flags
 	flag.Uint64Var(&startBlock, "start", 10_000_000, "Start block")
 	flag.Usage = func() {
 		fmt.Println("scan_blocks interates over blocks with their transactions from a given start block.")
@@ -41,9 +42,11 @@ func main() {
 	}
 	flag.Parse()
 
+	// connect to RPC endpoint
 	client := w3.MustDial("https://rpc.ankr.com/eth")
 	defer client.Close()
 
+	// fetch blocks in bulk
 	calls := make([]core.Caller, bulkSize)
 	blocks := make([]types.Block, bulkSize)
 
