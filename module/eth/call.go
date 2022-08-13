@@ -66,6 +66,7 @@ type CallFuncFactory struct {
 	args      []any
 	from      *common.Address
 	atBlock   *big.Int
+	value     *big.Int
 	overrides AccountOverrides
 
 	// returns
@@ -75,6 +76,11 @@ type CallFuncFactory struct {
 
 func (f *CallFuncFactory) AtBlock(blockNumber *big.Int) *CallFuncFactory {
 	f.atBlock = blockNumber
+	return f
+}
+
+func (f *CallFuncFactory) Value(value *big.Int) *CallFuncFactory {
+	f.value = value
 	return f
 }
 
