@@ -107,8 +107,9 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	}
 
 	msg := ethereum.CallMsg{
-		To:   &f.contract,
-		Data: input,
+		To:    &f.contract,
+		Value: f.value,
+		Data:  input,
 	}
 	if f.from != nil {
 		msg.From = *f.from
