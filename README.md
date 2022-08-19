@@ -38,7 +38,7 @@ or [`MustDial`](https://pkg.go.dev/github.com/lmittmann/w3#MustDial).
 
 ```go
 // Connect (or panic on error)
-client := w3.MustDial("https://cloudflare-eth.com")
+client := w3.MustDial("https://rpc.ankr.com/eth")
 defer client.Close()
 ```
 

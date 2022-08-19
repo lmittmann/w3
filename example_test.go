@@ -11,7 +11,7 @@ import (
 )
 
 func ExampleDial() {
-	client, err := w3.Dial("https://cloudflare-eth.com")
+	client, err := w3.Dial("https://rpc.ankr.com/eth")
 	if err != nil {
 		fmt.Printf("Failed to connect to RPC endpoint: %v\n", err)
 		return
@@ -20,7 +20,7 @@ func ExampleDial() {
 }
 
 func ExampleMustDial() {
-	client := w3.MustDial("https://cloudflare-eth.com")
+	client := w3.MustDial("https://rpc.ankr.com/eth")
 	defer client.Close()
 }
 
@@ -78,7 +78,7 @@ func ExampleNewFunc() {
 func ExampleClient_Call() {
 	// Connect to RPC endpoint (or panic on error) and
 	// close the connection when you are done.
-	client := w3.MustDial("https://cloudflare-eth.com")
+	client := w3.MustDial("https://rpc.ankr.com/eth")
 	defer client.Close()
 
 	var (
@@ -110,7 +110,7 @@ func ExampleClient_Call() {
 }
 
 func ExampleClient_Call_nonceAndBalance() {
-	client := w3.MustDial("https://cloudflare-eth.com")
+	client := w3.MustDial("https://rpc.ankr.com/eth")
 	defer client.Close()
 
 	var (
