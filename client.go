@@ -47,7 +47,7 @@ func Dial(rawurl string) (*Client, error) {
 	}, nil
 }
 
-// MustDial is like Dial but panics if the connection establishment failes.
+// MustDial is like [Dial] but panics if the connection establishment failes.
 func MustDial(rawurl string) *Client {
 	client, err := Dial(rawurl)
 	if err != nil {
@@ -58,7 +58,7 @@ func MustDial(rawurl string) *Client {
 
 // Close closes the RPC connection and cancels any in-flight requests.
 //
-// Close implements the io.Closer interface.
+// Close implements the [io.Closer] interface.
 func (c *Client) Close() error {
 	c.client.Close()
 	return nil
@@ -117,7 +117,7 @@ func (c *Client) CallCtx(ctx context.Context, calls ...core.Caller) error {
 	return nil
 }
 
-// Call is like CallCtx with ctx equal to context.Background().
+// Call is like [CallCtx] with ctx equal to context.Background().
 func (c *Client) Call(calls ...core.Caller) error {
 	return c.CallCtx(context.Background(), calls...)
 }

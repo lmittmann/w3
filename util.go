@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// Common big.Int's.
+// Common [big.Int]'s.
 var (
 	Big0     = big.NewInt(0)
 	Big1     = big.NewInt(1)
@@ -22,8 +22,8 @@ var (
 // A returns an address from a hexstring or panics if the hexstring does not
 // represent a valid checksum encoded address.
 //
-// Use go-ethereum's common.HexToAddress("0x…") to get the address from a
-// hexstring without panicking.
+// Use [common.HexToAddress] to get the address from a hexstring without
+// panicking.
 func A(hexAddress string) common.Address {
 	if !has0xPrefix(hexAddress) {
 		panic(fmt.Sprintf("hex address %q must have 0x prefix", hexAddress))
@@ -55,8 +55,8 @@ func APtr(hexAddress string) *common.Address {
 // B returns a byte slice from a hexstring or panics if the hexstring does not
 // represent a vaild byte slice.
 //
-// Use go-ethereum's common.FromHex("0x…") to get the byte slice from a
-//hexstring without panicking.
+// Use [common.FromHex] to get the byte slice from a hexstring without
+// panicking.
 func B(hexBytes string) []byte {
 	if !has0xPrefix(hexBytes) {
 		panic(fmt.Sprintf("hex bytes %q must have 0x prefix", hexBytes))
@@ -75,8 +75,7 @@ func B(hexBytes string) []byte {
 // H returns a hash from a hexstring or panics if the hexstring does not
 // represent a valid hash.
 //
-// Use go-ethereum's common.HexToHash("0x…") to get the hash from a hexstring
-// without panicking.
+// Use [common.HexToHash] to get the hash from a hexstring without panicking.
 func H(hexHash string) common.Hash {
 	if !has0xPrefix(hexHash) {
 		panic(fmt.Sprintf("hex hash %q must have 0x prefix", hexHash))
@@ -94,17 +93,19 @@ func H(hexHash string) common.Hash {
 	return hash
 }
 
-// I returns a big.Int from a hexstring or decimal number string (with optional
-// unit) or panics if the parsing fails.
+// I returns a [big.Int] from a hexstring or decimal number string (with
+// optional unit) or panics if the parsing fails.
 //
 // I supports the units "ether" or "eth" and "gwei" for decimal number strings.
 // E.g.:
-//     w3.I("1 ether")   -> 1000000000000000000
-//     w3.I("1.2 ether") -> 1200000000000000000
+//
+//	w3.I("1 ether")   -> 1000000000000000000
+//	w3.I("1.2 ether") -> 1200000000000000000
 //
 // Fractional digits that exceed the units maximum number of fractional digits
 // are ignored. E.g.:
-//     w3.I("0.000000123456 gwei") -> 123
+//
+//	w3.I("0.000000123456 gwei") -> 123
 func I(strInt string) *big.Int {
 	if has0xPrefix(strInt) {
 		return parseHexBig(strInt)

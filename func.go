@@ -26,7 +26,7 @@ var (
 
 // Func represents a Smart Contract function ABI binding.
 //
-// Func implements the core.Func interface.
+// Func implements the [w3types.Func] interface.
 type Func struct {
 	Signature string        // Function signature
 	Selector  [4]byte       // 4-byte selector
@@ -67,7 +67,7 @@ func NewFunc(signature, returns string) (*Func, error) {
 	}, nil
 }
 
-// MustNewFunc is like NewFunc but panics if the signature or returns parsing
+// MustNewFunc is like [NewFunc] but panics if the signature or returns parsing
 // fails.
 func MustNewFunc(signature, returns string) *Func {
 	fn, err := NewFunc(signature, returns)

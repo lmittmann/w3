@@ -38,7 +38,7 @@ func NewEvent(signature string) (*Event, error) {
 	}, nil
 }
 
-// MustNewEvent is like NewEvent but panics if the signature parsing fails.
+// MustNewEvent is like [NewEvent] but panics if the signature parsing fails.
 func MustNewEvent(signature string) *Event {
 	event, err := NewEvent(signature)
 	if err != nil {
