@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/lmittmann/w3/core"
+	"github.com/lmittmann/w3/w3types"
 )
 
 func TestNewFunc(t *testing.T) {
@@ -58,7 +58,7 @@ func TestFuncEncodeArgs(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		Func core.Func
+		Func w3types.Func
 		Args []any
 		Want []byte
 	}{
@@ -132,7 +132,7 @@ func TestFuncDecodeArgs(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		Func     core.Func
+		Func     w3types.Func
 		Input    []byte
 		Args     []any
 		WantArgs []any
@@ -218,7 +218,7 @@ func TestFuncDecodeReturns(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		Func        core.Func
+		Func        w3types.Func
 		Output      []byte
 		Returns     []any
 		WantReturns []any

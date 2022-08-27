@@ -7,15 +7,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/lmittmann/w3/core"
 	"github.com/lmittmann/w3/internal/inline"
 	"github.com/lmittmann/w3/internal/module"
+	"github.com/lmittmann/w3/w3types"
 )
 
 // Call requests the output data of the given message at the given blockNumber.
 // If blockNumber is nil, the output of the message at the latest known block is
 // requested.
-func Call(msg ethereum.CallMsg, blockNumber *big.Int, overrides AccountOverrides) core.CallFactoryReturns[[]byte] {
+func Call(msg ethereum.CallMsg, blockNumber *big.Int, overrides AccountOverrides) w3types.CallerFactory[[]byte] {
 	return &callFactory{msg: msg, atBlock: blockNumber, overrides: overrides}
 }
 
@@ -29,12 +29,12 @@ type callFactory struct {
 	returns *[]byte
 }
 
-func (f *callFactory) Returns(output *[]byte) core.Caller {
+func (f *callFactory) Returns(output *[]byte) w3types.Caller {
 	f.returns = output
 	return f
 }
 
-// CreateRequest implements the core.RequestCreator interface.
+// CreateRequest implements the w3types.RequestCreator interface.
 func (f *callFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_call",
@@ -46,7 +46,7 @@ func (f *callFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
-// HandleResponse implements the core.ResponseHandler interface.
+// HandleResponse implements the w3types.ResponseHandler interface.
 func (f *callFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
@@ -56,13 +56,13 @@ func (f *callFactory) HandleResponse(elem rpc.BatchElem) error {
 
 // CallFunc requests the returns of Func fn at common.Address contract with the
 // given args.
-func CallFunc(fn core.Func, contract common.Address, args ...any) *CallFuncFactory {
+func CallFunc(fn w3types.Func, contract common.Address, args ...any) *CallFuncFactory {
 	return &CallFuncFactory{fn: fn, contract: contract, args: args}
 }
 
 type CallFuncFactory struct {
 	// args
-	fn        core.Func
+	fn        w3types.Func
 	contract  common.Address
 	args      []any
 	from      *common.Address
@@ -85,7 +85,7 @@ func (f *CallFuncFactory) Value(value *big.Int) *CallFuncFactory {
 	return f
 }
 
-func (f *CallFuncFactory) Returns(returns ...any) core.Caller {
+func (f *CallFuncFactory) Returns(returns ...any) w3types.Caller {
 	f.returns = returns
 	return f
 }
@@ -100,7 +100,7 @@ func (f *CallFuncFactory) Overrides(overrides AccountOverrides) *CallFuncFactory
 	return f
 }
 
-// CreateRequest implements the core.RequestCreator interface.
+// CreateRequest implements the w3types.RequestCreator interface.
 func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	input, err := f.fn.EncodeArgs(f.args...)
 	if err != nil {
@@ -126,7 +126,7 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
-// HandleResponse implements the core.ResponseHandler interface.
+// HandleResponse implements the w3types.ResponseHandler interface.
 func (f *CallFuncFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err

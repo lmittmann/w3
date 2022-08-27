@@ -8,14 +8,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
-	"github.com/lmittmann/w3/core"
 	"github.com/lmittmann/w3/internal"
 	"github.com/lmittmann/w3/rpctest"
+	"github.com/lmittmann/w3/w3types"
 )
 
 type testCase[T any] struct {
 	Golden  string
-	Call    core.CallerFactory[T]
+	Call    w3types.CallerFactory[T]
 	GotRet  T
 	WantRet T
 	WantErr error

@@ -6,12 +6,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/lmittmann/w3/core"
 	"github.com/lmittmann/w3/internal/module"
+	"github.com/lmittmann/w3/w3types"
 )
 
 // BlockByHash requests the block with the given hash with full transactions.
-func BlockByHash(hash common.Hash) core.CallerFactory[types.Block] {
+func BlockByHash(hash common.Hash) w3types.CallerFactory[types.Block] {
 	return module.NewFactory(
 		"eth_getBlockByHash",
 		[]any{hash, true},
@@ -21,7 +21,7 @@ func BlockByHash(hash common.Hash) core.CallerFactory[types.Block] {
 
 // BlockByNumber requests the block with the given number with full
 // transactions. If number is nil, the latest block is requested.
-func BlockByNumber(number *big.Int) core.CallerFactory[types.Block] {
+func BlockByNumber(number *big.Int) w3types.CallerFactory[types.Block] {
 	return module.NewFactory(
 		"eth_getBlockByNumber",
 		[]any{module.BlockNumberArg(number), true},
@@ -30,7 +30,7 @@ func BlockByNumber(number *big.Int) core.CallerFactory[types.Block] {
 }
 
 // HeaderByHash requests the header with the given hash.
-func HeaderByHash(hash common.Hash) core.CallerFactory[types.Header] {
+func HeaderByHash(hash common.Hash) w3types.CallerFactory[types.Header] {
 	return module.NewFactory[types.Header](
 		"eth_getBlockByHash",
 		[]any{hash, false},
@@ -39,7 +39,7 @@ func HeaderByHash(hash common.Hash) core.CallerFactory[types.Header] {
 
 // HeaderByNumber requests the header with the given number. If number is nil,
 // the latest header is requested.
-func HeaderByNumber(number *big.Int) core.CallerFactory[types.Header] {
+func HeaderByNumber(number *big.Int) w3types.CallerFactory[types.Header] {
 	return module.NewFactory[types.Header](
 		"eth_getBlockByNumber",
 		[]any{module.BlockNumberArg(number), false},

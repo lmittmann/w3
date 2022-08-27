@@ -6,12 +6,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/lmittmann/w3/core"
 	"github.com/lmittmann/w3/internal/module"
+	"github.com/lmittmann/w3/w3types"
 )
 
 // Tx requests the transaction with the given hash.
-func Tx(hash common.Hash) core.CallerFactory[types.Transaction] {
+func Tx(hash common.Hash) w3types.CallerFactory[types.Transaction] {
 	return module.NewFactory[types.Transaction](
 		"eth_getTransactionByHash",
 		[]any{hash},
@@ -19,7 +19,7 @@ func Tx(hash common.Hash) core.CallerFactory[types.Transaction] {
 }
 
 // TxByBlockHashAndIndex requests the transaction in the given block with the given index.
-func TxByBlockHashAndIndex(blockHash common.Hash, index uint64) core.CallerFactory[types.Transaction] {
+func TxByBlockHashAndIndex(blockHash common.Hash, index uint64) w3types.CallerFactory[types.Transaction] {
 	return module.NewFactory[types.Transaction](
 		"eth_getTransactionByBlockHashAndIndex",
 		[]any{blockHash, hexutil.Uint64(index)},
@@ -27,7 +27,7 @@ func TxByBlockHashAndIndex(blockHash common.Hash, index uint64) core.CallerFacto
 }
 
 // TxByBlockNumberAndIndex requests the transaction in the given block with the given index.
-func TxByBlockNumberAndIndex(blockNumber *big.Int, index uint64) core.CallerFactory[types.Transaction] {
+func TxByBlockNumberAndIndex(blockNumber *big.Int, index uint64) w3types.CallerFactory[types.Transaction] {
 	return module.NewFactory[types.Transaction](
 		"eth_getTransactionByBlockNumberAndIndex",
 		[]any{module.BlockNumberArg(blockNumber), hexutil.Uint64(index)},
@@ -35,7 +35,7 @@ func TxByBlockNumberAndIndex(blockNumber *big.Int, index uint64) core.CallerFact
 }
 
 // SendRawTx sends a raw transaction to the network and returns its hash.
-func SendRawTx(rawTx []byte) core.CallerFactory[common.Hash] {
+func SendRawTx(rawTx []byte) w3types.CallerFactory[common.Hash] {
 	return module.NewFactory[common.Hash](
 		"eth_sendRawTransaction",
 		[]any{hexutil.Encode(rawTx)},
@@ -43,7 +43,7 @@ func SendRawTx(rawTx []byte) core.CallerFactory[common.Hash] {
 }
 
 // SendTx sends a signed transaction to the network and returns its hash.
-func SendTx(tx *types.Transaction) core.CallerFactory[common.Hash] {
+func SendTx(tx *types.Transaction) w3types.CallerFactory[common.Hash] {
 	return module.NewFactory(
 		"eth_sendRawTransaction",
 		[]any{tx},
@@ -60,7 +60,7 @@ func SendTx(tx *types.Transaction) core.CallerFactory[common.Hash] {
 }
 
 // TxReceipt requests the receipt of the transaction with the given hash.
-func TxReceipt(txHash common.Hash) core.CallerFactory[types.Receipt] {
+func TxReceipt(txHash common.Hash) w3types.CallerFactory[types.Receipt] {
 	return module.NewFactory[types.Receipt](
 		"eth_getTransactionReceipt",
 		[]any{txHash},
@@ -70,7 +70,7 @@ func TxReceipt(txHash common.Hash) core.CallerFactory[types.Receipt] {
 // Nonce requests the nonce of the given common.Address addr at the given
 // blockNumber. If blockNumber is nil, the nonce at the latest known block is
 // requested.
-func Nonce(addr common.Address, blockNumber *big.Int) core.CallerFactory[uint64] {
+func Nonce(addr common.Address, blockNumber *big.Int) w3types.CallerFactory[uint64] {
 	return module.NewFactory(
 		"eth_getTransactionCount",
 		[]any{addr, module.BlockNumberArg(blockNumber)},

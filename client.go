@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/lmittmann/w3/core"
+	"github.com/lmittmann/w3/w3types"
 )
 
 var (
@@ -69,7 +69,7 @@ func (c *Client) Close() error {
 //
 // An error is returned if RPC request creation, networking, or RPC response
 // handeling fails.
-func (c *Client) CallCtx(ctx context.Context, calls ...core.Caller) error {
+func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 	// no requests = nothing to do
 	if len(calls) <= 0 {
 		return nil
@@ -118,6 +118,6 @@ func (c *Client) CallCtx(ctx context.Context, calls ...core.Caller) error {
 }
 
 // Call is like [CallCtx] with ctx equal to context.Background().
-func (c *Client) Call(calls ...core.Caller) error {
+func (c *Client) Call(calls ...w3types.Caller) error {
 	return c.CallCtx(context.Background(), calls...)
 }

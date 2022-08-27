@@ -6,12 +6,12 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/lmittmann/w3/core"
 	"github.com/lmittmann/w3/internal/module"
+	"github.com/lmittmann/w3/w3types"
 )
 
 // Logs requests the logs of the given ethereum.FilterQuery q.
-func Logs(q ethereum.FilterQuery) core.CallerFactory[[]types.Log] {
+func Logs(q ethereum.FilterQuery) w3types.CallerFactory[[]types.Log] {
 	return &logsFactory{filterQuery: q}
 }
 
@@ -23,12 +23,12 @@ type logsFactory struct {
 	returns *[]types.Log
 }
 
-func (f *logsFactory) Returns(logs *[]types.Log) core.Caller {
+func (f *logsFactory) Returns(logs *[]types.Log) w3types.Caller {
 	f.returns = logs
 	return f
 }
 
-// CreateRequest implements the core.RequestCreator interface.
+// CreateRequest implements the w3types.RequestCreator interface.
 func (f *logsFactory) CreateRequest() (rpc.BatchElem, error) {
 	arg, err := toFilterArg(f.filterQuery)
 	if err != nil {
@@ -42,7 +42,7 @@ func (f *logsFactory) CreateRequest() (rpc.BatchElem, error) {
 	}, nil
 }
 
-// HandleResponse implements the core.ResponseHandler interface.
+// HandleResponse implements the w3types.ResponseHandler interface.
 func (f *logsFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err

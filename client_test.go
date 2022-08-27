@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/lmittmann/w3"
-	"github.com/lmittmann/w3/core"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/w3types"
 )
 
 var benchRPC = flag.String("benchRPC", "", "RPC endpoint for benchmark")
@@ -71,7 +71,7 @@ func BenchmarkCall_Balance100(b *testing.B) {
 
 	b.Run("Batch", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			requests := make([]core.Caller, len(addr100))
+			requests := make([]w3types.Caller, len(addr100))
 			for j := 0; j < len(requests); j++ {
 				requests[j] = eth.Balance(addr100[j], nil).Returns(balance)
 			}
@@ -108,7 +108,7 @@ func BenchmarkCall_Block100(b *testing.B) {
 
 	b.Run("Batch", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			requests := make([]core.Caller, len(block100))
+			requests := make([]w3types.Caller, len(block100))
 			for j := 0; j < len(requests); j++ {
 				requests[j] = eth.BlockByNumber(block100[j]).Returns(block)
 			}
