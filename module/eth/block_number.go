@@ -4,14 +4,14 @@ import (
 	"math/big"
 
 	"github.com/lmittmann/w3/core"
-	"github.com/lmittmann/w3/internal"
+	"github.com/lmittmann/w3/internal/module"
 )
 
 // BlockNumber requests the number of the most recent block.
 func BlockNumber() core.CallerFactory[big.Int] {
-	return internal.NewFactory(
+	return module.NewFactory(
 		"eth_blockNumber",
 		nil,
-		internal.WithRetWrapper(internal.HexBigWrapper),
+		module.WithRetWrapper(module.HexBigRetWrapper),
 	)
 }

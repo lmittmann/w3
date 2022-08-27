@@ -1,14 +1,17 @@
 package eth
 
 import (
+	"fmt"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/lmittmann/w3/core"
+	"github.com/lmittmann/w3/internal/module"
 )
 
 // Logs requests the logs of the given ethereum.FilterQuery q.
-func Logs(q ethereum.FilterQuery) core.CallFactoryReturns[[]types.Log] {
+func Logs(q ethereum.FilterQuery) core.CallerFactory[[]types.Log] {
 	return &logsFactory{filterQuery: q}
 }
 
@@ -45,4 +48,27 @@ func (f *logsFactory) HandleResponse(elem rpc.BatchElem) error {
 		return err
 	}
 	return nil
+}
+
+func toFilterArg(q ethereum.FilterQuery) (any, error) {
+	arg := map[string]any{
+		"topics": q.Topics,
+	}
+	if len(q.Addresses) > 0 {
+		arg["address"] = q.Addresses
+	}
+	if q.BlockHash != nil {
+		arg["blockHash"] = *q.BlockHash
+		if q.FromBlock != nil || q.ToBlock != nil {
+			return nil, fmt.Errorf("cannot specify both BlockHash and FromBlock/ToBlock")
+		}
+	} else {
+		if q.FromBlock == nil {
+			arg["fromBlock"] = "0x0"
+		} else {
+			arg["fromBlock"] = module.BlockNumberArg(q.FromBlock)
+		}
+		arg["toBlock"] = module.BlockNumberArg(q.ToBlock)
+	}
+	return arg, nil
 }

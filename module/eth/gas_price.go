@@ -4,14 +4,14 @@ import (
 	"math/big"
 
 	"github.com/lmittmann/w3/core"
-	"github.com/lmittmann/w3/internal"
+	"github.com/lmittmann/w3/internal/module"
 )
 
 // GasPrice requests the current gas price in wei.
 func GasPrice() core.CallerFactory[big.Int] {
-	return internal.NewFactory(
+	return module.NewFactory(
 		"eth_gasPrice",
 		nil,
-		internal.WithRetWrapper(internal.HexBigWrapper),
+		module.WithRetWrapper(module.HexBigRetWrapper),
 	)
 }

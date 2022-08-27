@@ -9,8 +9,6 @@ import (
 )
 
 func TestStorageAt(t *testing.T) {
-	t.Parallel()
-
 	tests := []testCase[common.Hash]{
 		{
 			Golden:  "get_storage_at",
@@ -19,7 +17,5 @@ func TestStorageAt(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.Golden, runTestCase(t, test))
-	}
+	runTestCases(t, tests)
 }

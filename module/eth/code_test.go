@@ -8,8 +8,6 @@ import (
 )
 
 func TestCode(t *testing.T) {
-	t.Parallel()
-
 	tests := []testCase[[]byte]{
 		{
 			Golden:  "get_code",
@@ -18,7 +16,5 @@ func TestCode(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.Golden, runTestCase(t, test))
-	}
+	runTestCases(t, tests)
 }

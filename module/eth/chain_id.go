@@ -2,14 +2,14 @@ package eth
 
 import (
 	"github.com/lmittmann/w3/core"
-	"github.com/lmittmann/w3/internal"
+	"github.com/lmittmann/w3/internal/module"
 )
 
 // ChainID requests the chains ID.
 func ChainID() core.CallerFactory[uint64] {
-	return internal.NewFactory(
+	return module.NewFactory(
 		"eth_chainId",
 		nil,
-		internal.WithRetWrapper(internal.HexUint64Wrapper),
+		module.WithRetWrapper(module.HexUint64RetWrapper),
 	)
 }

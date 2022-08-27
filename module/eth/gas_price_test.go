@@ -9,8 +9,6 @@ import (
 )
 
 func TestGasPrice(t *testing.T) {
-	t.Parallel()
-
 	tests := []testCase[big.Int]{
 		{
 			Golden:  "gas_price",
@@ -19,7 +17,5 @@ func TestGasPrice(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.Golden, runTestCase(t, test))
-	}
+	runTestCases(t, tests)
 }

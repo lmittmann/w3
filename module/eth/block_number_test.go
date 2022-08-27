@@ -9,8 +9,6 @@ import (
 )
 
 func TestBlockNumber(t *testing.T) {
-	t.Parallel()
-
 	tests := []testCase[big.Int]{
 		{
 			Golden:  "block_number",
@@ -19,7 +17,5 @@ func TestBlockNumber(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.Golden, runTestCase(t, test))
-	}
+	runTestCases(t, tests)
 }

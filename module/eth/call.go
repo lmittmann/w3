@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/lmittmann/w3/core"
 	"github.com/lmittmann/w3/internal/inline"
+	"github.com/lmittmann/w3/internal/module"
 )
 
 // Call requests the output data of the given message at the given blockNumber.
@@ -38,8 +39,8 @@ func (f *callFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_call",
 		Args: inline.If(f.overrides == nil,
-			[]any{toCallArg(f.msg), toBlockNumberArg(f.atBlock)},
-			[]any{toCallArg(f.msg), toBlockNumberArg(f.atBlock), f.overrides},
+			[]any{toCallArg(f.msg), module.BlockNumberArg(f.atBlock)},
+			[]any{toCallArg(f.msg), module.BlockNumberArg(f.atBlock), f.overrides},
 		),
 		Result: (*hexutil.Bytes)(f.returns),
 	}, nil
@@ -118,8 +119,8 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "eth_call",
 		Args: inline.If(f.overrides == nil,
-			[]any{toCallArg(msg), toBlockNumberArg(f.atBlock)},
-			[]any{toCallArg(msg), toBlockNumberArg(f.atBlock), f.overrides},
+			[]any{toCallArg(msg), module.BlockNumberArg(f.atBlock)},
+			[]any{toCallArg(msg), module.BlockNumberArg(f.atBlock), f.overrides},
 		),
 		Result: &f.result,
 	}, nil
