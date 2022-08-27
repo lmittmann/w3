@@ -1,4 +1,7 @@
-package core
+/*
+Package w3types implements common types.
+*/
+package w3types
 
 import "github.com/ethereum/go-ethereum/rpc"
 
@@ -39,20 +42,4 @@ type CallerFactory[T any] interface {
 	// Returns given argument points to the variable in which to store the
 	// calls result.
 	Returns(*T) Caller
-}
-
-// Deprecated: CallFactoryReturns is the interface that wraps the basic Returns method.
-type CallFactoryReturns[T any] interface {
-
-	// Returns given argument points to the variable in which to store the
-	// calls result.
-	Returns(*T) Caller
-}
-
-// Deprecated: CallFactoryReturnsRAW is the interface that wraps the basic ReturnsRAW method.
-type CallFactoryReturnsRAW[T any] interface {
-
-	// ReturnsRAW given argument points to the variable in which to store the
-	// calls result.
-	ReturnsRAW(*T) Caller
 }
