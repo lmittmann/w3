@@ -43,7 +43,7 @@ func main() {
 	flag.TextVar(&addrAcc, "acc", w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"), "Account address")
 	flag.TextVar(&addrToken, "token", w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"), "Token address")
 	flag.Usage = func() {
-		fmt.Println("token_balance prints the balance of an ERC20 token for a given account.\n")
+		fmt.Println("token_balance prints the balance of an ERC20 token for a given account.")
 		flag.PrintDefaults()
 	}
 	flag.Parse()

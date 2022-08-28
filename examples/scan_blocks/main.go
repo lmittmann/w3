@@ -21,8 +21,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/lmittmann/w3"
-	"github.com/lmittmann/w3/core"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/w3types"
 )
 
 var (
@@ -47,7 +47,7 @@ func main() {
 	defer client.Close()
 
 	// fetch blocks in bulk
-	calls := make([]core.Caller, bulkSize)
+	calls := make([]w3types.Caller, bulkSize)
 	blocks := make([]types.Block, bulkSize)
 
 	for i, txCount := 0, 0; ; i++ {
