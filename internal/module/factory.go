@@ -91,6 +91,7 @@ func WithRetWrapper[T any](fn RetWrapperFunc[T]) Option[T] {
 
 var (
 	HexBigRetWrapper    RetWrapperFunc[big.Int] = func(ret *big.Int) any { return (*hexutil.Big)(ret) }
+	HexUintRetWrapper   RetWrapperFunc[uint]    = func(ret *uint) any { return (*hexutil.Uint)(ret) }
 	HexUint64RetWrapper RetWrapperFunc[uint64]  = func(ret *uint64) any { return (*hexutil.Uint64)(ret) }
 	HexBytesRetWrapper  RetWrapperFunc[[]byte]  = func(ret *[]byte) any { return (*hexutil.Bytes)(ret) }
 )

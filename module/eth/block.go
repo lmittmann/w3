@@ -29,6 +29,26 @@ func BlockByNumber(number *big.Int) w3types.CallerFactory[types.Block] {
 	)
 }
 
+// BlockTxCountByHash requests the number of transactions in the block with the
+// given hash.
+func BlockTxCountByHash(hash common.Hash) w3types.CallerFactory[uint] {
+	return module.NewFactory(
+		"eth_getBlockTransactionCountByHash",
+		[]any{hash},
+		module.WithRetWrapper(module.HexUintRetWrapper),
+	)
+}
+
+// BlockTxCountByNumber requests the number of transactions in the block with
+// the given number.
+func BlockTxCountByNumber(number *big.Int) w3types.CallerFactory[uint] {
+	return module.NewFactory(
+		"eth_getBlockTransactionCountByNumber",
+		[]any{module.BlockNumberArg(number)},
+		module.WithRetWrapper(module.HexUintRetWrapper),
+	)
+}
+
 // HeaderByHash requests the header with the given hash.
 func HeaderByHash(hash common.Hash) w3types.CallerFactory[types.Header] {
 	return module.NewFactory[types.Header](
