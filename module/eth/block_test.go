@@ -12,10 +12,11 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestBlockByHash(t *testing.T) {
-	tests := []testCase[types.Block]{
+	tests := []rpctest.TestCase[types.Block]{
 		{
 			Golden: "get_block_by_hash__1",
 			Call:   eth.BlockByHash(w3.H("0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6")),
@@ -78,14 +79,14 @@ func TestBlockByHash(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests,
+	rpctest.RunTestCases(t, tests,
 		cmp.AllowUnexported(types.Block{}, types.Transaction{}, atomic.Value{}),
 		cmpopts.IgnoreFields(types.Transaction{}, "time"),
 	)
 }
 
 func TestBlockByNumber(t *testing.T) {
-	tests := []testCase[types.Block]{
+	tests := []rpctest.TestCase[types.Block]{
 		{
 			Golden: "get_block_by_number__1",
 			Call:   eth.BlockByNumber(big.NewInt(1)),
@@ -148,14 +149,14 @@ func TestBlockByNumber(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests,
+	rpctest.RunTestCases(t, tests,
 		cmp.AllowUnexported(types.Block{}, types.Transaction{}, atomic.Value{}),
 		cmpopts.IgnoreFields(types.Transaction{}, "time"),
 	)
 }
 
 func TestBlockTxCountByHash(t *testing.T) {
-	tests := []testCase[uint]{
+	tests := []rpctest.TestCase[uint]{
 		{
 			Golden:  "block_transaction_count_by_hash__15050000",
 			Call:    eth.BlockTxCountByHash(w3.H("0xc43d35f6a64f8a64f046c8deb4069572d622dfe7f028f62301b186f08f0e96f2")),
@@ -168,11 +169,11 @@ func TestBlockTxCountByHash(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }
 
 func TestBlockTxCountByNumber(t *testing.T) {
-	tests := []testCase[uint]{
+	tests := []rpctest.TestCase[uint]{
 		{
 			Golden:  "block_transaction_count_by_number__15050000",
 			Call:    eth.BlockTxCountByNumber(big.NewInt(15050000)),
@@ -180,11 +181,11 @@ func TestBlockTxCountByNumber(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }
 
 func TestHeaderByHash(t *testing.T) {
-	tests := []testCase[types.Header]{
+	tests := []rpctest.TestCase[types.Header]{
 		{
 			Golden: "get_block_by_hash__12965000",
 			Call:   eth.HeaderByHash(w3.H("0x9b83c12c69edb74f6c8dd5d052765c1adf940e320bd1291696e6fa07829eee71")),
@@ -209,11 +210,11 @@ func TestHeaderByHash(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }
 
 func TestHeaderByNumber(t *testing.T) {
-	tests := []testCase[types.Header]{
+	tests := []rpctest.TestCase[types.Header]{
 		{
 			Golden: "get_block_by_number__12965000",
 			Call:   eth.HeaderByNumber(big.NewInt(12965000)),
@@ -238,5 +239,5 @@ func TestHeaderByNumber(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }

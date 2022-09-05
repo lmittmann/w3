@@ -6,10 +6,11 @@ import (
 
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestGasPrice(t *testing.T) {
-	tests := []testCase[big.Int]{
+	tests := []rpctest.TestCase[big.Int]{
 		{
 			Golden:  "gas_price",
 			Call:    eth.GasPrice(),
@@ -17,5 +18,5 @@ func TestGasPrice(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }

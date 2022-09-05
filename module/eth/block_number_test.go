@@ -6,10 +6,11 @@ import (
 
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestBlockNumber(t *testing.T) {
-	tests := []testCase[big.Int]{
+	tests := []rpctest.TestCase[big.Int]{
 		{
 			Golden:  "block_number",
 			Call:    eth.BlockNumber(),
@@ -17,5 +18,5 @@ func TestBlockNumber(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }

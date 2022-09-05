@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestChainID(t *testing.T) {
-	tests := []testCase[uint64]{
+	tests := []rpctest.TestCase[uint64]{
 		{
 			Golden:  "chain_id",
 			Call:    eth.ChainID(),
@@ -15,5 +16,5 @@ func TestChainID(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }

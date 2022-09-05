@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 	"github.com/lmittmann/w3/w3types"
 )
 
@@ -16,7 +17,7 @@ var (
 )
 
 func TestCall(t *testing.T) {
-	tests := []testCase[[]byte]{
+	tests := []rpctest.TestCase[[]byte]{
 		{
 			Golden: "call_func",
 			Call: eth.Call(&w3types.Message{
@@ -43,11 +44,11 @@ func TestCall(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }
 
 func TestEstimateGas(t *testing.T) {
-	tests := []testCase[uint64]{
+	tests := []rpctest.TestCase[uint64]{
 		{
 			Golden: "estimate_gas",
 			Call: eth.EstimateGas(&w3types.Message{
@@ -59,11 +60,11 @@ func TestEstimateGas(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }
 
 func TestAccessList(t *testing.T) {
-	tests := []testCase[eth.AccessListResponse]{
+	tests := []rpctest.TestCase[eth.AccessListResponse]{
 		{
 			Golden: "create_access_list",
 			Call: eth.AccessList(&w3types.Message{
@@ -85,5 +86,5 @@ func TestAccessList(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }

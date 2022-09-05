@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 var type2Tx = types.NewTx(&types.DynamicFeeTx{
@@ -28,7 +29,7 @@ var type2Tx = types.NewTx(&types.DynamicFeeTx{
 })
 
 func TestTx(t *testing.T) {
-	tests := []testCase[types.Transaction]{
+	tests := []rpctest.TestCase[types.Transaction]{
 		{
 			Golden: "get_transaction_by_hash__type0",
 			Call:   eth.Tx(w3.H("0x2ecd08e86079f08cfc27c326aa01b1c8d62f288d5961118056bac7da315f94d9")),
@@ -54,14 +55,14 @@ func TestTx(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests,
+	rpctest.RunTestCases(t, tests,
 		cmp.AllowUnexported(types.Transaction{}, atomic.Value{}),
 		cmpopts.IgnoreFields(types.Transaction{}, "time"),
 	)
 }
 
 func TestTxByBlockHashAndIndex(t *testing.T) {
-	tests := []testCase[types.Transaction]{
+	tests := []rpctest.TestCase[types.Transaction]{
 		{
 			Golden:  "get_transaction_by_block_hash_and_index",
 			Call:    eth.TxByBlockHashAndIndex(w3.H("0xa32d159805750cbe428b799a49b85dcb2300f61d806786f317260e721727d162"), 98),
@@ -74,14 +75,14 @@ func TestTxByBlockHashAndIndex(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests,
+	rpctest.RunTestCases(t, tests,
 		cmp.AllowUnexported(types.Transaction{}, atomic.Value{}),
 		cmpopts.IgnoreFields(types.Transaction{}, "time"),
 	)
 }
 
 func TestTxByBlockNumberAndIndex(t *testing.T) {
-	tests := []testCase[types.Transaction]{
+	tests := []rpctest.TestCase[types.Transaction]{
 		{
 			Golden:  "get_transaction_by_block_number_and_index",
 			Call:    eth.TxByBlockNumberAndIndex(big.NewInt(12965001), 98),
@@ -89,14 +90,14 @@ func TestTxByBlockNumberAndIndex(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests,
+	rpctest.RunTestCases(t, tests,
 		cmp.AllowUnexported(types.Transaction{}, atomic.Value{}),
 		cmpopts.IgnoreFields(types.Transaction{}, "time"),
 	)
 }
 
 func TestSendTx(t *testing.T) {
-	tests := []testCase[common.Hash]{
+	tests := []rpctest.TestCase[common.Hash]{
 		{
 			Golden:  "send_raw_transaction",
 			Call:    eth.SendTx(type2Tx),
@@ -104,11 +105,11 @@ func TestSendTx(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }
 
 func TestTxReceipt(t *testing.T) {
-	tests := []testCase[types.Receipt]{
+	tests := []rpctest.TestCase[types.Receipt]{
 		{
 			Golden: "get_transaction_receipt",
 			Call:   eth.TxReceipt(w3.H("0xed382cb554ad10e94921d263a56c670669d6c380bbdacdbf96fed625b7132a1d")),
@@ -147,11 +148,11 @@ func TestTxReceipt(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }
 
 func TestNonce(t *testing.T) {
-	tests := []testCase[uint64]{
+	tests := []rpctest.TestCase[uint64]{
 		{
 			Golden:  "get_transaction_count",
 			Call:    eth.Nonce(w3.A("0x000000000000000000000000000000000000c0Fe"), nil),
@@ -159,5 +160,5 @@ func TestNonce(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }

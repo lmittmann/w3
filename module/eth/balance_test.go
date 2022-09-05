@@ -6,10 +6,11 @@ import (
 
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestBalance(t *testing.T) {
-	tests := []testCase[big.Int]{
+	tests := []rpctest.TestCase[big.Int]{
 		{
 			Golden:  "get_balance",
 			Call:    eth.Balance(w3.A("0x000000000000000000000000000000000000c0Fe"), nil),
@@ -22,5 +23,5 @@ func TestBalance(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }

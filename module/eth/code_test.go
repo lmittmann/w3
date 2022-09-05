@@ -5,10 +5,11 @@ import (
 
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 )
 
 func TestCode(t *testing.T) {
-	tests := []testCase[[]byte]{
+	tests := []rpctest.TestCase[[]byte]{
 		{
 			Golden:  "get_code",
 			Call:    eth.Code(w3.A("0x000000000000000000000000000000000000c0DE"), nil),
@@ -16,5 +17,5 @@ func TestCode(t *testing.T) {
 		},
 	}
 
-	runTestCases(t, tests)
+	rpctest.RunTestCases(t, tests)
 }
