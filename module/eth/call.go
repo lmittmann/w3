@@ -97,9 +97,11 @@ func CallFunc(fn w3types.Func, contract common.Address, args ...any) *CallFuncFa
 
 type CallFuncFactory struct {
 	// args
-	fn       w3types.Func
-	contract common.Address
-	args     []any
+	fn        w3types.Func
+	contract  common.Address
+	args      []any
+	atBlock   *big.Int
+	overrides w3types.State
 
 	// returns
 	result  []byte
@@ -111,18 +113,36 @@ func (f *CallFuncFactory) Returns(returns ...any) w3types.Caller {
 	return f
 }
 
+func (f *CallFuncFactory) AtBlock(blockNumber *big.Int) *CallFuncFactory {
+	f.atBlock = blockNumber
+	return f
+}
+
+func (f *CallFuncFactory) Overrides(overrides w3types.State) *CallFuncFactory {
+	f.overrides = overrides
+	return f
+}
+
 func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	input, err := f.fn.EncodeArgs(f.args...)
 	if err != nil {
 		return rpc.BatchElem{}, err
 	}
 
-	return rpc.BatchElem{
-		Method: "eth_call",
-		Args: []any{&w3types.Message{
+	args := []any{
+		w3types.Message{
 			To:    &f.contract,
 			Input: input,
-		}, module.BlockNumberArg(nil)},
+		},
+		module.BlockNumberArg(f.atBlock),
+	}
+	if len(f.overrides) > 0 {
+		args = append(args, f.overrides)
+	}
+
+	return rpc.BatchElem{
+		Method: "eth_call",
+		Args:   args,
 		Result: (*hexutil.Bytes)(&f.result),
 	}, nil
 }
