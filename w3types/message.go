@@ -29,7 +29,7 @@ type Message struct {
 	Args []any
 }
 
-// SetTx sets msg to tx and returns msg.
+// SetTx sets msg to the [types.Transaction] tx and returns msg.
 func (msg *Message) SetTx(tx *types.Transaction, signer types.Signer) *Message {
 	from, err := signer.Sender(tx)
 	if err != nil {
@@ -49,7 +49,7 @@ func (msg *Message) SetTx(tx *types.Transaction, signer types.Signer) *Message {
 	return msg
 }
 
-// SetCallMsg sets msg to callMsg and returns msg.
+// SetCallMsg sets msg to the [ethereum.CallMsg] callMsg and returns msg.
 func (msg *Message) SetCallMsg(callMsg ethereum.CallMsg) *Message {
 	msg.From = callMsg.From
 	msg.To = callMsg.To
