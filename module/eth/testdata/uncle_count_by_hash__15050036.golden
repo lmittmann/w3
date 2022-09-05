@@ -1,0 +1,2 @@
+> {"jsonrpc":"2.0","id":1,"method":"eth_getUncleCountByBlockHash","params":["0x7a98a492c1288a8451905bc665cb28d45fbdf8913c34d4ad756acb0609342e67"]}
+< {"jsonrpc":"2.0","id":1,"result":"0x1"}
