@@ -154,6 +154,35 @@ func TestBlockByNumber(t *testing.T) {
 	)
 }
 
+func TestBlockTxCountByHash(t *testing.T) {
+	tests := []testCase[uint]{
+		{
+			Golden:  "block_transaction_count_by_hash__15050000",
+			Call:    eth.BlockTxCountByHash(w3.H("0xc43d35f6a64f8a64f046c8deb4069572d622dfe7f028f62301b186f08f0e96f2")),
+			WantRet: 32,
+		},
+		{
+			Golden:  "block_transaction_count_by_hash__0x00",
+			Call:    eth.BlockTxCountByHash(common.Hash{}),
+			WantErr: errors.New("w3: response handling failed: not found"),
+		},
+	}
+
+	runTestCases(t, tests)
+}
+
+func TestBlockTxCountByNumber(t *testing.T) {
+	tests := []testCase[uint]{
+		{
+			Golden:  "block_transaction_count_by_number__15050000",
+			Call:    eth.BlockTxCountByNumber(big.NewInt(15050000)),
+			WantRet: 32,
+		},
+	}
+
+	runTestCases(t, tests)
+}
+
 func TestHeaderByHash(t *testing.T) {
 	tests := []testCase[types.Header]{
 		{
