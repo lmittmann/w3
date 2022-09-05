@@ -1,0 +1,2 @@
+> {"jsonrpc":"2.0","id":1,"method":"eth_estimateGas","params":[{"to":"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2","data":"0x70a08231000000000000000000000000000000000000000000000000000000000000c0fe"},"latest"]}
+< {"jsonrpc":"2.0","id":1,"result":"0x5cc6"}

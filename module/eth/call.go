@@ -1,13 +1,13 @@
 package eth
 
 import (
+	"encoding/json"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/lmittmann/w3/internal/inline"
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
 )
@@ -15,43 +15,78 @@ import (
 // Call requests the output data of the given message at the given blockNumber.
 // If blockNumber is nil, the output of the message at the latest known block is
 // requested.
-func Call(msg ethereum.CallMsg, blockNumber *big.Int, overrides AccountOverrides) w3types.CallerFactory[[]byte] {
-	return &callFactory{msg: msg, atBlock: blockNumber, overrides: overrides}
+func Call(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State) w3types.CallerFactory[[]byte] {
+	args := []any{msg, module.BlockNumberArg(blockNumber)}
+	if overrides != nil {
+		args = append(args, overrides)
+	}
+
+	return module.NewFactory(
+		"eth_call",
+		args,
+		module.WithArgsWrapper[[]byte](msgArgsWrapper),
+		module.WithRetWrapper(module.HexBytesRetWrapper),
+	)
 }
 
-type callFactory struct {
-	// args
-	msg       ethereum.CallMsg
-	atBlock   *big.Int
-	overrides AccountOverrides
-
-	// returns
-	returns *[]byte
+// EstimateGas requests the estimated gas cost of the given message at the given
+// blockNumber. If blockNumber is nil, the estimated gas cost of the message at
+// the latest block is requested.
+func EstimateGas(msg *w3types.Message, blockNumber *big.Int) w3types.CallerFactory[uint64] {
+	return module.NewFactory(
+		"eth_estimateGas",
+		[]any{msg, module.BlockNumberArg(blockNumber)},
+		module.WithArgsWrapper[uint64](msgArgsWrapper),
+		module.WithRetWrapper(module.HexUint64RetWrapper),
+	)
 }
 
-func (f *callFactory) Returns(output *[]byte) w3types.Caller {
-	f.returns = output
-	return f
+// AccessList requests the access list of the given message at the given
+// blockNumber. If blockNumber is nil, the access list of the message at the
+// latest block is requested.
+func AccessList(msg *w3types.Message, blockNumber *big.Int) w3types.CallerFactory[AccessListResponse] {
+	return module.NewFactory(
+		"eth_createAccessList",
+		[]any{msg, module.BlockNumberArg(blockNumber)},
+		module.WithArgsWrapper[AccessListResponse](msgArgsWrapper),
+	)
 }
 
-// CreateRequest implements the w3types.RequestCreator interface.
-func (f *callFactory) CreateRequest() (rpc.BatchElem, error) {
-	return rpc.BatchElem{
-		Method: "eth_call",
-		Args: inline.If(f.overrides == nil,
-			[]any{toCallArg(f.msg), module.BlockNumberArg(f.atBlock)},
-			[]any{toCallArg(f.msg), module.BlockNumberArg(f.atBlock), f.overrides},
-		),
-		Result: (*hexutil.Bytes)(f.returns),
-	}, nil
+type AccessListResponse struct {
+	AccessList types.AccessList
+	GasUsed    uint64
 }
 
-// HandleResponse implements the w3types.ResponseHandler interface.
-func (f *callFactory) HandleResponse(elem rpc.BatchElem) error {
-	if err := elem.Error; err != nil {
+// UnmarshalJSON implements [json.Unmarshaler].
+func (alResp *AccessListResponse) UnmarshalJSON(data []byte) error {
+	type accessListResponse struct {
+		AccessList types.AccessList `json:"accessList"`
+		GasUsed    hexutil.Uint64   `json:"gasUsed"`
+	}
+
+	var resp accessListResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
 		return err
 	}
+
+	alResp.AccessList = resp.AccessList
+	alResp.GasUsed = uint64(resp.GasUsed)
 	return nil
+}
+
+func msgArgsWrapper(slice []any) ([]any, error) {
+	msg := slice[0].(*w3types.Message)
+	if msg.Input != nil || msg.Func == nil {
+		return slice, nil
+	}
+
+	input, err := msg.Func.EncodeArgs(msg.Args...)
+	if err != nil {
+		return nil, err
+	}
+	msg.Input = input
+	slice[0] = msg
+	return slice, nil
 }
 
 // CallFunc requests the returns of Func fn at common.Address contract with the
@@ -62,27 +97,13 @@ func CallFunc(fn w3types.Func, contract common.Address, args ...any) *CallFuncFa
 
 type CallFuncFactory struct {
 	// args
-	fn        w3types.Func
-	contract  common.Address
-	args      []any
-	from      *common.Address
-	atBlock   *big.Int
-	value     *big.Int
-	overrides AccountOverrides
+	fn       w3types.Func
+	contract common.Address
+	args     []any
 
 	// returns
-	result  hexutil.Bytes
+	result  []byte
 	returns []any
-}
-
-func (f *CallFuncFactory) AtBlock(blockNumber *big.Int) *CallFuncFactory {
-	f.atBlock = blockNumber
-	return f
-}
-
-func (f *CallFuncFactory) Value(value *big.Int) *CallFuncFactory {
-	f.value = value
-	return f
 }
 
 func (f *CallFuncFactory) Returns(returns ...any) w3types.Caller {
@@ -90,72 +111,29 @@ func (f *CallFuncFactory) Returns(returns ...any) w3types.Caller {
 	return f
 }
 
-func (f *CallFuncFactory) From(from common.Address) *CallFuncFactory {
-	f.from = &from
-	return f
-}
-
-func (f *CallFuncFactory) Overrides(overrides AccountOverrides) *CallFuncFactory {
-	f.overrides = overrides
-	return f
-}
-
-// CreateRequest implements the w3types.RequestCreator interface.
 func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	input, err := f.fn.EncodeArgs(f.args...)
 	if err != nil {
 		return rpc.BatchElem{}, err
 	}
 
-	msg := ethereum.CallMsg{
-		To:    &f.contract,
-		Value: f.value,
-		Data:  input,
-	}
-	if f.from != nil {
-		msg.From = *f.from
-	}
-
 	return rpc.BatchElem{
 		Method: "eth_call",
-		Args: inline.If(f.overrides == nil,
-			[]any{toCallArg(msg), module.BlockNumberArg(f.atBlock)},
-			[]any{toCallArg(msg), module.BlockNumberArg(f.atBlock), f.overrides},
-		),
-		Result: &f.result,
+		Args: []any{&w3types.Message{
+			To:    &f.contract,
+			Input: input,
+		}, module.BlockNumberArg(nil)},
+		Result: (*hexutil.Bytes)(&f.result),
 	}, nil
 }
 
-// HandleResponse implements the w3types.ResponseHandler interface.
 func (f *CallFuncFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
 	}
-	output := []byte(f.result)
-	if err := f.fn.DecodeReturns(output, f.returns...); err != nil {
+
+	if err := f.fn.DecodeReturns(f.result, f.returns...); err != nil {
 		return err
 	}
 	return nil
-}
-
-func toCallArg(msg ethereum.CallMsg) any {
-	arg := map[string]any{
-		"to": msg.To,
-	}
-	if msg.From.Hash().Big().Sign() > 0 {
-		arg["from"] = msg.From
-	}
-	if len(msg.Data) > 0 {
-		arg["data"] = hexutil.Bytes(msg.Data)
-	}
-	if msg.Value != nil {
-		arg["value"] = (*hexutil.Big)(msg.Value)
-	}
-	if msg.Gas != 0 {
-		arg["gas"] = hexutil.Uint64(msg.Gas)
-	}
-	if msg.GasPrice != nil {
-		arg["gasPrice"] = (*hexutil.Big)(msg.GasPrice)
-	}
-	return arg
 }
