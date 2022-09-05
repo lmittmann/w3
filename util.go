@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/lmittmann/w3/internal/crypto"
 )
 
 // Common [big.Int]'s.
