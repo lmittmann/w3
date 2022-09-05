@@ -1,0 +1,2 @@
+> {"jsonrpc":"2.0","id":1,"method":"eth_getTransactionByBlockHashAndIndex","params":["0xa32d159805750cbe428b799a49b85dcb2300f61d806786f317260e721727d162","0x12c"]}
+< {"jsonrpc":"2.0","id":1,"result":null}
