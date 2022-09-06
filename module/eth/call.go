@@ -57,20 +57,20 @@ type AccessListResponse struct {
 	GasUsed    uint64
 }
 
-// UnmarshalJSON implements [json.Unmarshaler].
-func (alResp *AccessListResponse) UnmarshalJSON(data []byte) error {
+// UnmarshalJSON implements the [json.Unmarshaler].
+func (resp *AccessListResponse) UnmarshalJSON(data []byte) error {
 	type accessListResponse struct {
 		AccessList types.AccessList `json:"accessList"`
 		GasUsed    hexutil.Uint64   `json:"gasUsed"`
 	}
 
-	var resp accessListResponse
-	if err := json.Unmarshal(data, &resp); err != nil {
+	var alResp accessListResponse
+	if err := json.Unmarshal(data, &alResp); err != nil {
 		return err
 	}
 
-	alResp.AccessList = resp.AccessList
-	alResp.GasUsed = uint64(resp.GasUsed)
+	resp.AccessList = alResp.AccessList
+	resp.GasUsed = uint64(alResp.GasUsed)
 	return nil
 }
 
