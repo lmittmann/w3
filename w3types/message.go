@@ -13,6 +13,10 @@ import (
 var addr0 = common.Address{}
 
 // Message represents a transaction without the signature.
+//
+// If no input data is given, but Func is not null, the input data is
+// automatically encoded from the given Func and Args arguments by many
+// functions that accept a Message struct as an argument.
 type Message struct {
 	From       common.Address  // Sender
 	To         *common.Address // Recipient
@@ -25,8 +29,8 @@ type Message struct {
 	Input      []byte // Input data
 	AccessList types.AccessList
 
-	Func Func
-	Args []any
+	Func Func  // Func to encode
+	Args []any // Arguments for Func
 }
 
 // SetTx sets msg to the [types.Transaction] tx and returns msg.
