@@ -21,6 +21,19 @@ first-class ABI support.
 and uses a variety of its types, such as [`common.Address`](https://pkg.go.dev/github.com/ethereum/go-ethereum/common#Address)
 or [`types.Transaction`](https://pkg.go.dev/github.com/ethereum/go-ethereum/core/types#Transaction).
 
+Batch requests with `w3` are up to **85x faster** than sequential requests with
+`go-ethereum/ethclient`.
+
+<details>
+<summary>Benchmarks</summary>
+<pre>
+name               ethclient time/op  w3 time/op  delta
+Call_BalanceNonce  78.3ms ± 2%        39.0ms ± 1%  -50.15%  (p=0.000 n=23+22)
+Call_Balance100     3.90s ± 5%         0.05s ± 2%  -98.84%  (p=0.000 n=20+24)
+Call_BalanceOf100   3.99s ± 3%         0.05s ± 2%  -98.73%  (p=0.000 n=22+23)
+Call_Block100       6.89s ± 7%         1.94s ±11%  -71.77%  (p=0.000 n=24+23)
+</pre>
+</details>
 
 ## Install
 
