@@ -117,7 +117,7 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 	return nil
 }
 
-// Call is like [CallCtx] with ctx equal to context.Background().
+// Call is like [Client.CallCtx] with ctx equal to context.Background().
 func (c *Client) Call(calls ...w3types.Caller) error {
 	return c.CallCtx(context.Background(), calls...)
 }
