@@ -130,7 +130,7 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 	}
 
 	args := []any{
-		w3types.Message{
+		&w3types.Message{
 			To:    &f.contract,
 			Input: input,
 		},

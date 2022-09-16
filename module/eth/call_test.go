@@ -47,6 +47,29 @@ func TestCall(t *testing.T) {
 	rpctest.RunTestCases(t, tests)
 }
 
+func TestCallFunc(t *testing.T) {
+	t.Parallel()
+
+	srv := rpctest.NewFileServer(t, "testdata/call_func.golden")
+	defer srv.Close()
+
+	client := w3.MustDial(srv.URL())
+	defer client.Close()
+
+	var (
+		balance     = new(big.Int)
+		wantBalance = big.NewInt(0)
+	)
+	if err := client.Call(
+		eth.CallFunc(funcBalanceOf, w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"), w3.A("0x000000000000000000000000000000000000c0Fe")).Returns(balance),
+	); err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	if wantBalance.Cmp(balance) != 0 {
+		t.Fatalf("want %v, got %v", wantBalance, balance)
+	}
+}
+
 func TestEstimateGas(t *testing.T) {
 	tests := []rpctest.TestCase[uint64]{
 		{
