@@ -3,8 +3,8 @@ module examples
 go 1.19
 
 require (
-	github.com/ethereum/go-ethereum v1.10.23
-	github.com/lmittmann/w3 v0.9.0
+	github.com/ethereum/go-ethereum v1.10.25
+	github.com/lmittmann/w3 v0.9.1
 )
 
 require (
