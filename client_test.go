@@ -1,21 +1,145 @@
 package w3_test
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"math/big"
+	"strconv"
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/google/go-cmp/cmp"
 	"github.com/lmittmann/w3"
+	"github.com/lmittmann/w3/internal"
 	"github.com/lmittmann/w3/module/eth"
+	"github.com/lmittmann/w3/rpctest"
 	"github.com/lmittmann/w3/w3types"
 )
 
-var benchRPC = flag.String("benchRPC", "", "RPC endpoint for benchmark")
+var (
+	benchRPC = flag.String("benchRPC", "", "RPC endpoint for benchmark")
+
+	jsonCalls1 = `> {"jsonrpc":"2.0","id":1}` + "\n" +
+		`< {"jsonrpc":"2.0","id":1,"result":"0x1"}`
+	jsonCalls2 = `> [{"jsonrpc":"2.0","id":1},{"jsonrpc":"2.0","id":2}]` + "\n" +
+		`< [{"jsonrpc":"2.0","id":1,"result":"0x1"},{"jsonrpc":"2.0","id":2,"result":"0x1"}]`
+)
+
+func TestClientCall(t *testing.T) {
+	tests := []struct {
+		Buf     *bytes.Buffer
+		Calls   []w3types.Caller
+		WantErr error
+	}{
+		{
+			Buf:   bytes.NewBufferString(jsonCalls1),
+			Calls: []w3types.Caller{&testCaller{}},
+		},
+		{
+			Buf:     bytes.NewBufferString(jsonCalls1),
+			Calls:   []w3types.Caller{&testCaller{RequestErr: errors.New("err")}},
+			WantErr: errors.New("err"),
+		},
+		{
+			Buf:     bytes.NewBufferString(jsonCalls1),
+			Calls:   []w3types.Caller{&testCaller{ReturnErr: errors.New("err")}},
+			WantErr: errors.New("w3: call failed: err"),
+		},
+		{
+			Buf: bytes.NewBufferString(jsonCalls2),
+			Calls: []w3types.Caller{
+				&testCaller{RequestErr: errors.New("err")},
+				&testCaller{},
+			},
+			WantErr: errors.New("err"),
+		},
+		{
+			Buf: bytes.NewBufferString(jsonCalls2),
+			Calls: []w3types.Caller{
+				&testCaller{ReturnErr: errors.New("err")},
+				&testCaller{},
+			},
+			WantErr: errors.New("w3: one ore more calls failed"),
+		},
+		{
+			Buf: bytes.NewBufferString(jsonCalls2),
+			Calls: []w3types.Caller{
+				&testCaller{},
+				&testCaller{ReturnErr: errors.New("err")},
+			},
+			WantErr: errors.New("w3: one ore more calls failed"),
+		},
+		{
+			Buf: bytes.NewBufferString(jsonCalls2),
+			Calls: []w3types.Caller{
+				&testCaller{ReturnErr: errors.New("err")},
+				&testCaller{ReturnErr: errors.New("err")},
+			},
+			WantErr: errors.New("w3: one ore more calls failed"),
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			srv := rpctest.NewServer(t, test.Buf)
+
+			client, err := w3.Dial(srv.URL())
+			if err != nil {
+				t.Fatalf("Failed to connect to test RPC endpoint: %v", err)
+			}
+
+			err = client.Call(test.Calls...)
+			if diff := cmp.Diff(test.WantErr, err,
+				internal.EquateErrors(),
+			); diff != "" {
+				t.Fatalf("(-want, +got)\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestClientCall_CallErrors(t *testing.T) {
+	srv := rpctest.NewServer(t, bytes.NewBufferString(jsonCalls2))
+
+	client, err := w3.Dial(srv.URL())
+	if err != nil {
+		t.Fatalf("Failed to connect to test RPC endpoint: %v", err)
+	}
+
+	err = client.Call(&testCaller{}, &testCaller{ReturnErr: errors.New("err")})
+	if err == nil {
+		t.Fatal("Want error")
+	}
+	if !errors.Is(err, w3.CallErrors{}) {
+		t.Fatalf("Want w3.CallErrors, got %T", err)
+	}
+	callErrs := err.(w3.CallErrors)
+	if callErrs[0] != nil {
+		t.Errorf("callErrs[0]: want <nil>, got %v", callErrs[0])
+	}
+	if callErrs[1] == nil || callErrs[1].Error() != "err" {
+		t.Errorf(`callErrs[1]: want "err", got %v`, callErrs[1])
+	}
+}
+
+type testCaller struct {
+	RequestErr error
+	ReturnErr  error
+}
+
+func (c *testCaller) CreateRequest() (elem rpc.BatchElem, err error) {
+	return rpc.BatchElem{}, c.RequestErr
+}
+
+func (c *testCaller) HandleResponse(elem rpc.BatchElem) (err error) {
+	return c.ReturnErr
+}
 
 func BenchmarkCall_BalanceNonce(b *testing.B) {
 	if *benchRPC == "" {

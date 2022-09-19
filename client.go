@@ -2,22 +2,11 @@ package w3
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/lmittmann/w3/w3types"
-)
-
-var (
-	// ErrRequestCreation is returned by Client.CallCtx and Client.Call when the
-	// creation of the RPC request failes.
-	ErrRequestCreation = errors.New("w3: request creation failed")
-
-	// ErrResponseHandling is returned by Client.CallCtx and Client.Call when
-	// the handeling of the RPC response failes.
-	ErrResponseHandling = errors.New("w3: response handling failed")
 )
 
 // Client represents a connection to an RPC endpoint.
@@ -82,7 +71,7 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 	for i, req := range calls {
 		batchElems[i], err = req.CreateRequest()
 		if err != nil {
-			return fmt.Errorf("%w: %v", ErrRequestCreation, err)
+			return err
 		}
 	}
 
@@ -108,11 +97,18 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 	}
 
 	// handle responses
+	var callErrs CallErrors
 	for i, req := range calls {
 		err = req.HandleResponse(batchElems[i])
 		if err != nil {
-			return fmt.Errorf("%w: %v", ErrResponseHandling, err)
+			if callErrs == nil {
+				callErrs = make(CallErrors, len(calls))
+			}
+			callErrs[i] = err
 		}
+	}
+	if len(callErrs) > 0 {
+		return callErrs
 	}
 	return nil
 }
@@ -120,4 +116,22 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 // Call is like [Client.CallCtx] with ctx equal to context.Background().
 func (c *Client) Call(calls ...w3types.Caller) error {
 	return c.CallCtx(context.Background(), calls...)
+}
+
+// CallErrors is an error type that contains the errors of multiple calls. The
+// length of the error slice is equal to the number of calls. Each error at a
+// given index corresponds to the call at the same index. An error is nil if the
+// corresponding call was successful.
+type CallErrors []error
+
+func (e CallErrors) Error() string {
+	if len(e) == 1 {
+		return fmt.Sprintf("w3: call failed: %s", e[0])
+	}
+	return "w3: one ore more calls failed"
+}
+
+func (e CallErrors) Is(target error) bool {
+	_, ok := target.(CallErrors)
+	return ok
 }

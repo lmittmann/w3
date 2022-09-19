@@ -18,7 +18,7 @@ func TestClientVersion(t *testing.T) {
 		{
 			Golden:  "client_version__err",
 			Call:    web3.ClientVersion(),
-			WantErr: errors.New("w3: response handling failed: the method web3_clientVersion does not exist/is not available"),
+			WantErr: errors.New("w3: call failed: the method web3_clientVersion does not exist/is not available"),
 		},
 	}
 

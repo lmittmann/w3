@@ -51,7 +51,7 @@ func TestTx(t *testing.T) {
 		{
 			Golden:  "get_transaction_by_hash__0x00",
 			Call:    eth.Tx(common.Hash{}),
-			WantErr: fmt.Errorf("w3: response handling failed: not found"),
+			WantErr: fmt.Errorf("w3: call failed: not found"),
 		},
 	}
 
@@ -71,7 +71,7 @@ func TestTxByBlockHashAndIndex(t *testing.T) {
 		{
 			Golden:  "get_transaction_by_block_hash_and_index__300",
 			Call:    eth.TxByBlockHashAndIndex(w3.H("0xa32d159805750cbe428b799a49b85dcb2300f61d806786f317260e721727d162"), 300),
-			WantErr: fmt.Errorf("w3: response handling failed: not found"),
+			WantErr: fmt.Errorf("w3: call failed: not found"),
 		},
 	}
 
@@ -144,7 +144,7 @@ func TestTxReceipt(t *testing.T) {
 		{
 			Golden:  "get_transaction_receipt_0x00",
 			Call:    eth.TxReceipt(common.Hash{}),
-			WantErr: fmt.Errorf("w3: response handling failed: not found"),
+			WantErr: fmt.Errorf("w3: call failed: not found"),
 		},
 	}
 

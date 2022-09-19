@@ -75,7 +75,7 @@ func TestBlockByHash(t *testing.T) {
 		{
 			Golden:  "get_block_by_hash__0x00",
 			Call:    eth.BlockByHash(common.Hash{}),
-			WantErr: errors.New("w3: response handling failed: not found"),
+			WantErr: errors.New("w3: call failed: not found"),
 		},
 	}
 
@@ -145,7 +145,7 @@ func TestBlockByNumber(t *testing.T) {
 		{
 			Golden:  "get_block_by_number__999999999",
 			Call:    eth.BlockByNumber(big.NewInt(999999999)),
-			WantErr: errors.New("w3: response handling failed: not found"),
+			WantErr: errors.New("w3: call failed: not found"),
 		},
 	}
 
@@ -165,7 +165,7 @@ func TestBlockTxCountByHash(t *testing.T) {
 		{
 			Golden:  "block_transaction_count_by_hash__0x00",
 			Call:    eth.BlockTxCountByHash(common.Hash{}),
-			WantErr: errors.New("w3: response handling failed: not found"),
+			WantErr: errors.New("w3: call failed: not found"),
 		},
 	}
 
