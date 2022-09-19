@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -60,7 +59,7 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	srv.readOnce.Do(srv.readGolden)
 
 	// read body
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		srv.t.Fatalf("Failed to read body: %v", err)
 	}
