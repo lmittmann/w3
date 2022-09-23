@@ -19,7 +19,7 @@ func TestBlockByHash(t *testing.T) {
 	tests := []rpctest.TestCase[types.Block]{
 		{
 			Golden: "get_block_by_hash__1",
-			Call:   eth.BlockByHash(w3.H("0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6")),
+			Call:   eth.BlockByHash(w3.H("0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6"), true),
 			WantRet: *types.NewBlockWithHeader(&types.Header{
 				ParentHash:  w3.H("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
@@ -40,7 +40,7 @@ func TestBlockByHash(t *testing.T) {
 		},
 		{
 			Golden: "get_block_by_hash__46147",
-			Call:   eth.BlockByHash(w3.H("0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1bdd")),
+			Call:   eth.BlockByHash(w3.H("0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1bdd"), true),
 			WantRet: *types.NewBlockWithHeader(&types.Header{
 				ParentHash:  w3.H("0x5a41d0e66b4120775176c09fcf39e7c0520517a13d2b57b18d33d342df038bfc"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
@@ -74,7 +74,7 @@ func TestBlockByHash(t *testing.T) {
 		},
 		{
 			Golden:  "get_block_by_hash__0x00",
-			Call:    eth.BlockByHash(common.Hash{}),
+			Call:    eth.BlockByHash(common.Hash{}, true),
 			WantErr: errors.New("w3: call failed: not found"),
 		},
 	}
@@ -89,7 +89,7 @@ func TestBlockByNumber(t *testing.T) {
 	tests := []rpctest.TestCase[types.Block]{
 		{
 			Golden: "get_block_by_number__1",
-			Call:   eth.BlockByNumber(big.NewInt(1)),
+			Call:   eth.BlockByNumber(big.NewInt(1), true),
 			WantRet: *types.NewBlockWithHeader(&types.Header{
 				ParentHash:  w3.H("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
@@ -110,7 +110,7 @@ func TestBlockByNumber(t *testing.T) {
 		},
 		{
 			Golden: "get_block_by_number__46147",
-			Call:   eth.BlockByNumber(big.NewInt(46147)),
+			Call:   eth.BlockByNumber(big.NewInt(46147), true),
 			WantRet: *types.NewBlockWithHeader(&types.Header{
 				ParentHash:  w3.H("0x5a41d0e66b4120775176c09fcf39e7c0520517a13d2b57b18d33d342df038bfc"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
@@ -144,7 +144,7 @@ func TestBlockByNumber(t *testing.T) {
 		},
 		{
 			Golden:  "get_block_by_number__999999999",
-			Call:    eth.BlockByNumber(big.NewInt(999999999)),
+			Call:    eth.BlockByNumber(big.NewInt(999999999), true),
 			WantErr: errors.New("w3: call failed: not found"),
 		},
 	}

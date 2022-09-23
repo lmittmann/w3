@@ -278,7 +278,7 @@ func BenchmarkCall_Block100(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			requests := make([]w3types.Caller, len(block100))
 			for j := 0; j < len(requests); j++ {
-				requests[j] = eth.BlockByNumber(block100[j]).Returns(&block)
+				requests[j] = eth.BlockByNumber(block100[j], true).Returns(&block)
 			}
 			w3Client.Call(requests...)
 		}

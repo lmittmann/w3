@@ -11,20 +11,22 @@ import (
 )
 
 // BlockByHash requests the block with the given hash with full transactions.
-func BlockByHash(hash common.Hash) w3types.CallerFactory[types.Block] {
+// If hydrate is false, only the transaction hashes will be requested, and not the full transactions.
+func BlockByHash(hash common.Hash, hydrate bool) w3types.CallerFactory[types.Block] {
 	return module.NewFactory(
 		"eth_getBlockByHash",
-		[]any{hash, true},
+		[]any{hash, hydrate},
 		module.WithRetWrapper(blockRetWrapper),
 	)
 }
 
 // BlockByNumber requests the block with the given number with full
 // transactions. If number is nil, the latest block is requested.
-func BlockByNumber(number *big.Int) w3types.CallerFactory[types.Block] {
+// If hydrate is false, only the transaction hashes will be requested, and not the full transactions.
+func BlockByNumber(number *big.Int, hydrate bool) w3types.CallerFactory[types.Block] {
 	return module.NewFactory(
 		"eth_getBlockByNumber",
-		[]any{module.BlockNumberArg(number), true},
+		[]any{module.BlockNumberArg(number), hydrate},
 		module.WithRetWrapper(blockRetWrapper),
 	)
 }
