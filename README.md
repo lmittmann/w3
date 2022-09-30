@@ -148,7 +148,7 @@ tx := types.MustSignNewTx(privKey, signer, &types.DynamicFeeTx{
 ```go
 var txHash common.Hash
 err := client.Call(
-	eth.SendTransaction(tx).Returns(&txHash),
+	eth.SendTx(tx).Returns(&txHash),
 )
 ```
 
