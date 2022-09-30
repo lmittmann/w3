@@ -46,7 +46,7 @@ func (p *parser) run() (err error) {
 	switch peek := p.peek(); peek.Typ {
 	case itemID:
 		err = p.parseFunc()
-	case itemTyp:
+	case itemTyp, itemLeftParen:
 		err = p.parseArgs(nil)
 	case itemError:
 		err = fmt.Errorf("lex error: %v", peek.Val)
