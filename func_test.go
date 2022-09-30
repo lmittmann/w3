@@ -259,6 +259,15 @@ func TestFuncDecodeReturns(t *testing.T) {
 			Returns:     []any{&[]byte{}},
 			WantReturns: []any{&[]byte{1, 2, 3}},
 		},
+		{ // https://github.com/lmittmann/w3/issues/25
+			Func:    MustNewFunc("test()", "(address arg0, uint256 arg1)"),
+			Output:  B("0x000000000000000000000000000000000000000000000000000000000000c0fe000000000000000000000000000000000000000000000000000000000000002a"),
+			Returns: []any{new(tuple)},
+			WantReturns: []any{&tuple{
+				Arg0: A("0x000000000000000000000000000000000000c0Fe"),
+				Arg1: big.NewInt(42),
+			}},
+		},
 	}
 
 	for i, test := range tests {

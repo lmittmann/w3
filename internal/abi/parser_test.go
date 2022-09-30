@@ -72,6 +72,15 @@ func TestParser(t *testing.T) {
 			}},
 		},
 		{
+			Input: "(address arg0, uint256 arg1)",
+			WantArgs: abi.Arguments{{
+				Type: tuple(
+					abi.ArgumentMarshaling{Type: "address", Name: "arg0"},
+					abi.ArgumentMarshaling{Type: "uint256", Name: "arg1"},
+				),
+			}},
+		},
+		{
 			Input:        "transfer(address,uint256)",
 			WantArgs:     abi.Arguments{{Type: typeAddress}, {Type: typeUint256}},
 			WantFuncName: "transfer",
