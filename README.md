@@ -184,7 +184,7 @@ to parse strings that may not be valid instead.
 
 List of supported RPC methods.
 
-### `eth`
+### [`eth`](https://pkg.go.dev/github.com/lmittmann/w3/module/eth)
 
 | Method                                    | Go Code
 | :---------------------------------------- | :-------
@@ -213,14 +213,14 @@ List of supported RPC methods.
 | `eth_getUncleCountByBlockHash`            | `eth.UncleCountByBlockHash(hash common.Hash).Returns(count *uint)`
 | `eth_getUncleCountByBlockNumber`          | `eth.UncleCountByBlockNumber(number *big.Int).Returns(count *uint)`
 
-### `debug`
+### [`debug`](https://pkg.go.dev/github.com/lmittmann/w3/module/debug)
 
 | Method                   | Go Code
 | :----------------------- | :-------
 | `debug_traceCall`        | `debug.TraceCall(msg *w3types.Message, blockNumber *big.Int, config *debug.TraceConfig).Returns(trace *debug.Trace)`
 | `debug_traceTransaction` | `debug.TraceTx(txHash common.Hash, config *debug.TraceConfig).Returns(trace *debug.Trace)`
 
-### `web3`
+### [`web3`](https://pkg.go.dev/github.com/lmittmann/w3/module/web3)
 
 | Method               | Go Code
 | :------------------- | :-------
