@@ -52,7 +52,6 @@ func (c *TraceConfig) MarshalJSON() ([]byte, error) {
 		DisableStack     bool          `json:"disableStack,omitempty"`
 		EnableMemory     bool          `json:"enableMemory,omitempty"`
 		EnableReturnData bool          `json:"enableReturnData,omitempty"`
-		Tracer           string        `json:"tracer,omitempty"`
 		Limit            uint64        `json:"limit,omitempty"`
 	}
 

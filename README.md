@@ -217,8 +217,8 @@ List of supported RPC methods.
 
 | Method                   | Go Code
 | :----------------------- | :-------
-| `debug_traceCall`        | `debug.TraceCall(msg *w3types.Message, blockNumber *big.Int, config *debug.TraceConfig).Returns(trace *debug.Trace)`
-| `debug_traceTransaction` | `debug.TraceTx(txHash common.Hash, config *debug.TraceConfig).Returns(trace *debug.Trace)`
+| `debug_traceCall`        | `debug.TraceCall(msg *w3types.Message, blockNumber *big.Int, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br>`debug.CallTraceCall(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(trace *debug.CallTrace)`
+| `debug_traceTransaction` | `debug.TraceTx(txHash common.Hash, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br>`debug.CallTraceTx(txHash common.Hash, overrides w3types.State).Returns(trace *debug.CallTrace)`
 
 ### [`web3`](https://pkg.go.dev/github.com/lmittmann/w3/module/web3)
 
