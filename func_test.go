@@ -2,6 +2,7 @@ package w3
 
 import (
 	"bytes"
+	"errors"
 	"math/big"
 	"strconv"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/lmittmann/w3/internal"
 	"github.com/lmittmann/w3/w3types"
 )
 
@@ -136,6 +138,7 @@ func TestFuncDecodeArgs(t *testing.T) {
 		Input    []byte
 		Args     []any
 		WantArgs []any
+		WantErr  error
 	}{
 		{
 			Func:     MustNewFunc("test(address)", ""),
@@ -200,15 +203,26 @@ func TestFuncDecodeArgs(t *testing.T) {
 				Arg1: big.NewInt(42),
 			}},
 		},
+		{ // https://github.com/lmittmann/w3/issues/22
+			Func:    MustNewFunc("transfer(address recipient, uint256 amount)", "bool success"),
+			Input:   B("0x"),
+			Args:    []any{new(common.Address), new(big.Int)},
+			WantErr: errors.New("w3: insufficient input length"),
+		},
 	}
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if err := test.Func.DecodeArgs(test.Input, test.Args...); err != nil {
-				t.Fatalf("Failed to decode args: %v", err)
+			err := test.Func.DecodeArgs(test.Input, test.Args...)
+			if diff := cmp.Diff(test.WantErr, err, internal.EquateErrors()); diff != "" {
+				t.Fatalf("Err: (-want, +got)\n%s", diff)
 			}
+			if err != nil {
+				return
+			}
+
 			if diff := cmp.Diff(test.WantArgs, test.Args, cmp.AllowUnexported(big.Int{})); diff != "" {
-				t.Fatalf("(-want, +got)\n%s", diff)
+				t.Fatalf("Args: (-want, +got)\n%s", diff)
 			}
 		})
 	}

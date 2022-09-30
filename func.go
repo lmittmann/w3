@@ -85,6 +85,9 @@ func (f *Func) EncodeArgs(args ...any) ([]byte, error) {
 
 // DecodeArgs ABI-decodes the given input to the given args.
 func (f *Func) DecodeArgs(input []byte, args ...any) error {
+	if len(input) < 4 {
+		return errors.New("w3: insufficient input length")
+	}
 	return _abi.Arguments(f.Args).Decode(input[4:], args...)
 }
 
