@@ -1,0 +1,2 @@
+> {"jsonrpc":"2.0","id":1,"method":"debug_traceTransaction","params":["0x38f299591902bfada359527fa6b9b597a959c41c6f72a3b484807fbf52dc8abe",{"disableStorage":true,"disableStack":true,"enableReturnData":true}]}
+< {"jsonrpc":"2.0","id":1,"result":{"structLogs":[],"gas":22224,"failed":false,"returnValue":""}}

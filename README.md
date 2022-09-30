@@ -217,8 +217,8 @@ List of supported RPC methods.
 
 | Method                   | Go Code
 | :----------------------- | :-------
-| `debug_traceCall`        | TODO
-| `debug_traceTransaction` | TODO
+| `debug_traceCall`        | `debug.TraceCall(msg *w3types.Message, blockNumber *big.Int, config *debug.TraceConfig).Returns(trace *debug.Trace)`
+| `debug_traceTransaction` | `debug.TraceTx(txHash common.Hash, config *debug.TraceConfig).Returns(trace *debug.Trace)`
 
 ### `web3`
 
