@@ -44,7 +44,8 @@ go get github.com/lmittmann/w3
 
 ## Getting Started
 
-> ℹ Check out the [examples](examples/)!
+> **Info**
+> Check out the [examples](examples/)!
 
 Connect to an RPC endpoint via HTTP, WebSocket, or IPC using [`Dial`](https://pkg.go.dev/github.com/lmittmann/w3#Dial)
 or [`MustDial`](https://pkg.go.dev/github.com/lmittmann/w3#MustDial).
