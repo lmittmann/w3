@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/lmittmann/w3/internal/crypto"
 )
 
 var (
@@ -77,14 +77,10 @@ func (a Arguments) EncodeWithSelector(selector [4]byte, args ...any) ([]byte, er
 // EncodeWithSignature ABI-encodes the given arguments args prepended by the
 // first 4 bytes of the hash of the given signature.
 func (a Arguments) EncodeWithSignature(signature string, args ...any) ([]byte, error) {
-	data, err := a.Encode(args...)
-	if err != nil {
-		return nil, err
-	}
+	var selector [4]byte
+	copy(selector[:], crypto.Keccak256([]byte(signature))[:4])
 
-	selector := crypto.Keccak256([]byte(signature))[:4]
-	data = append(selector, data...)
-	return data, nil
+	return a.EncodeWithSelector(selector, args...)
 }
 
 // Decode ABI-decodes the given data to the given arguments args.
