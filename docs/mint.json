@@ -1,0 +1,45 @@
+{
+  "name": "w3",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#73CEDD",
+    "light": "#BCE8EF",
+    "dark": "#67B9C6",
+    "ultraLight": "#EBF6F8",
+    "ultraDark": "#51929C",
+    "background": {
+      "dark": "#111"
+    }
+  },
+  "topbarCtaButton": {
+    "type": "github",
+    "url": "https://github.com/lmittmann/w3"
+  },
+  "anchors": [
+    {
+      "name": "Package",
+      "icon": "golang",
+      "url": "https://pkg.go.dev/github.com/lmittmann/w3"
+    },
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "color": "#333333",
+      "url": "https://github.com/Realize-Engineering/pipebird"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": ["introduction", "rpc-methods"]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/lmittmann_",
+    "github": "https://gh@mittmann.dev"
+  }
+}
