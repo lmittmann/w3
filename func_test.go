@@ -209,6 +209,12 @@ func TestFuncDecodeArgs(t *testing.T) {
 			Args:    []any{new(common.Address), new(big.Int)},
 			WantErr: errors.New("w3: insufficient input length"),
 		},
+		{
+			Func:    MustNewFunc("test((address arg0, uint256 arg1))", ""),
+			Input:   B("0xffffffff000000000000000000000000000000000000000000000000000000000000c0fe000000000000000000000000000000000000000000000000000000000000002a"),
+			Args:    []any{new(tupleWithUnexportedProperty)},
+			WantErr: errors.New(`abi: invalid type: field "Arg0" does not exist on dest struct`),
+		},
 	}
 
 	for i, test := range tests {
@@ -301,6 +307,11 @@ func hashPtr(h common.Hash) *common.Hash { return &h }
 
 type tuple struct {
 	Arg0 common.Address
+	Arg1 *big.Int
+}
+
+type tupleWithUnexportedProperty struct {
+	arg0 common.Address
 	Arg1 *big.Int
 }
 

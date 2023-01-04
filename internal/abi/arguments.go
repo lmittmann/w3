@@ -182,6 +182,9 @@ func copyTuple(rDst, rSrc reflect.Value) error {
 
 	for i := 0; i < rSrc.NumField(); i++ {
 		fieldName := rSrc.Type().Field(i).Name
+		if rDst.Elem().FieldByName(fieldName).Kind() == reflect.Invalid {
+			return fmt.Errorf("%w: field %q does not exist on dest struct", errInvalidType, fieldName)
+		}
 		rDst.Elem().FieldByName(fieldName).Set(rSrc.Field(i))
 	}
 	return nil
