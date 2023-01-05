@@ -13,39 +13,65 @@ type item struct {
 
 type itemType int
 
-const (
-	itemError      itemType = iota
-	itemID                  // function or argument name
-	itemTyp                 // argument type
-	itemLeftParen           // '('
-	itemRightParen          // ')'
-	itemDelim               // ','
-	itemEOF
-)
+// IsType returns whether the item is a type or not.
+func (i *item) IsType() (string, bool) {
+	if i.Typ != itemTypeID {
+		return "", false
+	}
+	typ, ok := types[i.Val]
+	return typ, ok
+}
 
-type stateFn func(*lexer) stateFn
+const (
+	// lexer item types
+	itemTypeID    = iota // identifier: [a-zA-Z_][0-9a-zA-Z_]*
+	itemTypePunct        // punctuation: [\(\)\[\],]
+	itemTypeNum          // number: [1-9][0-9]*
+
+	eof rune = -1
+
+	num0  = "123456789"
+	num   = "0" + num0
+	id0   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+	id    = id0 + num
+	space = " \t\r\n"
+)
 
 // lexer holds the state of the scanner.
 type lexer struct {
-	input  string      // the string being scanned
-	start  int         // start position of this item
-	pos    int         // current position in the input
-	width  int         // width of last rune read from input
-	itemCh chan<- item // channel of scanned items
+	input string // the string being scanned
+	start int    // start position of this item
+	pos   int    // current position in the input
+	width int    // width of last rune read from input
 }
 
-func newLexer(input string, itemCh chan<- item) *lexer {
-	return &lexer{
-		input:  input,
-		itemCh: itemCh,
-	}
+func newLexer(input string) *lexer {
+	return &lexer{input: input}
 }
 
-func (l *lexer) run() {
-	for state := lexFuncOrType; state != nil; {
-		state = state(l)
+func (l *lexer) nextItem() (*item, error) {
+Start:
+	switch l.peek() {
+	case ' ', '\t', '\r', '\n':
+		l.acceptRun(space)
+		l.ignore()
+		goto Start
+	case '(', ')', '[', ']', ',':
+		l.next()
+		return &item{itemTypePunct, l.token()}, nil
+	case '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		l.accept(num0)
+		l.acceptRun(num)
+		return &item{itemTypeNum, l.token()}, nil
+	case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_':
+		l.accept(id0)
+		l.acceptRun(id)
+		return &item{itemTypeID, l.token()}, nil
+	case eof:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("unexpected character: %c", l.next())
 	}
-	close(l.itemCh)
 }
 
 func (l *lexer) next() (next rune) {
@@ -93,183 +119,9 @@ func (l *lexer) acceptRun(valid string) {
 }
 
 func (l *lexer) token() string {
-	return l.input[l.start:l.pos]
-}
-
-func (l *lexer) emit(typ itemType) {
-	l.emitVal(typ, l.token())
-}
-
-func (l *lexer) emitVal(typ itemType, val string) {
-	l.itemCh <- item{typ, val}
-	l.start = l.pos
-}
-
-// errorf returns an error token and terminates the scan by passing
-// back a nil pointer that will be the next state.
-func (l *lexer) errorf(format string, args ...any) stateFn {
-	l.itemCh <- item{itemError, fmt.Sprintf(format, args...)}
-	return nil
-}
-
-const (
-	eof rune = -1
-
-	number  = "0123456789"
-	idStart = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_"
-	idPart  = idStart + number
-	space   = " \t\r\n"
-)
-
-func lexFuncOrType(l *lexer) stateFn {
-	switch l.peek() {
-	case '(':
-		return lexLeftParent
-	case eof:
-		l.emit(itemEOF)
-		return nil
-	}
-
-	l.accept(idStart)
-	l.acceptRun(idPart)
-
-	switch l.peek() {
-	case '(':
-		l.emit(itemID)
-		return lexLeftParent
-	default:
-		l.backupAll()
-		return lexType
-	}
-}
-
-func lexLeftParent(l *lexer) stateFn {
-	if next := l.next(); next == '(' {
-		l.emit(itemLeftParen)
-	} else {
-		return l.errorf("unexpected token %q, want '('", next)
-	}
-
-	switch l.peek() {
-	case '(':
-		return lexLeftParent
-	case ')':
-		return lexRightParent
-	case eof:
-		return l.errorf("unexpected EOF after '('")
-	default:
-		return lexType
-	}
-}
-
-func lexRightParent(l *lexer) stateFn {
-	if next := l.next(); next == ')' {
-		l.emit(itemRightParen)
-	} else {
-		return l.errorf("unexpected token %q, want ')'", next)
-	}
-
-	switch peek := l.peek(); peek {
-	case ')':
-		return lexRightParent
-	case ' ', '\t', '\r', '\n':
-		return lexArgName
-	case ',':
-		return lexDelim
-	case eof:
-		l.emit(itemEOF)
-		return nil
-	default:
-		return l.errorf("unexpected token %q, want ')', ',' or EOF", peek)
-	}
-}
-
-func lexType(l *lexer) stateFn {
-	// ignore leading spaces
-	l.acceptRun(space)
+	token := l.input[l.start:l.pos]
 	l.ignore()
-
-	// accept type
-	l.accept(idStart)
-	l.acceptRun(idPart)
-	normType, ok := types[l.token()]
-	if !ok {
-		return l.errorf("unknown type %q", l.token())
-	}
-	l.ignore()
-
-	// optionally accept array
-	for l.peek() == '[' {
-		l.accept("[")
-		l.acceptRun(number)
-		switch peek := l.peek(); peek {
-		case ']':
-			l.accept("]")
-		case eof:
-			return l.errorf("unexpected EOF, want ']'")
-		default:
-			return l.errorf("unexpected token %q, want ']'", peek)
-		}
-		normType += l.token()
-		l.ignore()
-	}
-	l.emitVal(itemTyp, normType)
-
-	switch peek := l.peek(); peek {
-	case ',':
-		return lexDelim
-	case ' ', '\t', '\r', '\n':
-		return lexArgName
-	case ')':
-		return lexRightParent
-	case eof:
-		l.emit(itemEOF)
-		return nil
-	default:
-		return lexType
-	}
-}
-
-func lexArgName(l *lexer) stateFn {
-	// ignore leading spaces
-	l.acceptRun(space)
-	l.ignore()
-
-	l.accept(idStart)
-	l.acceptRun(idPart)
-	l.emit(itemID)
-
-	switch peek := l.peek(); peek {
-	case ')':
-		return lexRightParent
-	case ',':
-		return lexDelim
-	case eof:
-		l.emit(itemEOF)
-		return nil
-	default:
-		return l.errorf("unexpected token %q, want ')', ',' or EOF", peek)
-	}
-}
-
-func lexDelim(l *lexer) stateFn {
-	if next := l.next(); next == ',' {
-		l.emit(itemDelim)
-	} else {
-		return l.errorf("unexpected token %q, want ','", next)
-	}
-
-	l.acceptRun(space)
-	l.ignore()
-
-	switch peek := l.peek(); peek {
-	case '(':
-		return lexLeftParent
-	case eof:
-		return l.errorf("unexpected EOF after ','")
-	default:
-		return lexType
-	}
+	return token
 }
 
 var types = map[string]string{
