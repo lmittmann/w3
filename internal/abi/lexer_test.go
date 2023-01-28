@@ -17,11 +17,11 @@ func TestLexer(t *testing.T) {
 		WantItems []*item
 		WantErr   error
 	}{
-		{Input: "", WantItems: []*item{}},
-		{Input: "uint256", WantItems: []*item{{itemTypeID, "uint256"}}},
-		{Input: "uint256[1]", WantItems: []*item{{itemTypeID, "uint256"}, {itemTypePunct, "["}, {itemTypeNum, "1"}, {itemTypePunct, "]"}}},
-		{Input: "uint balance", WantItems: []*item{{itemTypeID, "uint"}, {itemTypeID, "balance"}}},
-		{Input: "1", WantItems: []*item{{itemTypeNum, "1"}}},
+		{Input: "", WantItems: []*item{{itemTypeEOF, ""}}},
+		{Input: "uint256", WantItems: []*item{{itemTypeID, "uint256"}, {itemTypeEOF, ""}}},
+		{Input: "uint256[1]", WantItems: []*item{{itemTypeID, "uint256"}, {itemTypePunct, "["}, {itemTypeNum, "1"}, {itemTypePunct, "]"}, {itemTypeEOF, ""}}},
+		{Input: "uint balance", WantItems: []*item{{itemTypeID, "uint"}, {itemTypeID, "balance"}, {itemTypeEOF, ""}}},
+		{Input: "1", WantItems: []*item{{itemTypeNum, "1"}, {itemTypeEOF, ""}}},
 
 		{Input: "0", WantErr: errors.New("unexpected character: 0")},
 		{Input: "uint256[0]", WantErr: errors.New("unexpected character: 0")},
@@ -48,10 +48,12 @@ func lex(input string) ([]*item, error) {
 		item, err := l.nextItem()
 		if err != nil {
 			return nil, err
-		} else if item == nil {
+		}
+
+		items = append(items, item)
+		if item.Typ == itemTypeEOF {
 			break
 		}
-		items = append(items, item)
 	}
 	return items, nil
 }

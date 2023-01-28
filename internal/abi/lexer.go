@@ -24,9 +24,10 @@ func (i *item) IsType() (string, bool) {
 
 const (
 	// lexer item types
-	itemTypeID    = iota // identifier: [a-zA-Z_][0-9a-zA-Z_]*
-	itemTypePunct        // punctuation: [\(\)\[\],]
-	itemTypeNum          // number: [1-9][0-9]*
+	itemTypeID    itemType = iota // identifier: [a-zA-Z_][0-9a-zA-Z_]*
+	itemTypePunct                 // punctuation: [\(\)\[\],]
+	itemTypeNum                   // number: [1-9][0-9]*
+	itemTypeEOF                   // end of file
 
 	eof rune = -1
 
@@ -68,7 +69,7 @@ Start:
 		l.acceptRun(id)
 		return &item{itemTypeID, l.token()}, nil
 	case eof:
-		return nil, nil
+		return &item{itemTypeEOF, ""}, nil
 	default:
 		return nil, fmt.Errorf("unexpected character: %c", l.next())
 	}
