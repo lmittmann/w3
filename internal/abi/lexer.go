@@ -2,6 +2,7 @@ package abi
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -14,6 +15,13 @@ type item struct {
 }
 
 type itemType int
+
+func (i item) String() string {
+	if i.Typ == itemTypeEOF {
+		return "EOF"
+	}
+	return strconv.Quote(i.Val)
+}
 
 // IsType returns whether the item is a type or not.
 func (i *item) IsType() (*abi.Type, bool) {

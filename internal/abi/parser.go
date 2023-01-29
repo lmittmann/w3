@@ -3,163 +3,261 @@ package abi
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-func parse(s string) (name string, args abi.Arguments, err error) {
-	itemCh := make(chan item, 1)
-	l := newLexer(s, itemCh)
-	go l.run()
+var ErrSyntax = errors.New("syntax error")
 
-	p := newParser(itemCh)
-	err = p.run()
-	if err != nil {
-		return
+func parseArgs(s string) (args abi.Arguments, err error) {
+	l := newLexer(s)
+	p := newParser(l)
+
+	if err := p.parseArgs(); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrSyntax, err)
 	}
+	return p.args, nil
+}
 
-	args = p.args
-	name = p.fnName
-	return
+func parseArgsWithName(s string) (name string, args abi.Arguments, err error) {
+	l := newLexer(s)
+	p := newParser(l)
+
+	if err := p.parseArgsWithName(); err != nil {
+		return "", nil, fmt.Errorf("%w: %v", ErrSyntax, err)
+	}
+	return p.name, p.args, nil
 }
 
 type parser struct {
-	itemCh <-chan item // channel of scanned items
-	items  []item
-	i      int
+	lexer *lexer
+	items []*item
+	i     int
 
-	args   abi.Arguments
-	fnName string
-	depth  int
-	err    string
+	name string
+	args abi.Arguments
+
+	err error
 }
 
-func newParser(itemCh <-chan item) *parser {
+func newParser(lexer *lexer) *parser {
 	return &parser{
-		itemCh: itemCh,
-		items:  make([]item, 0, 1),
-		i:      -1,
+		lexer: lexer,
+		items: make([]*item, 0),
+		i:     -1,
 	}
 }
 
-func (p *parser) run() (err error) {
-	switch peek := p.peek(); peek.Typ {
-	case itemID:
-		err = p.parseFunc()
-	case itemTyp, itemLeftParen:
-		err = p.parseArgs(nil)
-	case itemError:
-		err = fmt.Errorf("lex error: %v", peek.Val)
-	case itemEOF:
-	default:
-		p.err = fmt.Sprintf(`unexpected item %q`, peek)
-	}
-	return
-}
-
-func (p *parser) next() (next item) {
+func (p *parser) next() *item {
 	if p.i < len(p.items)-1 {
 		p.i += 1
-		next = p.items[p.i]
-	} else {
-		next = <-p.itemCh
-		p.i += 1
-		p.items = append(p.items, next)
+		return p.items[p.i]
 	}
-	return
+
+	next, err := p.lexer.nextItem()
+	if err != nil {
+		p.err = err
+		return nil
+	}
+
+	p.i += 1
+	p.items = append(p.items, next)
+	return next
 }
 
 func (p *parser) backup() {
 	p.i -= 1
 }
 
-func (p *parser) peek() (next item) {
-	next = p.next()
+func (p *parser) peek() *item {
+	next := p.next()
 	p.backup()
-	return
+	return next
 }
 
-func (p *parser) parseFunc() error {
-	next := p.next()
-	p.fnName = next.Val
-
-	if next := p.next(); next.Typ != itemLeftParen {
-		return fmt.Errorf(`unexpected item %q, want "("`, next)
+func (p *parser) parseArgsWithName() error {
+	// parse name
+	if next := p.next(); next.Typ != itemTypeID {
+		return fmt.Errorf(`unexpected %s, expecting name`, next)
+	} else {
+		p.name = next.Val
 	}
 
-	if err := p.parseArgs(nil); err != nil {
+	// parse "("
+	if next := p.next(); next.Typ != itemTypePunct || next.Val != "(" {
+		return fmt.Errorf(`unexpected %s, expecting "("`, next)
+	}
+
+	if err := p.parseArgs(); err != nil {
 		return err
 	}
 
-	if next := p.next(); next.Typ != itemRightParen {
-		return fmt.Errorf(`unexpected item %q, want ")"`, next)
+	// parse ")"
+	if next := p.next(); next.Typ != itemTypePunct || next.Val != ")" {
+		return fmt.Errorf(`unexpected %s, expecting ")"`, next)
 	}
-	if next := p.next(); next.Typ != itemEOF {
-		return fmt.Errorf(`unexpected item %q, want EOF`, next)
+
+	// parse EOF
+	if next := p.next(); next.Typ != itemTypeEOF {
+		return fmt.Errorf(`unexpected %s, expecting EOF`, next)
 	}
 	return nil
-
 }
 
-func (p *parser) parseArgs(components *[]abi.ArgumentMarshaling) error {
-	p.depth += 1
-	defer func() { p.depth-- }()
+func (p *parser) parseArgs() error {
+	if peek := p.peek(); (peek.Typ == itemTypeEOF && p.name == "") ||
+		(peek.Typ == itemTypePunct && peek.Val == ")" && p.name != "") {
+		return nil
+	}
 
 	for {
-		var (
-			typ   string
-			name  string
-			comps []abi.ArgumentMarshaling
-		)
+		// parse type
+		typ, err := p.parseType()
+		if err != nil {
+			return err
+		}
+		arg := abi.Argument{Type: *typ}
 
-		switch peek := p.peek(); peek.Typ {
-		case itemTyp:
-			typ = p.next().Val
-		case itemLeftParen:
+		// parse optional indexed and name
+		peek := p.peek()
+		if peek.Typ == itemTypeID {
+			if peek.Val == "indexed" {
+				arg.Indexed = true
+			} else {
+				arg.Name = peek.Val
+			}
 			p.next()
-			typ = "tuple"
-			if err := p.parseArgs(&comps); err != nil {
-				return err
+
+			peek = p.peek()
+			if peek.Typ == itemTypeID && arg.Indexed {
+				arg.Name = peek.Val
+				p.next()
 			}
-			if next := p.next(); next.Typ != itemRightParen {
-				return fmt.Errorf(`unexpected item %q, want ")"`, next)
-			}
-		case itemRightParen:
-			return nil
-		case itemError:
-			return errors.New(p.next().Val)
-		default:
-			return fmt.Errorf(`unexpected item %q, want type or "("`, p.next().Val)
 		}
 
-		if peek := p.peek(); peek.Typ == itemID {
-			name = p.next().Val
-		}
+		p.args = append(p.args, arg)
 
-		if p.depth > 1 {
-			*components = append(*components, abi.ArgumentMarshaling{
-				Name:       name,
-				Type:       typ,
-				Components: comps,
-			})
+		// parse ",", EOF, or ")"
+		if peek := p.peek(); peek.Typ == itemTypeEOF && p.name == "" {
+			break
+		} else if peek.Typ == itemTypePunct && peek.Val == ")" && p.name != "" {
+			break
+		} else if peek.Typ == itemTypePunct && peek.Val == "," {
+			p.next()
 		} else {
-			ty, err := abi.NewType(typ, "", comps)
-			if err != nil {
-				return err
+			if p.name == "" {
+				return fmt.Errorf(`unexpected %s, want "," or EOF`, peek)
+			} else {
+				return fmt.Errorf(`unexpected %s, want "," or ")"`, peek)
 			}
-			p.args = append(p.args, abi.Argument{
-				Name: name,
-				Type: ty,
-			})
-		}
-
-		switch peek := p.peek(); peek.Typ {
-		case itemDelim:
-			p.next()
-		case itemRightParen:
-			return nil
-		case itemEOF:
-			return nil
 		}
 	}
+	return nil
+}
+
+// parseType parses a non-tupple type of form "type (indexed)? (name)?"
+func (p *parser) parseType() (*abi.Type, error) {
+	var (
+		typ *abi.Type
+		ok  bool
+		err error
+	)
+	if peek := p.peek(); peek.Typ == itemTypeID {
+		// non-tuple type
+		typ, ok = peek.IsType()
+		if !ok {
+			return nil, fmt.Errorf(`unexpected %s, expecting type`, peek)
+		}
+		p.next()
+	} else if peek.Typ == itemTypePunct && peek.Val == "(" {
+		// tuple type
+		typ, err = p.parseTupleTypes()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf(`unexpected %s, expecting type`, peek)
+	}
+
+	// optional: parse slice or array
+	typ, err = p.parseSliceOrArray(typ)
+	if err != nil {
+		return nil, err
+	}
+
+	return typ, nil
+}
+
+func (p *parser) parseTupleType() (*abi.Type, string, error) {
+	typ, err := p.parseType()
+	if err != nil {
+		return nil, "", err
+	}
+
+	// parse name
+	next := p.next()
+	if next.Typ != itemTypeID {
+		return nil, "", fmt.Errorf(`unexpected %s, want name`, next)
+	}
+
+	return typ, next.Val, nil
+}
+
+func (p *parser) parseTupleTypes() (*abi.Type, error) {
+	if next := p.next(); next.Typ != itemTypePunct || next.Val != "(" {
+		return nil, fmt.Errorf(`unexpected %s, expecting "("`, next)
+	}
+
+	typ := &abi.Type{T: abi.TupleTy}
+	for {
+		// parse type
+		elemTyp, name, err := p.parseTupleType()
+		if err != nil {
+			return nil, err
+		}
+		typ.TupleElems = append(typ.TupleElems, elemTyp)
+		typ.TupleRawNames = append(typ.TupleRawNames, name)
+
+		next := p.next()
+		if next.Typ == itemTypePunct {
+			if next.Val == ")" {
+				break
+			} else if next.Val == "," {
+				continue
+			}
+		}
+		return nil, fmt.Errorf(`unexpected %s, expecting "," or ")"`, next)
+	}
+	return typ, nil
+}
+
+func (p *parser) parseSliceOrArray(typ *abi.Type) (*abi.Type, error) {
+	parent := *typ
+	for peek := p.peek(); peek.Typ == itemTypePunct && peek.Val == "["; peek = p.peek() {
+		// parse "["
+		p.next()
+
+		// nest type
+		parentCopy := parent
+		parent = abi.Type{
+			Elem: &parentCopy,
+		}
+
+		// parse optional number
+		next := p.next()
+		if next.Typ == itemTypeNum {
+			parent.Size, _ = strconv.Atoi(next.Val)
+			parent.T = abi.ArrayTy
+			next = p.next()
+		} else {
+			parent.T = abi.SliceTy
+		}
+
+		// parse "]"
+		if next.Typ != itemTypePunct || next.Val != "]" {
+			return nil, fmt.Errorf(`unexpected %s, expecting "]"`, next)
+		}
+	}
+	return &parent, nil
 }

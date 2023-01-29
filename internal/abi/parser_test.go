@@ -12,22 +12,25 @@ import (
 )
 
 var (
-	typeUint256 = abi.Type{T: abi.UintTy, Size: 256}
 	typeAddress = abi.Type{T: abi.AddressTy, Size: 20}
+	typeUint24  = abi.Type{T: abi.UintTy, Size: 24}
+	typeUint160 = abi.Type{T: abi.UintTy, Size: 160}
+	typeUint256 = abi.Type{T: abi.UintTy, Size: 256}
 )
 
-func TestParser(t *testing.T) {
-	t.Parallel()
-
+func TestParseArgs(t *testing.T) {
 	tests := []struct {
-		Input        string
-		WantArgs     abi.Arguments
-		WantFuncName string
-		WantErr      error
+		Input    string
+		WantArgs abi.Arguments
+		WantErr  error
 	}{
 		{
 			Input:    "",
 			WantArgs: abi.Arguments{},
+		},
+		{
+			Input:   "xxx",
+			WantErr: errors.New(`syntax error: unexpected "xxx", expecting type`),
 		},
 		{
 			Input:    "uint256",
@@ -42,16 +45,20 @@ func TestParser(t *testing.T) {
 			WantArgs: abi.Arguments{{Type: typeUint256, Name: "balance"}},
 		},
 		{
-			Input:    "address,uint256",
-			WantArgs: abi.Arguments{{Type: typeAddress}, {Type: typeUint256}},
+			Input:    "uint256 indexed balance",
+			WantArgs: abi.Arguments{{Type: typeUint256, Indexed: true, Name: "balance"}},
 		},
 		{
-			Input:    "address recipient, uint256 amount",
-			WantArgs: abi.Arguments{{Type: typeAddress, Name: "recipient"}, {Type: typeUint256, Name: "amount"}},
+			Input:    "uint256 indexed",
+			WantArgs: abi.Arguments{{Type: typeUint256, Indexed: true}},
 		},
 		{
 			Input:    "uint256[]",
 			WantArgs: abi.Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.SliceTy}}},
+		},
+		{
+			Input:    "uint256[3]",
+			WantArgs: abi.Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.ArrayTy, Size: 3}}},
 		},
 		{
 			Input: "uint256[][]",
@@ -59,6 +66,16 @@ func TestParser(t *testing.T) {
 				Type: abi.Type{
 					Elem: &abi.Type{Elem: &typeUint256, T: abi.SliceTy},
 					T:    abi.SliceTy,
+				},
+			}},
+		},
+		{
+			Input: "uint256[][3]",
+			WantArgs: abi.Arguments{{
+				Type: abi.Type{
+					Elem: &abi.Type{Elem: &typeUint256, T: abi.SliceTy},
+					T:    abi.ArrayTy,
+					Size: 3,
 				},
 			}},
 		},
@@ -72,68 +89,59 @@ func TestParser(t *testing.T) {
 			}},
 		},
 		{
-			Input: "(address arg0, uint256 arg1)",
+			Input:   "uint256[",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting "]"`),
+		},
+		{
+			Input:   "uint256[3",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting "]"`),
+		},
+		{
+			Input: "(uint256 arg0)",
 			WantArgs: abi.Arguments{{
-				Type: tuple(
-					abi.ArgumentMarshaling{Type: "address", Name: "arg0"},
-					abi.ArgumentMarshaling{Type: "uint256", Name: "arg1"},
-				),
+				Type: abi.Type{
+					T:             abi.TupleTy,
+					TupleElems:    []*abi.Type{&typeUint256},
+					TupleRawNames: []string{"arg0"},
+				},
 			}},
 		},
 		{
-			Input:        "transfer(address,uint256)",
-			WantArgs:     abi.Arguments{{Type: typeAddress}, {Type: typeUint256}},
-			WantFuncName: "transfer",
-		},
-		{
-			Input:        "transfer(address recipient, uint256 amount)",
-			WantArgs:     abi.Arguments{{Type: typeAddress, Name: "recipient"}, {Type: typeUint256, Name: "amount"}},
-			WantFuncName: "transfer",
-		},
-		{
-			Input:        "fee()",
-			WantArgs:     nil,
-			WantFuncName: "fee",
-		},
-		{
-			Input: "exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params)",
-			WantArgs: abi.Arguments{
-				{
-					Type: tuple(
-						abi.ArgumentMarshaling{Type: "address", Name: "tokenIn"},
-						abi.ArgumentMarshaling{Type: "address", Name: "tokenOut"},
-						abi.ArgumentMarshaling{Type: "uint24", Name: "fee"},
-						abi.ArgumentMarshaling{Type: "address", Name: "recipient"},
-						abi.ArgumentMarshaling{Type: "uint256", Name: "deadline"},
-						abi.ArgumentMarshaling{Type: "uint256", Name: "amountIn"},
-						abi.ArgumentMarshaling{Type: "uint256", Name: "amountOutMinimum"},
-						abi.ArgumentMarshaling{Type: "uint160", Name: "sqrtPriceLimitX96"},
-					),
-					Name: "params",
+			Input: "(uint256 arg0)[]",
+			WantArgs: abi.Arguments{{
+				Type: abi.Type{
+					Elem: &abi.Type{
+						T:             abi.TupleTy,
+						TupleElems:    []*abi.Type{&typeUint256},
+						TupleRawNames: []string{"arg0"},
+					},
+					T: abi.SliceTy,
 				},
-			},
-			WantFuncName: "exactInputSingle",
+			}},
 		},
 		{
-			Input:   "xxx",
-			WantErr: errors.New(`lex error: unknown type "xxx"`),
-		},
-		{
-			Input:   "f(",
-			WantErr: errors.New(`unexpected EOF after '('`),
+			Input: "(uint256 arg0)[3]",
+			WantArgs: abi.Arguments{{
+				Type: abi.Type{
+					Elem: &abi.Type{
+						T:             abi.TupleTy,
+						TupleElems:    []*abi.Type{&typeUint256},
+						TupleRawNames: []string{"arg0"},
+					},
+					T:    abi.ArrayTy,
+					Size: 3,
+				},
+			}},
 		},
 	}
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotName, gotArgs, gotErr := parse(test.Input)
+			gotArgs, gotErr := parseArgs(test.Input)
 			if diff := cmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
 				t.Fatalf("Err (-want, +got):\n%s", diff)
-			}
-			if test.WantFuncName != gotName {
-				t.Errorf("FuncName want: %s, got: %s", test.WantFuncName, gotName)
 			}
 			if diff := cmp.Diff(test.WantArgs, gotArgs,
 				cmpopts.EquateEmpty(),
@@ -145,10 +153,90 @@ func TestParser(t *testing.T) {
 	}
 }
 
-func tuple(types ...abi.ArgumentMarshaling) abi.Type {
-	typ, err := abi.NewType("tuple", "", types)
-	if err != nil {
-		panic(err.Error())
+func TestParseArgsWithName(t *testing.T) {
+	tests := []struct {
+		Input    string
+		WantArgs abi.Arguments
+		WantName string
+		WantErr  error
+	}{
+		{
+			Input:   "",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting name`),
+		},
+		{
+			Input:   "uint",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting "("`),
+		},
+		{
+			Input:    "f()",
+			WantName: "f",
+		},
+		{
+			Input:   "f(",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting type`),
+		},
+		{
+			Input:   "f(uint256",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
+		{
+			Input:   "f(uint256 indexed",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
+		{
+			Input:   "f(uint256 arg0",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
+		{
+			Input:   "f(uint256 indexed arg0",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
+		{
+			Input:   "f(uint256,",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting type`),
+		},
+		{
+			Input:    "transfer(address,uint256)",
+			WantArgs: abi.Arguments{{Type: typeAddress}, {Type: typeUint256}},
+			WantName: "transfer",
+		},
+		{
+			Input:    "transfer(address recipient, uint256 amount)",
+			WantArgs: abi.Arguments{{Type: typeAddress, Name: "recipient"}, {Type: typeUint256, Name: "amount"}},
+			WantName: "transfer",
+		},
+		{
+			Input: "exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params)",
+			WantArgs: abi.Arguments{{
+				Type: abi.Type{
+					T:             abi.TupleTy,
+					TupleElems:    []*abi.Type{&typeAddress, &typeAddress, &typeUint24, &typeAddress, &typeUint256, &typeUint256, &typeUint256, &typeUint160},
+					TupleRawNames: []string{"tokenIn", "tokenOut", "fee", "recipient", "deadline", "amountIn", "amountOutMinimum", "sqrtPriceLimitX96"},
+				},
+				Name: "params",
+			}},
+			WantName: "exactInputSingle",
+		},
 	}
-	return typ
+
+	for i, test := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			gotName, gotArgs, gotErr := parseArgsWithName(test.Input)
+			if diff := cmp.Diff(test.WantErr, gotErr,
+				internal.EquateErrors(),
+			); diff != "" {
+				t.Fatalf("Err (-want, +got):\n%s", diff)
+			}
+			if test.WantName != gotName {
+				t.Errorf("Name want: %s, got: %s", test.WantName, gotName)
+			}
+			if diff := cmp.Diff(test.WantArgs, gotArgs,
+				cmpopts.EquateEmpty(),
+				cmpopts.IgnoreUnexported(abi.Type{}),
+				cmpopts.IgnoreFields(abi.Type{}, "TupleType")); diff != "" {
+				t.Errorf("Args (-want, +got):\n%s", diff)
+			}
+		})
+	}
 }
