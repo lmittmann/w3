@@ -260,3 +260,34 @@ func TestParseArgsWithName(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkParseArgsWithName(b *testing.B) {
+	benchmarks := []struct {
+		Input string
+	}{
+		{"func(uint256)"},
+		{"transfer(address recipient, uint256 amount)"},
+		{"exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params)"},
+	}
+
+	for i, bench := range benchmarks {
+		b.Run(strconv.Itoa(i), func(b *testing.B) {
+			b.ReportAllocs()
+
+			for n := 0; n < b.N; n++ {
+				ParseArgsWithName(bench.Input)
+			}
+		})
+
+		b.Run("geth_"+strconv.Itoa(i), func(b *testing.B) {
+			b.ReportAllocs()
+
+			for n := 0; n < b.N; n++ {
+				_, err := abi.ParseSelector(bench.Input)
+				if err != nil {
+					b.SkipNow()
+				}
+			}
+		})
+	}
+}
