@@ -132,6 +132,7 @@ func (l *lexer) token() string {
 
 var types = map[string]abi.Type{
 	"address": {T: abi.AddressTy, Size: 20},
+	"hash":    {T: abi.HashTy, Size: 32},
 	"bool":    {T: abi.BoolTy},
 	"bytes":   {T: abi.BytesTy},
 	"string":  {T: abi.StringTy},
