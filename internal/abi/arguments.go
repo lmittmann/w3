@@ -17,18 +17,6 @@ var (
 // Arguments represents a slice of abi.Argument's.
 type Arguments []abi.Argument
 
-// Parse parses the given Solidity function/event signature and returns its
-// name and arguments.
-func Parse(s string) (name string, a Arguments, err error) {
-	name, args, err := parse(s)
-	if err != nil {
-		return "", nil, err
-	}
-
-	a = (Arguments)(args)
-	return
-}
-
 func (a Arguments) Signature() string {
 	if len(a) <= 0 {
 		return ""

@@ -10,24 +10,27 @@ import (
 
 var ErrSyntax = errors.New("syntax error")
 
-func parseArgs(s string) (args abi.Arguments, err error) {
+// ParseArgs parses the given Solidity args and returns its arguments.
+func ParseArgs(s string) (a Arguments, err error) {
 	l := newLexer(s)
 	p := newParser(l)
 
 	if err := p.parseArgs(); err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrSyntax, err)
 	}
-	return p.args, nil
+	return (Arguments)(p.args), nil
 }
 
-func parseArgsWithName(s string) (name string, args abi.Arguments, err error) {
+// ParseArgsWithName parses the given Solidity function/event signature and
+// returns its name and arguments.
+func ParseArgsWithName(s string) (name string, a Arguments, err error) {
 	l := newLexer(s)
 	p := newParser(l)
 
 	if err := p.parseArgsWithName(); err != nil {
 		return "", nil, fmt.Errorf("%w: %v", ErrSyntax, err)
 	}
-	return p.name, p.args, nil
+	return p.name, (Arguments)(p.args), nil
 }
 
 type parser struct {

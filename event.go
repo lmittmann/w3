@@ -22,7 +22,7 @@ type Event struct {
 //
 // An error is returned if the signature parsing fails.
 func NewEvent(signature string) (*Event, error) {
-	name, args, err := _abi.Parse(signature)
+	name, args, err := _abi.ParseArgsWithName(signature)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidABI, err)
 	}

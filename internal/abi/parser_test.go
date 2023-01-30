@@ -21,12 +21,12 @@ var (
 func TestParseArgs(t *testing.T) {
 	tests := []struct {
 		Input    string
-		WantArgs abi.Arguments
+		WantArgs Arguments
 		WantErr  error
 	}{
 		{
 			Input:    "",
-			WantArgs: abi.Arguments{},
+			WantArgs: Arguments{},
 		},
 		{
 			Input:   "xxx",
@@ -34,35 +34,35 @@ func TestParseArgs(t *testing.T) {
 		},
 		{
 			Input:    "uint256",
-			WantArgs: abi.Arguments{{Type: typeUint256}},
+			WantArgs: Arguments{{Type: typeUint256}},
 		},
 		{
 			Input:    "uint",
-			WantArgs: abi.Arguments{{Type: typeUint256}},
+			WantArgs: Arguments{{Type: typeUint256}},
 		},
 		{
 			Input:    "uint256 balance",
-			WantArgs: abi.Arguments{{Type: typeUint256, Name: "balance"}},
+			WantArgs: Arguments{{Type: typeUint256, Name: "balance"}},
 		},
 		{
 			Input:    "uint256 indexed balance",
-			WantArgs: abi.Arguments{{Type: typeUint256, Indexed: true, Name: "balance"}},
+			WantArgs: Arguments{{Type: typeUint256, Indexed: true, Name: "balance"}},
 		},
 		{
 			Input:    "uint256 indexed",
-			WantArgs: abi.Arguments{{Type: typeUint256, Indexed: true}},
+			WantArgs: Arguments{{Type: typeUint256, Indexed: true}},
 		},
 		{
 			Input:    "uint256[]",
-			WantArgs: abi.Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.SliceTy}}},
+			WantArgs: Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.SliceTy}}},
 		},
 		{
 			Input:    "uint256[3]",
-			WantArgs: abi.Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.ArrayTy, Size: 3}}},
+			WantArgs: Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.ArrayTy, Size: 3}}},
 		},
 		{
 			Input: "uint256[][]",
-			WantArgs: abi.Arguments{{
+			WantArgs: Arguments{{
 				Type: abi.Type{
 					Elem: &abi.Type{Elem: &typeUint256, T: abi.SliceTy},
 					T:    abi.SliceTy,
@@ -71,7 +71,7 @@ func TestParseArgs(t *testing.T) {
 		},
 		{
 			Input: "uint256[][3]",
-			WantArgs: abi.Arguments{{
+			WantArgs: Arguments{{
 				Type: abi.Type{
 					Elem: &abi.Type{Elem: &typeUint256, T: abi.SliceTy},
 					T:    abi.ArrayTy,
@@ -81,12 +81,21 @@ func TestParseArgs(t *testing.T) {
 		},
 		{
 			Input: "uint256[3][]",
-			WantArgs: abi.Arguments{{
+			WantArgs: Arguments{{
 				Type: abi.Type{
 					Elem: &abi.Type{Elem: &typeUint256, T: abi.ArrayTy, Size: 3},
 					T:    abi.SliceTy,
 				},
 			}},
+		},
+		{
+			Input: "uint256[],uint256[3],uint256[][3],uint256[3][]",
+			WantArgs: Arguments{
+				{Type: abi.Type{T: abi.SliceTy, Elem: &typeUint256}},
+				{Type: abi.Type{T: abi.ArrayTy, Size: 3, Elem: &typeUint256}},
+				{Type: abi.Type{T: abi.ArrayTy, Size: 3, Elem: &abi.Type{T: abi.SliceTy, Elem: &typeUint256}}},
+				{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.ArrayTy, Size: 3, Elem: &typeUint256}}},
+			},
 		},
 		{
 			Input:   "uint256[",
@@ -98,7 +107,7 @@ func TestParseArgs(t *testing.T) {
 		},
 		{
 			Input: "(uint256 arg0)",
-			WantArgs: abi.Arguments{{
+			WantArgs: Arguments{{
 				Type: abi.Type{
 					T:             abi.TupleTy,
 					TupleElems:    []*abi.Type{&typeUint256},
@@ -108,7 +117,7 @@ func TestParseArgs(t *testing.T) {
 		},
 		{
 			Input: "(uint256 arg0)[]",
-			WantArgs: abi.Arguments{{
+			WantArgs: Arguments{{
 				Type: abi.Type{
 					Elem: &abi.Type{
 						T:             abi.TupleTy,
@@ -121,7 +130,7 @@ func TestParseArgs(t *testing.T) {
 		},
 		{
 			Input: "(uint256 arg0)[3]",
-			WantArgs: abi.Arguments{{
+			WantArgs: Arguments{{
 				Type: abi.Type{
 					Elem: &abi.Type{
 						T:             abi.TupleTy,
@@ -133,11 +142,22 @@ func TestParseArgs(t *testing.T) {
 				},
 			}},
 		},
+		{
+			Input: "uint256,(uint256 v0,uint256 v1),((uint256 v00,uint256 v01) v0,uint256 v1)",
+			WantArgs: Arguments{
+				{Type: typeUint256},
+				{Type: abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}, TupleRawNames: []string{"v0", "v1"}}},
+				{Type: abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{
+					{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}, TupleRawNames: []string{"v00", "v01"}},
+					&typeUint256,
+				}, TupleRawNames: []string{"v0", "v1"}}},
+			},
+		},
 	}
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotArgs, gotErr := parseArgs(test.Input)
+			gotArgs, gotErr := ParseArgs(test.Input)
 			if diff := cmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
@@ -156,7 +176,7 @@ func TestParseArgs(t *testing.T) {
 func TestParseArgsWithName(t *testing.T) {
 	tests := []struct {
 		Input    string
-		WantArgs abi.Arguments
+		WantArgs Arguments
 		WantName string
 		WantErr  error
 	}{
@@ -198,17 +218,17 @@ func TestParseArgsWithName(t *testing.T) {
 		},
 		{
 			Input:    "transfer(address,uint256)",
-			WantArgs: abi.Arguments{{Type: typeAddress}, {Type: typeUint256}},
+			WantArgs: Arguments{{Type: typeAddress}, {Type: typeUint256}},
 			WantName: "transfer",
 		},
 		{
 			Input:    "transfer(address recipient, uint256 amount)",
-			WantArgs: abi.Arguments{{Type: typeAddress, Name: "recipient"}, {Type: typeUint256, Name: "amount"}},
+			WantArgs: Arguments{{Type: typeAddress, Name: "recipient"}, {Type: typeUint256, Name: "amount"}},
 			WantName: "transfer",
 		},
 		{
 			Input: "exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params)",
-			WantArgs: abi.Arguments{{
+			WantArgs: Arguments{{
 				Type: abi.Type{
 					T:             abi.TupleTy,
 					TupleElems:    []*abi.Type{&typeAddress, &typeAddress, &typeUint24, &typeAddress, &typeUint256, &typeUint256, &typeUint256, &typeUint160},
@@ -222,7 +242,7 @@ func TestParseArgsWithName(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotName, gotArgs, gotErr := parseArgsWithName(test.Input)
+			gotName, gotArgs, gotErr := ParseArgsWithName(test.Input)
 			if diff := cmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {

@@ -10,106 +10,46 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/lmittmann/w3/internal"
 )
-
-func TestParse(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		Signature     string
-		WantName      string
-		WantArguments Arguments
-		WantErr       error
-	}{
-		{
-			Signature:     "",
-			WantArguments: Arguments{},
-		},
-		{
-			Signature:     "uint256",
-			WantArguments: Arguments{{Type: typeUint256}},
-		},
-		{
-			Signature:     "uint256 balance",
-			WantArguments: Arguments{{Type: typeUint256, Name: "balance"}},
-		},
-		{
-			Signature:     "uint256,address",
-			WantArguments: Arguments{{Type: typeUint256}, {Type: typeAddress}},
-		},
-		{
-			Signature: "uint256[],uint256[3],uint256[][3],uint256[3][]",
-			WantArguments: Arguments{
-				{Type: abi.Type{T: abi.SliceTy, Elem: &typeUint256}},
-				{Type: abi.Type{T: abi.ArrayTy, Size: 3, Elem: &typeUint256}},
-				{Type: abi.Type{T: abi.ArrayTy, Size: 3, Elem: &abi.Type{T: abi.SliceTy, Elem: &typeUint256}}},
-				{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.ArrayTy, Size: 3, Elem: &typeUint256}}},
-			},
-		},
-		{
-			Signature: "uint256,(uint256 v0,uint256 v1),((uint256 v00,uint256 v01) v0,uint256 v1)",
-			WantArguments: Arguments{
-				{Type: typeUint256},
-				{Type: abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}, TupleRawNames: []string{"v0", "v1"}}},
-				{Type: abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{
-					{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}, TupleRawNames: []string{"v00", "v01"}},
-					&typeUint256,
-				}, TupleRawNames: []string{"v0", "v1"}}},
-			},
-		},
-		{
-			Signature:     "func()",
-			WantName:      "func",
-			WantArguments: Arguments{},
-		},
-		{
-			Signature:     "transfer(address,uint256)",
-			WantName:      "transfer",
-			WantArguments: Arguments{{Type: typeAddress}, {Type: typeUint256}},
-		},
-	}
-
-	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotName, gotArguments, gotErr := Parse(test.Signature)
-			if diff := cmp.Diff(test.WantErr, gotErr,
-				internal.EquateErrors(),
-			); diff != "" {
-				t.Fatalf("Err: (-want, +got)\n%s", diff)
-			} else if test.WantName != gotName {
-				t.Fatalf("Name: want %q, got%q", test.WantErr, gotName)
-			} else if diff := cmp.Diff(test.WantArguments, gotArguments,
-				cmpopts.EquateEmpty(),
-				cmpopts.IgnoreUnexported(abi.Type{}),
-				cmpopts.IgnoreFields(abi.Type{}, "TupleType"),
-			); diff != "" {
-				t.Fatalf("Arguments: (-want, +got)\n%s", diff)
-			}
-		})
-	}
-}
 
 func TestSignature(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		Arguments     Arguments
+		Args          Arguments
 		WantSignature string
 	}{
 		{
-			Arguments:     Arguments{},
+			Args:          Arguments{},
 			WantSignature: "",
 		},
 		{
-			Arguments:     Arguments{{Type: typeUint256}},
+			Args:          Arguments{{Type: typeUint256}},
 			WantSignature: "uint256",
+		},
+		{
+			Args:          Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.SliceTy}}},
+			WantSignature: "uint256[]",
+		},
+		{
+			Args:          Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.ArrayTy, Size: 3}}},
+			WantSignature: "uint256[3]",
+		},
+		{
+			Args: Arguments{{
+				Type: abi.Type{
+					T:             abi.TupleTy,
+					TupleElems:    []*abi.Type{&typeUint256},
+					TupleRawNames: []string{"arg0"},
+				},
+			}},
+			WantSignature: "(uint256)",
 		},
 	}
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotSignature := test.Arguments.Signature()
+			gotSignature := test.Args.Signature()
 			if test.WantSignature != gotSignature {
 				t.Fatalf("want %q, got %q", test.WantSignature, gotSignature)
 			}
