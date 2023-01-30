@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -14,7 +15,7 @@ var (
 	errInvalidType = errors.New("abi: invalid type")
 )
 
-// Arguments represents a slice of abi.Argument's.
+// Arguments represents a slice of [abi.Argument]'s.
 type Arguments []abi.Argument
 
 func (a Arguments) Signature() string {
@@ -24,21 +25,13 @@ func (a Arguments) Signature() string {
 
 	fields := make([]string, len(a))
 	for i, arg := range a {
-		fields[i] = typeToString(arg.Type)
+		fields[i] = typeToString(&arg.Type)
 	}
 	return strings.Join(fields, ",")
 }
 
 func (a Arguments) SignatureWithName(name string) string {
-	if len(a) <= 0 {
-		return name + "()"
-	}
-
-	fields := make([]string, len(a))
-	for i, arg := range a {
-		fields[i] = typeToString(arg.Type)
-	}
-	return name + "(" + strings.Join(fields, ",") + ")"
+	return name + "(" + a.Signature() + ")"
 }
 
 // Encode ABI-encodes the given arguments args.
@@ -87,31 +80,31 @@ func (a Arguments) Decode(data []byte, args ...any) error {
 	return nil
 }
 
-// typeToTypeString maps from a abi.Type t to its string representation.
-func typeToString(t abi.Type) string {
+// typeToString returns the string representation of a [abi.Type].
+func typeToString(t *abi.Type) string {
 	switch t.T {
 	case abi.IntTy:
-		return fmt.Sprintf("int%d", t.Size)
+		return "int" + strconv.Itoa(t.Size)
 	case abi.UintTy:
-		return fmt.Sprintf("uint%d", t.Size)
+		return "uint" + strconv.Itoa(t.Size)
 	case abi.BoolTy:
 		return "bool"
 	case abi.StringTy:
 		return "string"
 	case abi.SliceTy:
-		return typeToString(*t.Elem) + "[]"
+		return typeToString(t.Elem) + "[]"
 	case abi.ArrayTy:
-		return typeToString(*t.Elem) + fmt.Sprintf("[%d]", t.Size)
+		return typeToString(t.Elem) + "[" + strconv.Itoa(t.Size) + "]"
 	case abi.TupleTy:
 		fields := make([]string, len(t.TupleElems))
 		for i, elem := range t.TupleElems {
-			fields[i] = typeToString(*elem)
+			fields[i] = typeToString(elem)
 		}
 		return "(" + strings.Join(fields, ",") + ")"
 	case abi.AddressTy:
 		return "address"
 	case abi.FixedBytesTy:
-		return fmt.Sprintf("bytes%d", t.Size)
+		return "bytes" + strconv.Itoa(t.Size)
 	case abi.BytesTy:
 		return "bytes"
 	case abi.HashTy:
