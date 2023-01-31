@@ -13,6 +13,7 @@ import (
 
 var (
 	typeAddress = abi.Type{T: abi.AddressTy, Size: 20}
+	typeBool    = abi.Type{T: abi.BoolTy}
 	typeUint24  = abi.Type{T: abi.UintTy, Size: 24}
 	typeUint160 = abi.Type{T: abi.UintTy, Size: 160}
 	typeUint256 = abi.Type{T: abi.UintTy, Size: 256}

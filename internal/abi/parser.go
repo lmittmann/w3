@@ -3,6 +3,7 @@ package abi
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -213,6 +214,7 @@ func (p *parser) parseTupleTypes() (*abi.Type, error) {
 	}
 
 	typ := &abi.Type{T: abi.TupleTy}
+	fields := make([]reflect.StructField, 0)
 	for {
 		// parse type
 		elemTyp, name, err := p.parseTupleType()
@@ -221,6 +223,11 @@ func (p *parser) parseTupleTypes() (*abi.Type, error) {
 		}
 		typ.TupleElems = append(typ.TupleElems, elemTyp)
 		typ.TupleRawNames = append(typ.TupleRawNames, name)
+		fields = append(fields, reflect.StructField{
+			Name: abi.ToCamelCase(name),
+			Type: elemTyp.GetType(),
+			Tag:  reflect.StructTag(`json:"` + name + `"`),
+		})
 
 		next := p.next()
 		if next.Typ == itemTypePunct {
@@ -232,6 +239,7 @@ func (p *parser) parseTupleTypes() (*abi.Type, error) {
 		}
 		return nil, fmt.Errorf(`unexpected %s, expecting "," or ")"`, next)
 	}
+	typ.TupleType = reflect.StructOf(fields)
 	return typ, nil
 }
 
