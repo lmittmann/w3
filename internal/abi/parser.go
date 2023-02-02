@@ -226,7 +226,7 @@ func (p *parser) parseTupleTypes() (*abi.Type, error) {
 		fields = append(fields, reflect.StructField{
 			Name: abi.ToCamelCase(name),
 			Type: elemTyp.GetType(),
-			Tag:  reflect.StructTag(`json:"` + name + `"`),
+			Tag:  reflect.StructTag(`abi:"` + name + `"`),
 		})
 
 		next := p.next()
