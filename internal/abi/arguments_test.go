@@ -3,13 +3,13 @@ package abi
 import (
 	"bytes"
 	"math/big"
+	"reflect"
 	"strconv"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func TestSignature(t *testing.T) {
@@ -177,41 +177,147 @@ func TestEncodeWithSignature(t *testing.T) {
 }
 
 func TestDecode(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		Arguments Arguments
-		Data      []byte
-		GotArgs   []any
-		WantArgs  []any
-	}{
-		{
-			Arguments: Arguments{{Type: typeUint256}},
-			Data:      common.FromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
-			GotArgs:   []any{new(big.Int)},
-			WantArgs:  []any{big.NewInt(1)},
-		},
-		{
-			Arguments: Arguments{{Type: typeAddress}},
-			Data:      common.FromHex("0x000000000000000000000000000000000000000000000000000000000000c0fe"),
-			GotArgs:   []any{new(common.Address)},
-			WantArgs:  []any{addrPtr(common.HexToAddress("0x000000000000000000000000000000000000c0Fe"))},
-		},
+	type tuple struct {
+		A bool
+		B *big.Int
 	}
 
-	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			err := test.Arguments.Decode(test.Data, test.GotArgs...)
-			if err != nil {
-				t.Fatalf("Failed to decode args: %v", err)
-			}
-			if diff := cmp.Diff(test.WantArgs, test.GotArgs,
-				cmp.AllowUnexported(big.Int{}),
-			); diff != "" {
-				t.Fatalf("(-want, +got)\n%s", diff)
-			}
-		})
-	}
+	var (
+		dataUintBool = common.FromHex("0x0000000000000000000000000000000000000000000000000000000000000001")
+		argsUint     = Arguments{{Type: typeUint256}}
+		argsBool     = Arguments{{Type: typeBool}}
+
+		dataTuple = common.FromHex("0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000007")
+		argsTuple = Arguments{{Type: abi.Type{
+			T:             abi.TupleTy,
+			TupleElems:    []*abi.Type{&typeBool, &typeUint256},
+			TupleRawNames: []string{"A", "_a"},
+			TupleType: reflect.TypeOf(struct {
+				A bool     `abi:"a"`
+				B *big.Int `abi:"b"`
+			}{}),
+		}}}
+
+		dataBytes2 = common.FromHex("0xc0fe000000000000000000000000000000000000000000000000000000000000")
+		argsBytes2 = Arguments{{Type: abi.Type{T: abi.FixedBytesTy, Size: 2}}}
+
+		dataSlice = common.FromHex("0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000007")
+		argsSlice = Arguments{{Type: abi.Type{T: abi.SliceTy, Size: 1, Elem: &typeUint256}}}
+	)
+
+	t.Run("set-ptr", func(t *testing.T) {
+		var arg big.Int
+		err := argsUint.Decode(dataUintBool, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		if want := big.NewInt(1); arg.Cmp(want) != 0 {
+			t.Fatalf("want %v, got %v", want, arg)
+		}
+	})
+
+	t.Run("set-ptr-of-ptr", func(t *testing.T) {
+		var arg *big.Int
+		err := argsUint.Decode(dataUintBool, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		if want := big.NewInt(1); arg.Cmp(want) != 0 {
+			t.Fatalf("want %v, got %v", want, arg)
+		}
+	})
+
+	t.Run("nil-val", func(t *testing.T) {
+		var arg *big.Int
+		err := argsUint.Decode(dataUintBool, arg)
+		if want := "abi: decode nil"; err == nil || want != err.Error() {
+			t.Fatalf("want %v, got %v", want, err)
+		}
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		if err := argsUint.Decode(dataUintBool, nil); err != nil {
+			t.Fatalf("want nil, got %v", err)
+		}
+	})
+
+	t.Run("non-ptr", func(t *testing.T) {
+		var arg bool
+		err := argsBool.Decode(dataUintBool, arg)
+		if want := "abi: decode non-pointer bool"; err == nil || want != err.Error() {
+			t.Fatalf("want %v, got %v", want, err)
+		}
+	})
+
+	t.Run("set-bool-ptr", func(t *testing.T) {
+		var arg bool
+		err := argsBool.Decode(dataUintBool, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		if want := true; arg != want {
+			t.Fatalf("want %v, got %v", want, arg)
+		}
+	})
+
+	t.Run("set-bool-ptr-of-ptr", func(t *testing.T) {
+		var arg *bool
+		err := argsBool.Decode(dataUintBool, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		if want := true; *arg != want {
+			t.Fatalf("want %v, got %v", want, arg)
+		}
+	})
+
+	t.Run("set-bytes2", func(t *testing.T) {
+		var arg [2]byte
+		err := argsBytes2.Decode(dataBytes2, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		want := [2]byte{0xc0, 0xfe}
+		if diff := cmp.Diff(want, arg); diff != "" {
+			t.Fatalf("(-want, +got)\n%s", diff)
+		}
+	})
+
+	t.Run("set-tuple-ptr", func(t *testing.T) {
+		var arg tuple
+		err := argsTuple.Decode(dataTuple, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		want := tuple{A: true, B: big.NewInt(7)}
+		if diff := cmp.Diff(want, arg, cmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Fatalf("(-want, +got)\n%s", diff)
+		}
+	})
+
+	t.Run("set-tuple-ptr-of-ptr", func(t *testing.T) {
+		var arg *tuple
+		err := argsTuple.Decode(dataTuple, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		want := &tuple{A: true, B: big.NewInt(7)}
+		if diff := cmp.Diff(want, arg, cmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Fatalf("(-want, +got)\n%s", diff)
+		}
+	})
+
+	t.Run("set-slice", func(t *testing.T) {
+		var arg []*big.Int
+		err := argsSlice.Decode(dataSlice, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		want := []*big.Int{big.NewInt(7)}
+		if diff := cmp.Diff(want, arg, cmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Fatalf("(-want, +got)\n%s", diff)
+		}
+	})
 }
 
 func TestTypeToString(t *testing.T) {
@@ -287,53 +393,3 @@ func TestTypeToString(t *testing.T) {
 		})
 	}
 }
-
-func TestCopyValue(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		T       byte
-		Dst     any
-		Src     any
-		WantErr error
-	}{
-		{
-			T:   abi.UintTy,
-			Dst: new(big.Int),
-			Src: big.NewInt(42),
-		},
-		{
-			T:   abi.UintTy,
-			Dst: new(big.Int),
-			Src: big.NewInt(42),
-		},
-		{
-			T:       abi.UintTy,
-			Dst:     new(big.Int),
-			Src:     []byte{1, 2, 3},
-			WantErr: errInvalidType,
-		},
-		{
-			T:   abi.BytesTy,
-			Dst: &[]byte{},
-			Src: &[]byte{1, 2, 3},
-		},
-	}
-
-	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			err := copyVal(test.T, test.Dst, test.Src)
-			if diff := cmp.Diff(test.WantErr, err, cmpopts.EquateErrors()); diff != "" {
-				t.Fatalf("(-want, +got)\n%s", diff)
-			} else if err != nil {
-				return
-			}
-
-			if diff := cmp.Diff(test.Dst, test.Src, cmp.AllowUnexported(big.Int{})); diff != "" {
-				t.Fatalf("(-want, +got)\n%s", diff)
-			}
-		})
-	}
-}
-
-func addrPtr(addr common.Address) *common.Address { return &addr }
