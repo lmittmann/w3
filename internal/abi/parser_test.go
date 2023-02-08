@@ -158,7 +158,7 @@ func TestParseArgs(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotArgs, gotErr := ParseArgs(test.Input)
+			gotArgs, gotErr := Parse(test.Input)
 			if diff := cmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
@@ -243,7 +243,7 @@ func TestParseArgsWithName(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotName, gotArgs, gotErr := ParseArgsWithName(test.Input)
+			gotName, gotArgs, gotErr := ParseWithName(test.Input)
 			if diff := cmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
@@ -276,7 +276,7 @@ func BenchmarkParseArgsWithName(b *testing.B) {
 			b.ReportAllocs()
 
 			for n := 0; n < b.N; n++ {
-				ParseArgsWithName(bench.Input)
+				ParseWithName(bench.Input)
 			}
 		})
 
