@@ -13,8 +13,6 @@ import (
 )
 
 func TestSignature(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Args          Arguments
 		WantSignature string
@@ -58,8 +56,6 @@ func TestSignature(t *testing.T) {
 }
 
 func TestSignatureWithName(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Arguments     Arguments
 		Name          string
@@ -88,8 +84,6 @@ func TestSignatureWithName(t *testing.T) {
 }
 
 func TestEncode(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Arguments Arguments
 		Args      []any
@@ -116,8 +110,6 @@ func TestEncode(t *testing.T) {
 }
 
 func TestEncodeWithSelector(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Arguments Arguments
 		Selector  [4]byte
@@ -147,8 +139,6 @@ func TestEncodeWithSelector(t *testing.T) {
 }
 
 func TestEncodeWithSignature(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Arguments Arguments
 		Args      []any
@@ -321,8 +311,6 @@ func TestDecode(t *testing.T) {
 }
 
 func TestTypeToString(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Type *abi.Type
 		Want string

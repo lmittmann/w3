@@ -10,8 +10,6 @@ import (
 )
 
 func TestLexer(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Input     string
 		WantItems []*item
