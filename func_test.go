@@ -210,10 +210,12 @@ func TestFuncDecodeArgs(t *testing.T) {
 			WantErr: errors.New("w3: insufficient input length"),
 		},
 		{
-			Func:    MustNewFunc("test((address arg0, uint256 arg1))", ""),
-			Input:   B("0xffffffff000000000000000000000000000000000000000000000000000000000000c0fe000000000000000000000000000000000000000000000000000000000000002a"),
-			Args:    []any{new(tupleWithUnexportedProperty)},
-			WantErr: errors.New(`abi: invalid type: field "Arg0" does not exist on dest struct`),
+			Func:  MustNewFunc("test((address arg0, uint256 arg1))", ""),
+			Input: B("0xffffffff000000000000000000000000000000000000000000000000000000000000c0fe000000000000000000000000000000000000000000000000000000000000002a"),
+			Args:  []any{new(tupleWithUnexportedProperty)},
+			WantArgs: []any{&tupleWithUnexportedProperty{
+				Arg1: big.NewInt(42),
+			}},
 		},
 	}
 
@@ -227,7 +229,9 @@ func TestFuncDecodeArgs(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(test.WantArgs, test.Args, cmp.AllowUnexported(big.Int{})); diff != "" {
+			if diff := cmp.Diff(test.WantArgs, test.Args,
+				cmp.AllowUnexported(big.Int{}, tupleWithUnexportedProperty{}),
+			); diff != "" {
 				t.Fatalf("Args: (-want, +got)\n%s", diff)
 			}
 		})
