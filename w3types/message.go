@@ -67,21 +67,21 @@ func (msg *Message) SetCallMsg(callMsg ethereum.CallMsg) *Message {
 	return msg
 }
 
+type message struct {
+	From       *common.Address  `json:"from,omitempty"`
+	To         *common.Address  `json:"to,omitempty"`
+	Nonce      hexutil.Uint64   `json:"nonce,omitempty"`
+	GasPrice   *hexutil.Big     `json:"gasPrice,omitempty"`
+	GasFeeCap  *hexutil.Big     `json:"gasFeeCap,omitempty"`
+	GasTipCap  *hexutil.Big     `json:"gasTipCap,omitempty"`
+	Gas        hexutil.Uint64   `json:"gas,omitempty"`
+	Value      *hexutil.Big     `json:"value,omitempty"`
+	Input      hexutil.Bytes    `json:"data,omitempty"`
+	AccessList types.AccessList `json:"accessList,omitempty"`
+}
+
 // MarshalJSON implements the [json.Marshaler].
 func (msg *Message) MarshalJSON() ([]byte, error) {
-	type message struct {
-		From       *common.Address  `json:"from,omitempty"`
-		To         *common.Address  `json:"to,omitempty"`
-		Nonce      hexutil.Uint64   `json:"nonce,omitempty"`
-		GasPrice   *hexutil.Big     `json:"gasPrice,omitempty"`
-		GasFeeCap  *hexutil.Big     `json:"gasFeeCap,omitempty"`
-		GasTipCap  *hexutil.Big     `json:"gasTipCap,omitempty"`
-		Gas        hexutil.Uint64   `json:"gas,omitempty"`
-		Value      *hexutil.Big     `json:"value,omitempty"`
-		Input      hexutil.Bytes    `json:"data,omitempty"`
-		AccessList types.AccessList `json:"accessList,omitempty"`
-	}
-
 	var enc message
 	if msg.From != addr0 {
 		enc.From = &msg.From
@@ -110,4 +110,38 @@ func (msg *Message) MarshalJSON() ([]byte, error) {
 		enc.AccessList = msg.AccessList
 	}
 	return json.Marshal(&enc)
+}
+
+// UnmarshalJSON implements the [json.Unmarshaler].
+func (msg *Message) UnmarshalJSON(data []byte) error {
+	var dec message
+	if err := json.Unmarshal(data, &dec); err != nil {
+		return err
+	}
+
+	if dec.From != nil {
+		msg.From = *dec.From
+	}
+	msg.To = dec.To
+	msg.Nonce = uint64(dec.Nonce)
+	if dec.GasPrice != nil {
+		msg.GasPrice = (*big.Int)(dec.GasPrice)
+	}
+	if dec.GasFeeCap != nil {
+		msg.GasFeeCap = (*big.Int)(dec.GasFeeCap)
+	}
+	if dec.GasTipCap != nil {
+		msg.GasTipCap = (*big.Int)(dec.GasTipCap)
+	}
+	msg.Gas = uint64(dec.Gas)
+	if dec.Value != nil {
+		msg.Value = (*big.Int)(dec.Value)
+	}
+	if len(dec.Input) > 0 {
+		msg.Input = dec.Input
+	}
+	if len(dec.AccessList) > 0 {
+		msg.AccessList = dec.AccessList
+	}
+	return nil
 }
