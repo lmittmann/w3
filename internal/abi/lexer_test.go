@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/lmittmann/w3/internal"
 )
 
 func TestLexer(t *testing.T) {
@@ -28,7 +29,7 @@ func TestLexer(t *testing.T) {
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			items, err := lex(test.Input)
-			if diff := cmp.Diff(test.WantErr, err, cmp.Comparer(equateErrors)); diff != "" {
+			if diff := cmp.Diff(test.WantErr, err, internal.EquateErrors()); diff != "" {
 				t.Fatalf("Err: (-want, +got)\n%s", diff)
 			}
 			if diff := cmp.Diff(test.WantItems, items, cmpopts.EquateEmpty()); diff != "" {
@@ -54,9 +55,4 @@ func lex(input string) ([]*item, error) {
 		}
 	}
 	return items, nil
-}
-
-// equateErrors compares two errors by their message.
-func equateErrors(x, y error) bool {
-	return x != nil && y != nil && x.Error() == y.Error()
 }
