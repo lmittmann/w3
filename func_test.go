@@ -203,8 +203,8 @@ func TestFuncDecodeArgs(t *testing.T) {
 		{
 			Func:     MustNewFunc("test(bool)", ""),
 			Input:    B("0xffffffff0000000000000000000000000000000000000000000000000000000000000001"),
-			Args:     []any{boolPtr(false)},
-			WantArgs: []any{boolPtr(true)},
+			Args:     []any{ptr(false)},
+			WantArgs: []any{ptr(true)},
 		},
 		{
 			Func:     MustNewFunc("test(bytes32)", ""),
@@ -216,7 +216,7 @@ func TestFuncDecodeArgs(t *testing.T) {
 			Func:     MustNewFunc("test(bytes32)", ""),
 			Input:    B("0xffffffff0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"),
 			Args:     []any{new(common.Hash)},
-			WantArgs: []any{hashPtr(H("0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"))},
+			WantArgs: []any{ptr(H("0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"))},
 		},
 		{
 			Func:     MustNewFunc("test(bytes)", ""),
@@ -353,8 +353,8 @@ func TestFuncDecodeReturns(t *testing.T) {
 		{
 			Func:        MustNewFunc("test()", "bool"),
 			Output:      B("0x0000000000000000000000000000000000000000000000000000000000000001"),
-			Returns:     []any{boolPtr(false)},
-			WantReturns: []any{boolPtr(true)},
+			Returns:     []any{ptr(false)},
+			WantReturns: []any{ptr(true)},
 		},
 		{
 			Func:        MustNewFunc("test()", "bytes32"),
@@ -366,7 +366,7 @@ func TestFuncDecodeReturns(t *testing.T) {
 			Func:        MustNewFunc("test()", "bytes32"),
 			Output:      B("0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"),
 			Returns:     []any{new(common.Hash)},
-			WantReturns: []any{hashPtr(H("0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"))},
+			WantReturns: []any{ptr(H("0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"))},
 		},
 		{
 			Func:        MustNewFunc("test()", "bytes"),
@@ -397,8 +397,7 @@ func TestFuncDecodeReturns(t *testing.T) {
 	}
 }
 
-func boolPtr(b bool) *bool               { return &b }
-func hashPtr(h common.Hash) *common.Hash { return &h }
+func ptr[T any](v T) *T { return &v }
 
 type tuple struct {
 	Arg0 common.Address
