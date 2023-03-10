@@ -133,7 +133,7 @@ func ExampleClient_Call_nonceAndBalance() {
 
 func ExampleEvent_DecodeArgs() {
 	var (
-		eventTransfer = w3.MustNewEvent("Transfer(address from, address to, uint256 value)")
+		eventTransfer = w3.MustNewEvent("Transfer(address indexed from, address indexed to, uint256 value)")
 		log           = &types.Log{
 			Address: w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 			Topics: []common.Hash{
