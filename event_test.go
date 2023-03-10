@@ -56,6 +56,7 @@ func TestNewEvent(t *testing.T) {
 			}
 
 			if diff := cmp.Diff(test.WantEvent, gotEvent,
+				cmpopts.IgnoreUnexported(Event{}),
 				cmpopts.IgnoreFields(Event{}, "Args"),
 			); diff != "" {
 				t.Fatalf("(-want, +got)\n%s", diff)
@@ -92,7 +93,7 @@ func TestEventDecodeArgs(t *testing.T) {
 			},
 		},
 		{
-			Event: MustNewEvent("Transfer(address,address,uint256)"),
+			Event: MustNewEvent("Transfer(address indexed, address, uint256)"),
 			Log: &types.Log{
 				Topics: []common.Hash{
 					H("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
@@ -110,7 +111,25 @@ func TestEventDecodeArgs(t *testing.T) {
 			},
 		},
 		{
-			Event: MustNewEvent("Transfer(address,address,uint256)"),
+			Event: MustNewEvent("Transfer(address, address indexed, uint256)"),
+			Log: &types.Log{
+				Topics: []common.Hash{
+					H("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
+					H("0x000000000000000000000000000000000000000000000000000000000000dead"),
+				},
+				Data: B("0x" +
+					"000000000000000000000000000000000000000000000000000000000000c0fe" +
+					"000000000000000000000000000000000000000000000000000000000000002a"),
+			},
+			Args: []any{new(common.Address), new(common.Address), new(big.Int)},
+			WantArgs: []any{
+				APtr("0x000000000000000000000000000000000000c0Fe"),
+				APtr("0x000000000000000000000000000000000000dEaD"),
+				big.NewInt(42),
+			},
+		},
+		{
+			Event: MustNewEvent("Transfer(address indexed, address indexed, uint256)"),
 			Log: &types.Log{
 				Topics: []common.Hash{
 					H("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
@@ -127,7 +146,7 @@ func TestEventDecodeArgs(t *testing.T) {
 			},
 		},
 		{
-			Event: MustNewEvent("Transfer(address,address,uint256)"),
+			Event: MustNewEvent("Transfer(address indexed, address indexed, uint256 indexed)"),
 			Log: &types.Log{
 				Topics: []common.Hash{
 					H("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
@@ -172,6 +191,7 @@ func TestEventDecodeArgs(t *testing.T) {
 			}
 			if diff := cmp.Diff(test.WantArgs, test.Args,
 				cmp.AllowUnexported(big.Int{}),
+				cmpopts.IgnoreUnexported(Event{}),
 			); diff != "" {
 				t.Fatalf("(-want, +got)\n%s", diff)
 			}

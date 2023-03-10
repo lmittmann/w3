@@ -15,6 +15,8 @@ type Event struct {
 	Signature string        // Event signature
 	Topic0    common.Hash   // Hash of event signature (Topic 0)
 	Args      abi.Arguments // Arguments
+
+	indexedArgs abi.Arguments // Subset of Args that are indexed
 }
 
 // NewEvent returns a new Smart Contract event log decoder from the given
@@ -30,11 +32,20 @@ func NewEvent(signature string) (*Event, error) {
 		return nil, fmt.Errorf("%w: missing event name", ErrInvalidABI)
 	}
 
+	indexedArgs := make(abi.Arguments, 0)
+	for _, arg := range args {
+		if arg.Indexed {
+			arg.Indexed = false
+			indexedArgs = append(indexedArgs, arg)
+		}
+	}
+
 	sig := args.SignatureWithName(name)
 	return &Event{
-		Signature: sig,
-		Topic0:    crypto.Keccak256Hash([]byte(sig)),
-		Args:      abi.Arguments(args),
+		Signature:   sig,
+		Topic0:      crypto.Keccak256Hash([]byte(sig)),
+		Args:        abi.Arguments(args),
+		indexedArgs: indexedArgs,
 	}, nil
 }
 
@@ -58,14 +69,30 @@ func (e *Event) DecodeArgs(log *types.Log, args ...any) error {
 	if len(e.Args) != len(args) {
 		return fmt.Errorf("%w: expected %d arguments, got %d", ErrArgumentMismatch, len(e.Args), len(args))
 	}
-
-	// concat topics[1:] and data
-	data := make([]byte, (len(log.Topics)-1)*32+len(log.Data))
-	var i int
-	for ; i < len(log.Topics)-1; i++ {
-		copy(data[i*32:], log.Topics[i+1][:])
+	if len(e.indexedArgs) != len(log.Topics)-1 {
+		return fmt.Errorf("%w: expected %d indexed arguments, got %d", ErrArgumentMismatch, len(e.indexedArgs), len(log.Topics)-1)
 	}
-	copy(data[i*32:], log.Data)
 
-	return _abi.Arguments(e.Args).Decode(data, args...)
+	indexedArgs := make([]any, 0, len(e.indexedArgs))
+	nonIndexedArgs := make([]any, 0, len(e.Args)-len(e.indexedArgs))
+	for i, arg := range e.Args {
+		if arg.Indexed {
+			indexedArgs = append(indexedArgs, args[i])
+		} else {
+			nonIndexedArgs = append(nonIndexedArgs, args[i])
+		}
+	}
+
+	// decode indexed args
+	for i, arg := range indexedArgs {
+		if err := (_abi.Arguments{e.indexedArgs[i]}).Decode(log.Topics[i+1][:], arg); err != nil {
+			return err
+		}
+	}
+
+	// decode non-indexed args
+	if err := _abi.Arguments(e.Args).Decode(log.Data, nonIndexedArgs...); err != nil {
+		return err
+	}
+	return nil
 }
