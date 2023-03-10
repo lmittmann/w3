@@ -138,10 +138,14 @@ func set(dst, src reflect.Value) error {
 }
 
 func setStruct(dst, src reflect.Value) error {
-	if dst.IsNil() {
-		dst.Set(reflect.New(dst.Type().Elem()))
+	if dst.Kind() == reflect.Pointer {
+		if dst.IsNil() {
+			dst.Set(reflect.New(dst.Type().Elem()))
+		}
+		dst = dst.Elem()
 	}
-	st, dt := src.Type(), dst.Elem().Type()
+
+	st, dt := src.Type(), dst.Type()
 
 	// field tag mapping (tags take precedence over names)
 	srcFields := make(map[string]reflect.StructField)
@@ -150,7 +154,7 @@ func setStruct(dst, src reflect.Value) error {
 		srcFields[field.Name] = field
 	}
 
-	for i := 0; i < dst.Elem().NumField(); i++ {
+	for i := 0; i < dst.NumField(); i++ {
 		dstField := dt.Field(i)
 		srcField, ok := srcFields[dstField.Name]
 		if !ok {
@@ -165,7 +169,7 @@ func setStruct(dst, src reflect.Value) error {
 		}
 
 		rCopy(
-			dst.Elem().FieldByName(dstField.Name),
+			dst.FieldByName(dstField.Name),
 			src.FieldByName(srcField.Name),
 		)
 	}
