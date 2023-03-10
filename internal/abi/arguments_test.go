@@ -220,7 +220,7 @@ func TestDecode(t *testing.T) {
 	t.Run("nil-val", func(t *testing.T) {
 		var arg *big.Int
 		err := argsUint.Decode(dataUintBool, arg)
-		if want := "abi: decode nil"; err == nil || want != err.Error() {
+		if want := "abi: decode nil *big.Int"; err == nil || want != err.Error() {
 			t.Fatalf("want %v, got %v", want, err)
 		}
 	})
