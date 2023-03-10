@@ -2,8 +2,11 @@ package abi
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 type item struct {
@@ -13,39 +16,73 @@ type item struct {
 
 type itemType int
 
-const (
-	itemError      itemType = iota
-	itemID                  // function or argument name
-	itemTyp                 // argument type
-	itemLeftParen           // '('
-	itemRightParen          // ')'
-	itemDelim               // ','
-	itemEOF
-)
+func (i item) String() string {
+	if i.Typ == itemTypeEOF {
+		return "EOF"
+	}
+	return strconv.Quote(i.Val)
+}
 
-type stateFn func(*lexer) stateFn
+// IsType returns whether the item is a type or not.
+func (i *item) IsType() (*abi.Type, bool) {
+	if i.Typ != itemTypeID {
+		return nil, false
+	}
+	typ, ok := types[i.Val]
+	return &typ, ok
+}
+
+const (
+	// lexer item types
+	itemTypeID    itemType = iota // identifier: [a-zA-Z_][0-9a-zA-Z_]*
+	itemTypePunct                 // punctuation: [\(\)\[\],]
+	itemTypeNum                   // number: [1-9][0-9]*
+	itemTypeEOF                   // end of file
+
+	eof rune = -1
+
+	num0  = "123456789"
+	num   = "0" + num0
+	id0   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+	id    = id0 + num
+	space = " \t\r\n"
+)
 
 // lexer holds the state of the scanner.
 type lexer struct {
-	input  string      // the string being scanned
-	start  int         // start position of this item
-	pos    int         // current position in the input
-	width  int         // width of last rune read from input
-	itemCh chan<- item // channel of scanned items
+	input string // the string being scanned
+	start int    // start position of this item
+	pos   int    // current position in the input
+	width int    // width of last rune read from input
 }
 
-func newLexer(input string, itemCh chan<- item) *lexer {
-	return &lexer{
-		input:  input,
-		itemCh: itemCh,
-	}
+func newLexer(input string) *lexer {
+	return &lexer{input: input}
 }
 
-func (l *lexer) run() {
-	for state := lexFuncOrType; state != nil; {
-		state = state(l)
+func (l *lexer) nextItem() (*item, error) {
+Start:
+	switch l.peek() {
+	case ' ', '\t', '\r', '\n':
+		l.acceptRun(space)
+		l.ignore()
+		goto Start
+	case '(', ')', '[', ']', ',':
+		l.next()
+		return &item{itemTypePunct, l.token()}, nil
+	case '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		l.accept(num0)
+		l.acceptRun(num)
+		return &item{itemTypeNum, l.token()}, nil
+	case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_':
+		l.accept(id0)
+		l.acceptRun(id)
+		return &item{itemTypeID, l.token()}, nil
+	case eof:
+		return &item{itemTypeEOF, ""}, nil
+	default:
+		return nil, fmt.Errorf("unexpected character: %c", l.next())
 	}
-	close(l.itemCh)
 }
 
 func (l *lexer) next() (next rune) {
@@ -60,11 +97,6 @@ func (l *lexer) next() (next rune) {
 
 func (l *lexer) backup() {
 	l.pos -= l.width
-}
-
-func (l *lexer) backupAll() {
-	l.pos = l.start
-	l.width = 0
 }
 
 func (l *lexer) ignore() {
@@ -93,286 +125,113 @@ func (l *lexer) acceptRun(valid string) {
 }
 
 func (l *lexer) token() string {
-	return l.input[l.start:l.pos]
-}
-
-func (l *lexer) emit(typ itemType) {
-	l.emitVal(typ, l.token())
-}
-
-func (l *lexer) emitVal(typ itemType, val string) {
-	l.itemCh <- item{typ, val}
-	l.start = l.pos
-}
-
-// errorf returns an error token and terminates the scan by passing
-// back a nil pointer that will be the next state.
-func (l *lexer) errorf(format string, args ...any) stateFn {
-	l.itemCh <- item{itemError, fmt.Sprintf(format, args...)}
-	return nil
-}
-
-const (
-	eof rune = -1
-
-	number  = "0123456789"
-	idStart = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_"
-	idPart  = idStart + number
-	space   = " \t\r\n"
-)
-
-func lexFuncOrType(l *lexer) stateFn {
-	switch l.peek() {
-	case '(':
-		return lexLeftParent
-	case eof:
-		l.emit(itemEOF)
-		return nil
-	}
-
-	l.accept(idStart)
-	l.acceptRun(idPart)
-
-	switch l.peek() {
-	case '(':
-		l.emit(itemID)
-		return lexLeftParent
-	default:
-		l.backupAll()
-		return lexType
-	}
-}
-
-func lexLeftParent(l *lexer) stateFn {
-	if next := l.next(); next == '(' {
-		l.emit(itemLeftParen)
-	} else {
-		return l.errorf("unexpected token %q, want '('", next)
-	}
-
-	switch l.peek() {
-	case '(':
-		return lexLeftParent
-	case ')':
-		return lexRightParent
-	case eof:
-		return l.errorf("unexpected EOF after '('")
-	default:
-		return lexType
-	}
-}
-
-func lexRightParent(l *lexer) stateFn {
-	if next := l.next(); next == ')' {
-		l.emit(itemRightParen)
-	} else {
-		return l.errorf("unexpected token %q, want ')'", next)
-	}
-
-	switch peek := l.peek(); peek {
-	case ')':
-		return lexRightParent
-	case ' ', '\t', '\r', '\n':
-		return lexArgName
-	case ',':
-		return lexDelim
-	case eof:
-		l.emit(itemEOF)
-		return nil
-	default:
-		return l.errorf("unexpected token %q, want ')', ',' or EOF", peek)
-	}
-}
-
-func lexType(l *lexer) stateFn {
-	// ignore leading spaces
-	l.acceptRun(space)
+	token := l.input[l.start:l.pos]
 	l.ignore()
-
-	// accept type
-	l.accept(idStart)
-	l.acceptRun(idPart)
-	normType, ok := types[l.token()]
-	if !ok {
-		return l.errorf("unknown type %q", l.token())
-	}
-	l.ignore()
-
-	// optionally accept array
-	for l.peek() == '[' {
-		l.accept("[")
-		l.acceptRun(number)
-		switch peek := l.peek(); peek {
-		case ']':
-			l.accept("]")
-		case eof:
-			return l.errorf("unexpected EOF, want ']'")
-		default:
-			return l.errorf("unexpected token %q, want ']'", peek)
-		}
-		normType += l.token()
-		l.ignore()
-	}
-	l.emitVal(itemTyp, normType)
-
-	switch peek := l.peek(); peek {
-	case ',':
-		return lexDelim
-	case ' ', '\t', '\r', '\n':
-		return lexArgName
-	case ')':
-		return lexRightParent
-	case eof:
-		l.emit(itemEOF)
-		return nil
-	default:
-		return lexType
-	}
+	return token
 }
 
-func lexArgName(l *lexer) stateFn {
-	// ignore leading spaces
-	l.acceptRun(space)
-	l.ignore()
-
-	l.accept(idStart)
-	l.acceptRun(idPart)
-	l.emit(itemID)
-
-	switch peek := l.peek(); peek {
-	case ')':
-		return lexRightParent
-	case ',':
-		return lexDelim
-	case eof:
-		l.emit(itemEOF)
-		return nil
-	default:
-		return l.errorf("unexpected token %q, want ')', ',' or EOF", peek)
-	}
-}
-
-func lexDelim(l *lexer) stateFn {
-	if next := l.next(); next == ',' {
-		l.emit(itemDelim)
-	} else {
-		return l.errorf("unexpected token %q, want ','", next)
-	}
-
-	l.acceptRun(space)
-	l.ignore()
-
-	switch peek := l.peek(); peek {
-	case '(':
-		return lexLeftParent
-	case eof:
-		return l.errorf("unexpected EOF after ','")
-	default:
-		return lexType
-	}
-}
-
-var types = map[string]string{
-	"address": "address",
-	"bool":    "bool",
-	"string":  "string",
-	"bytes":   "bytes",
-	"bytes1":  "bytes1",
-	"bytes2":  "bytes2",
-	"bytes3":  "bytes3",
-	"bytes4":  "bytes4",
-	"bytes5":  "bytes5",
-	"bytes6":  "bytes6",
-	"bytes7":  "bytes7",
-	"bytes8":  "bytes8",
-	"bytes9":  "bytes9",
-	"bytes10": "bytes10",
-	"bytes11": "bytes11",
-	"bytes12": "bytes12",
-	"bytes13": "bytes13",
-	"bytes14": "bytes14",
-	"bytes15": "bytes15",
-	"bytes16": "bytes16",
-	"bytes17": "bytes17",
-	"bytes18": "bytes18",
-	"bytes19": "bytes19",
-	"bytes20": "bytes20",
-	"bytes21": "bytes21",
-	"bytes22": "bytes22",
-	"bytes23": "bytes23",
-	"bytes24": "bytes24",
-	"bytes25": "bytes25",
-	"bytes26": "bytes26",
-	"bytes27": "bytes27",
-	"bytes28": "bytes28",
-	"bytes29": "bytes29",
-	"bytes30": "bytes30",
-	"bytes31": "bytes31",
-	"bytes32": "bytes32",
-	"int":     "int256",
-	"int8":    "int8",
-	"int16":   "int16",
-	"int24":   "int24",
-	"int32":   "int32",
-	"int40":   "int40",
-	"int48":   "int48",
-	"int56":   "int56",
-	"int64":   "int64",
-	"int72":   "int72",
-	"int80":   "int80",
-	"int88":   "int88",
-	"int96":   "int96",
-	"int104":  "int104",
-	"int112":  "int112",
-	"int120":  "int120",
-	"int128":  "int128",
-	"int136":  "int136",
-	"int144":  "int144",
-	"int152":  "int152",
-	"int160":  "int160",
-	"int168":  "int168",
-	"int176":  "int176",
-	"int184":  "int184",
-	"int192":  "int192",
-	"int200":  "int200",
-	"int208":  "int208",
-	"int216":  "int216",
-	"int224":  "int224",
-	"int232":  "int232",
-	"int240":  "int240",
-	"int248":  "int248",
-	"int256":  "int256",
-	"uint":    "uint256",
-	"uint8":   "uint8",
-	"uint16":  "uint16",
-	"uint24":  "uint24",
-	"uint32":  "uint32",
-	"uint40":  "uint40",
-	"uint48":  "uint48",
-	"uint56":  "uint56",
-	"uint64":  "uint64",
-	"uint72":  "uint72",
-	"uint80":  "uint80",
-	"uint88":  "uint88",
-	"uint96":  "uint96",
-	"uint104": "uint104",
-	"uint112": "uint112",
-	"uint120": "uint120",
-	"uint128": "uint128",
-	"uint136": "uint136",
-	"uint144": "uint144",
-	"uint152": "uint152",
-	"uint160": "uint160",
-	"uint168": "uint168",
-	"uint176": "uint176",
-	"uint184": "uint184",
-	"uint192": "uint192",
-	"uint200": "uint200",
-	"uint208": "uint208",
-	"uint216": "uint216",
-	"uint224": "uint224",
-	"uint232": "uint232",
-	"uint240": "uint240",
-	"uint248": "uint248",
-	"uint256": "uint256",
+var types = map[string]abi.Type{
+	"address": {T: abi.AddressTy, Size: 20},
+	"hash":    {T: abi.HashTy, Size: 32},
+	"bool":    {T: abi.BoolTy},
+	"bytes":   {T: abi.BytesTy},
+	"string":  {T: abi.StringTy},
+	"bytes1":  {T: abi.FixedBytesTy, Size: 1},
+	"bytes2":  {T: abi.FixedBytesTy, Size: 2},
+	"bytes3":  {T: abi.FixedBytesTy, Size: 3},
+	"bytes4":  {T: abi.FixedBytesTy, Size: 4},
+	"bytes5":  {T: abi.FixedBytesTy, Size: 5},
+	"bytes6":  {T: abi.FixedBytesTy, Size: 6},
+	"bytes7":  {T: abi.FixedBytesTy, Size: 7},
+	"bytes8":  {T: abi.FixedBytesTy, Size: 8},
+	"bytes9":  {T: abi.FixedBytesTy, Size: 9},
+	"bytes10": {T: abi.FixedBytesTy, Size: 10},
+	"bytes11": {T: abi.FixedBytesTy, Size: 11},
+	"bytes12": {T: abi.FixedBytesTy, Size: 12},
+	"bytes13": {T: abi.FixedBytesTy, Size: 13},
+	"bytes14": {T: abi.FixedBytesTy, Size: 14},
+	"bytes15": {T: abi.FixedBytesTy, Size: 15},
+	"bytes16": {T: abi.FixedBytesTy, Size: 16},
+	"bytes17": {T: abi.FixedBytesTy, Size: 17},
+	"bytes18": {T: abi.FixedBytesTy, Size: 18},
+	"bytes19": {T: abi.FixedBytesTy, Size: 19},
+	"bytes20": {T: abi.FixedBytesTy, Size: 20},
+	"bytes21": {T: abi.FixedBytesTy, Size: 21},
+	"bytes22": {T: abi.FixedBytesTy, Size: 22},
+	"bytes23": {T: abi.FixedBytesTy, Size: 23},
+	"bytes24": {T: abi.FixedBytesTy, Size: 24},
+	"bytes25": {T: abi.FixedBytesTy, Size: 25},
+	"bytes26": {T: abi.FixedBytesTy, Size: 26},
+	"bytes27": {T: abi.FixedBytesTy, Size: 27},
+	"bytes28": {T: abi.FixedBytesTy, Size: 28},
+	"bytes29": {T: abi.FixedBytesTy, Size: 29},
+	"bytes30": {T: abi.FixedBytesTy, Size: 30},
+	"bytes31": {T: abi.FixedBytesTy, Size: 31},
+	"bytes32": {T: abi.FixedBytesTy, Size: 32},
+	"uint8":   {T: abi.UintTy, Size: 8},
+	"uint16":  {T: abi.UintTy, Size: 16},
+	"uint24":  {T: abi.UintTy, Size: 24},
+	"uint32":  {T: abi.UintTy, Size: 32},
+	"uint40":  {T: abi.UintTy, Size: 40},
+	"uint48":  {T: abi.UintTy, Size: 48},
+	"uint56":  {T: abi.UintTy, Size: 56},
+	"uint64":  {T: abi.UintTy, Size: 64},
+	"uint72":  {T: abi.UintTy, Size: 72},
+	"uint80":  {T: abi.UintTy, Size: 80},
+	"uint88":  {T: abi.UintTy, Size: 88},
+	"uint96":  {T: abi.UintTy, Size: 96},
+	"uint104": {T: abi.UintTy, Size: 104},
+	"uint112": {T: abi.UintTy, Size: 112},
+	"uint120": {T: abi.UintTy, Size: 120},
+	"uint128": {T: abi.UintTy, Size: 128},
+	"uint136": {T: abi.UintTy, Size: 136},
+	"uint144": {T: abi.UintTy, Size: 144},
+	"uint152": {T: abi.UintTy, Size: 152},
+	"uint160": {T: abi.UintTy, Size: 160},
+	"uint168": {T: abi.UintTy, Size: 168},
+	"uint176": {T: abi.UintTy, Size: 176},
+	"uint184": {T: abi.UintTy, Size: 184},
+	"uint192": {T: abi.UintTy, Size: 192},
+	"uint200": {T: abi.UintTy, Size: 200},
+	"uint208": {T: abi.UintTy, Size: 208},
+	"uint216": {T: abi.UintTy, Size: 216},
+	"uint224": {T: abi.UintTy, Size: 224},
+	"uint232": {T: abi.UintTy, Size: 232},
+	"uint240": {T: abi.UintTy, Size: 240},
+	"uint248": {T: abi.UintTy, Size: 248},
+	"uint256": {T: abi.UintTy, Size: 256},
+	"uint":    {T: abi.UintTy, Size: 256},
+	"int8":    {T: abi.IntTy, Size: 8},
+	"int16":   {T: abi.IntTy, Size: 16},
+	"int24":   {T: abi.IntTy, Size: 24},
+	"int32":   {T: abi.IntTy, Size: 32},
+	"int40":   {T: abi.IntTy, Size: 40},
+	"int48":   {T: abi.IntTy, Size: 48},
+	"int56":   {T: abi.IntTy, Size: 56},
+	"int64":   {T: abi.IntTy, Size: 64},
+	"int72":   {T: abi.IntTy, Size: 72},
+	"int80":   {T: abi.IntTy, Size: 80},
+	"int88":   {T: abi.IntTy, Size: 88},
+	"int96":   {T: abi.IntTy, Size: 96},
+	"int104":  {T: abi.IntTy, Size: 104},
+	"int112":  {T: abi.IntTy, Size: 112},
+	"int120":  {T: abi.IntTy, Size: 120},
+	"int128":  {T: abi.IntTy, Size: 128},
+	"int136":  {T: abi.IntTy, Size: 136},
+	"int144":  {T: abi.IntTy, Size: 144},
+	"int152":  {T: abi.IntTy, Size: 152},
+	"int160":  {T: abi.IntTy, Size: 160},
+	"int168":  {T: abi.IntTy, Size: 168},
+	"int176":  {T: abi.IntTy, Size: 176},
+	"int184":  {T: abi.IntTy, Size: 184},
+	"int192":  {T: abi.IntTy, Size: 192},
+	"int200":  {T: abi.IntTy, Size: 200},
+	"int208":  {T: abi.IntTy, Size: 208},
+	"int216":  {T: abi.IntTy, Size: 216},
+	"int224":  {T: abi.IntTy, Size: 224},
+	"int232":  {T: abi.IntTy, Size: 232},
+	"int240":  {T: abi.IntTy, Size: 240},
+	"int248":  {T: abi.IntTy, Size: 248},
+	"int256":  {T: abi.IntTy, Size: 256},
+	"int":     {T: abi.IntTy, Size: 256},
 }

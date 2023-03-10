@@ -41,7 +41,7 @@ type Func struct {
 //
 // An error is returned if the signature or returns parsing fails.
 func NewFunc(signature, returns string) (*Func, error) {
-	name, args, err := _abi.Parse(signature)
+	name, args, err := _abi.ParseWithName(signature)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidABI, err)
 	}
@@ -49,12 +49,9 @@ func NewFunc(signature, returns string) (*Func, error) {
 		return nil, fmt.Errorf("%w: missing function name", ErrInvalidABI)
 	}
 
-	returnsName, returnArgs, err := _abi.Parse(returns)
+	returnArgs, err := _abi.Parse(returns)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidABI, err)
-	}
-	if returnsName != "" {
-		return nil, fmt.Errorf("%w: returns must not have a function name", ErrInvalidABI)
 	}
 
 	sig := args.SignatureWithName(name)

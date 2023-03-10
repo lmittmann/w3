@@ -3,113 +3,51 @@ package abi
 import (
 	"bytes"
 	"math/big"
+	"reflect"
 	"strconv"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/lmittmann/w3/internal"
 )
 
-func TestParse(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		Signature     string
-		WantName      string
-		WantArguments Arguments
-		WantErr       error
-	}{
-		{
-			Signature:     "",
-			WantArguments: Arguments{},
-		},
-		{
-			Signature:     "uint256",
-			WantArguments: Arguments{{Type: typeUint256}},
-		},
-		{
-			Signature:     "uint256 balance",
-			WantArguments: Arguments{{Type: typeUint256, Name: "balance"}},
-		},
-		{
-			Signature:     "uint256,address",
-			WantArguments: Arguments{{Type: typeUint256}, {Type: typeAddress}},
-		},
-		{
-			Signature: "uint256[],uint256[3],uint256[][3],uint256[3][]",
-			WantArguments: Arguments{
-				{Type: abi.Type{T: abi.SliceTy, Elem: &typeUint256}},
-				{Type: abi.Type{T: abi.ArrayTy, Size: 3, Elem: &typeUint256}},
-				{Type: abi.Type{T: abi.ArrayTy, Size: 3, Elem: &abi.Type{T: abi.SliceTy, Elem: &typeUint256}}},
-				{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.ArrayTy, Size: 3, Elem: &typeUint256}}},
-			},
-		},
-		{
-			Signature: "uint256,(uint256 v0,uint256 v1),((uint256 v00,uint256 v01) v0,uint256 v1)",
-			WantArguments: Arguments{
-				{Type: typeUint256},
-				{Type: abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}, TupleRawNames: []string{"v0", "v1"}}},
-				{Type: abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{
-					{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}, TupleRawNames: []string{"v00", "v01"}},
-					&typeUint256,
-				}, TupleRawNames: []string{"v0", "v1"}}},
-			},
-		},
-		{
-			Signature:     "func()",
-			WantName:      "func",
-			WantArguments: Arguments{},
-		},
-		{
-			Signature:     "transfer(address,uint256)",
-			WantName:      "transfer",
-			WantArguments: Arguments{{Type: typeAddress}, {Type: typeUint256}},
-		},
-	}
-
-	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotName, gotArguments, gotErr := Parse(test.Signature)
-			if diff := cmp.Diff(test.WantErr, gotErr,
-				internal.EquateErrors(),
-			); diff != "" {
-				t.Fatalf("Err: (-want, +got)\n%s", diff)
-			} else if test.WantName != gotName {
-				t.Fatalf("Name: want %q, got%q", test.WantErr, gotName)
-			} else if diff := cmp.Diff(test.WantArguments, gotArguments,
-				cmpopts.EquateEmpty(),
-				cmpopts.IgnoreUnexported(abi.Type{}),
-				cmpopts.IgnoreFields(abi.Type{}, "TupleType"),
-			); diff != "" {
-				t.Fatalf("Arguments: (-want, +got)\n%s", diff)
-			}
-		})
-	}
-}
-
 func TestSignature(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
-		Arguments     Arguments
+		Args          Arguments
 		WantSignature string
 	}{
 		{
-			Arguments:     Arguments{},
+			Args:          Arguments{},
 			WantSignature: "",
 		},
 		{
-			Arguments:     Arguments{{Type: typeUint256}},
+			Args:          Arguments{{Type: typeUint256}},
 			WantSignature: "uint256",
+		},
+		{
+			Args:          Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.SliceTy}}},
+			WantSignature: "uint256[]",
+		},
+		{
+			Args:          Arguments{{Type: abi.Type{Elem: &typeUint256, T: abi.ArrayTy, Size: 3}}},
+			WantSignature: "uint256[3]",
+		},
+		{
+			Args: Arguments{{
+				Type: abi.Type{
+					T:             abi.TupleTy,
+					TupleElems:    []*abi.Type{&typeUint256},
+					TupleRawNames: []string{"arg0"},
+				},
+			}},
+			WantSignature: "(uint256)",
 		},
 	}
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotSignature := test.Arguments.Signature()
+			gotSignature := test.Args.Signature()
 			if test.WantSignature != gotSignature {
 				t.Fatalf("want %q, got %q", test.WantSignature, gotSignature)
 			}
@@ -118,8 +56,6 @@ func TestSignature(t *testing.T) {
 }
 
 func TestSignatureWithName(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Arguments     Arguments
 		Name          string
@@ -148,8 +84,6 @@ func TestSignatureWithName(t *testing.T) {
 }
 
 func TestEncode(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Arguments Arguments
 		Args      []any
@@ -176,8 +110,6 @@ func TestEncode(t *testing.T) {
 }
 
 func TestEncodeWithSelector(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Arguments Arguments
 		Selector  [4]byte
@@ -207,8 +139,6 @@ func TestEncodeWithSelector(t *testing.T) {
 }
 
 func TestEncodeWithSignature(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Arguments Arguments
 		Args      []any
@@ -237,105 +167,209 @@ func TestEncodeWithSignature(t *testing.T) {
 }
 
 func TestDecode(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		Arguments Arguments
-		Data      []byte
-		GotArgs   []any
-		WantArgs  []any
-	}{
-		{
-			Arguments: Arguments{{Type: typeUint256}},
-			Data:      common.FromHex("0x0000000000000000000000000000000000000000000000000000000000000001"),
-			GotArgs:   []any{new(big.Int)},
-			WantArgs:  []any{big.NewInt(1)},
-		},
-		{
-			Arguments: Arguments{{Type: typeAddress}},
-			Data:      common.FromHex("0x000000000000000000000000000000000000000000000000000000000000c0fe"),
-			GotArgs:   []any{new(common.Address)},
-			WantArgs:  []any{addrPtr(common.HexToAddress("0x000000000000000000000000000000000000c0Fe"))},
-		},
+	type tuple struct {
+		A bool
+		B *big.Int
 	}
 
-	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			err := test.Arguments.Decode(test.Data, test.GotArgs...)
-			if err != nil {
-				t.Fatalf("Failed to decode args: %v", err)
-			}
-			if diff := cmp.Diff(test.WantArgs, test.GotArgs,
-				cmp.AllowUnexported(big.Int{}),
-			); diff != "" {
-				t.Fatalf("(-want, +got)\n%s", diff)
-			}
-		})
-	}
+	var (
+		dataUintBool = common.FromHex("0x0000000000000000000000000000000000000000000000000000000000000001")
+		argsUint     = Arguments{{Type: typeUint256}}
+		argsBool     = Arguments{{Type: typeBool}}
+
+		dataTuple = common.FromHex("0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000007")
+		argsTuple = Arguments{{Type: abi.Type{
+			T:             abi.TupleTy,
+			TupleElems:    []*abi.Type{&typeBool, &typeUint256},
+			TupleRawNames: []string{"A", "_a"},
+			TupleType: reflect.TypeOf(struct {
+				A bool     `abi:"a"`
+				B *big.Int `abi:"b"`
+			}{}),
+		}}}
+
+		dataBytes2 = common.FromHex("0xc0fe000000000000000000000000000000000000000000000000000000000000")
+		argsBytes2 = Arguments{{Type: abi.Type{T: abi.FixedBytesTy, Size: 2}}}
+
+		dataSlice = common.FromHex("0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000007")
+		argsSlice = Arguments{{Type: abi.Type{T: abi.SliceTy, Size: 1, Elem: &typeUint256}}}
+	)
+
+	t.Run("set-ptr", func(t *testing.T) {
+		var arg big.Int
+		err := argsUint.Decode(dataUintBool, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		if want := big.NewInt(1); arg.Cmp(want) != 0 {
+			t.Fatalf("want %v, got %v", want, arg)
+		}
+	})
+
+	t.Run("set-ptr-of-ptr", func(t *testing.T) {
+		var arg *big.Int
+		err := argsUint.Decode(dataUintBool, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		if want := big.NewInt(1); arg.Cmp(want) != 0 {
+			t.Fatalf("want %v, got %v", want, arg)
+		}
+	})
+
+	t.Run("nil-val", func(t *testing.T) {
+		var arg *big.Int
+		err := argsUint.Decode(dataUintBool, arg)
+		if want := "abi: decode nil *big.Int"; err == nil || want != err.Error() {
+			t.Fatalf("want %v, got %v", want, err)
+		}
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		if err := argsUint.Decode(dataUintBool, nil); err != nil {
+			t.Fatalf("want nil, got %v", err)
+		}
+	})
+
+	t.Run("non-ptr", func(t *testing.T) {
+		var arg bool
+		err := argsBool.Decode(dataUintBool, arg)
+		if want := "abi: decode non-pointer bool"; err == nil || want != err.Error() {
+			t.Fatalf("want %v, got %v", want, err)
+		}
+	})
+
+	t.Run("set-bool-ptr", func(t *testing.T) {
+		var arg bool
+		err := argsBool.Decode(dataUintBool, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		if want := true; arg != want {
+			t.Fatalf("want %v, got %v", want, arg)
+		}
+	})
+
+	t.Run("set-bool-ptr-of-ptr", func(t *testing.T) {
+		var arg *bool
+		err := argsBool.Decode(dataUintBool, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		if want := true; *arg != want {
+			t.Fatalf("want %v, got %v", want, arg)
+		}
+	})
+
+	t.Run("set-bytes2", func(t *testing.T) {
+		var arg [2]byte
+		err := argsBytes2.Decode(dataBytes2, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		want := [2]byte{0xc0, 0xfe}
+		if diff := cmp.Diff(want, arg); diff != "" {
+			t.Fatalf("(-want, +got)\n%s", diff)
+		}
+	})
+
+	t.Run("set-tuple-ptr", func(t *testing.T) {
+		var arg tuple
+		err := argsTuple.Decode(dataTuple, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		want := tuple{A: true, B: big.NewInt(7)}
+		if diff := cmp.Diff(want, arg, cmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Fatalf("(-want, +got)\n%s", diff)
+		}
+	})
+
+	t.Run("set-tuple-ptr-of-ptr", func(t *testing.T) {
+		var arg *tuple
+		err := argsTuple.Decode(dataTuple, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		want := &tuple{A: true, B: big.NewInt(7)}
+		if diff := cmp.Diff(want, arg, cmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Fatalf("(-want, +got)\n%s", diff)
+		}
+	})
+
+	t.Run("set-slice", func(t *testing.T) {
+		var arg []*big.Int
+		err := argsSlice.Decode(dataSlice, &arg)
+		if err != nil {
+			t.Fatalf("Failed to decode args: %v", err)
+		}
+		want := []*big.Int{big.NewInt(7)}
+		if diff := cmp.Diff(want, arg, cmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Fatalf("(-want, +got)\n%s", diff)
+		}
+	})
 }
 
 func TestTypeToString(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
-		Type abi.Type
+		Type *abi.Type
 		Want string
 	}{
-		{Type: abi.Type{T: abi.BoolTy}, Want: "bool"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}, Want: "bool[]"},
-		{Type: abi.Type{Size: 2, T: abi.ArrayTy, Elem: &abi.Type{T: abi.BoolTy}}, Want: "bool[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BoolTy}}}, Want: "bool[2][]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}}, Want: "bool[][]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}}, Want: "bool[][2]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BoolTy}}}, Want: "bool[2][2]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BoolTy}}}}, Want: "bool[2][][2]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BoolTy}}}}, Want: "bool[2][2][2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}}}, Want: "bool[][][]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}}}, Want: "bool[][2][]"},
-		{Type: abi.Type{Size: 8, T: abi.IntTy}, Want: "int8"},
-		{Type: abi.Type{Size: 16, T: abi.IntTy}, Want: "int16"},
-		{Type: abi.Type{Size: 32, T: abi.IntTy}, Want: "int32"},
-		{Type: abi.Type{Size: 64, T: abi.IntTy}, Want: "int64"},
-		{Type: abi.Type{Size: 256, T: abi.IntTy}, Want: "int256"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 8, T: abi.IntTy}}, Want: "int8[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 8, T: abi.IntTy}}, Want: "int8[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 16, T: abi.IntTy}}, Want: "int16[]"},
-		{Type: abi.Type{Size: 2, T: abi.ArrayTy, Elem: &abi.Type{Size: 16, T: abi.IntTy}}, Want: "int16[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 32, T: abi.IntTy}}, Want: "int32[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 32, T: abi.IntTy}}, Want: "int32[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 64, T: abi.IntTy}}, Want: "int64[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 64, T: abi.IntTy}}, Want: "int64[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 256, T: abi.IntTy}}, Want: "int256[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 256, T: abi.IntTy}}, Want: "int256[2]"},
-		{Type: abi.Type{Size: 8, T: abi.UintTy}, Want: "uint8"},
-		{Type: abi.Type{Size: 16, T: abi.UintTy}, Want: "uint16"},
-		{Type: abi.Type{Size: 32, T: abi.UintTy}, Want: "uint32"},
-		{Type: abi.Type{Size: 64, T: abi.UintTy}, Want: "uint64"},
-		{Type: abi.Type{Size: 256, T: abi.UintTy}, Want: "uint256"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 8, T: abi.UintTy}}, Want: "uint8[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 8, T: abi.UintTy}}, Want: "uint8[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 16, T: abi.UintTy}}, Want: "uint16[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 16, T: abi.UintTy}}, Want: "uint16[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 32, T: abi.UintTy}}, Want: "uint32[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 32, T: abi.UintTy}}, Want: "uint32[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 64, T: abi.UintTy}}, Want: "uint64[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 64, T: abi.UintTy}}, Want: "uint64[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 256, T: abi.UintTy}}, Want: "uint256[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 256, T: abi.UintTy}}, Want: "uint256[2]"},
-		{Type: abi.Type{T: abi.FixedBytesTy, Size: 32}, Want: "bytes32"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BytesTy}}, Want: "bytes[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BytesTy}}, Want: "bytes[2]"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.FixedBytesTy, Size: 32}}, Want: "bytes32[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.FixedBytesTy, Size: 32}}, Want: "bytes32[2]"},
-		{Type: abi.Type{T: abi.HashTy, Size: 20}, Want: "hash"},
-		{Type: abi.Type{T: abi.StringTy}, Want: "string"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.StringTy}}, Want: "string[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.StringTy}}, Want: "string[2]"},
-		{Type: abi.Type{Size: 20, T: abi.AddressTy}, Want: "address"},
-		{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 20, T: abi.AddressTy}}, Want: "address[]"},
-		{Type: abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 20, T: abi.AddressTy}}, Want: "address[2]"},
-		{Type: abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}}, Want: "(uint256,uint256)"},
-		{Type: abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}}, &typeUint256}}, Want: "((uint256,uint256),uint256)"},
+		{Type: &abi.Type{T: abi.BoolTy}, Want: "bool"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}, Want: "bool[]"},
+		{Type: &abi.Type{Size: 2, T: abi.ArrayTy, Elem: &abi.Type{T: abi.BoolTy}}, Want: "bool[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BoolTy}}}, Want: "bool[2][]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}}, Want: "bool[][]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}}, Want: "bool[][2]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BoolTy}}}, Want: "bool[2][2]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BoolTy}}}}, Want: "bool[2][][2]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BoolTy}}}}, Want: "bool[2][2][2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}}}, Want: "bool[][][]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BoolTy}}}}, Want: "bool[][2][]"},
+		{Type: &abi.Type{Size: 8, T: abi.IntTy}, Want: "int8"},
+		{Type: &abi.Type{Size: 16, T: abi.IntTy}, Want: "int16"},
+		{Type: &abi.Type{Size: 32, T: abi.IntTy}, Want: "int32"},
+		{Type: &abi.Type{Size: 64, T: abi.IntTy}, Want: "int64"},
+		{Type: &abi.Type{Size: 256, T: abi.IntTy}, Want: "int256"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 8, T: abi.IntTy}}, Want: "int8[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 8, T: abi.IntTy}}, Want: "int8[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 16, T: abi.IntTy}}, Want: "int16[]"},
+		{Type: &abi.Type{Size: 2, T: abi.ArrayTy, Elem: &abi.Type{Size: 16, T: abi.IntTy}}, Want: "int16[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 32, T: abi.IntTy}}, Want: "int32[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 32, T: abi.IntTy}}, Want: "int32[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 64, T: abi.IntTy}}, Want: "int64[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 64, T: abi.IntTy}}, Want: "int64[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 256, T: abi.IntTy}}, Want: "int256[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 256, T: abi.IntTy}}, Want: "int256[2]"},
+		{Type: &abi.Type{Size: 8, T: abi.UintTy}, Want: "uint8"},
+		{Type: &abi.Type{Size: 16, T: abi.UintTy}, Want: "uint16"},
+		{Type: &abi.Type{Size: 32, T: abi.UintTy}, Want: "uint32"},
+		{Type: &abi.Type{Size: 64, T: abi.UintTy}, Want: "uint64"},
+		{Type: &abi.Type{Size: 256, T: abi.UintTy}, Want: "uint256"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 8, T: abi.UintTy}}, Want: "uint8[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 8, T: abi.UintTy}}, Want: "uint8[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 16, T: abi.UintTy}}, Want: "uint16[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 16, T: abi.UintTy}}, Want: "uint16[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 32, T: abi.UintTy}}, Want: "uint32[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 32, T: abi.UintTy}}, Want: "uint32[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 64, T: abi.UintTy}}, Want: "uint64[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 64, T: abi.UintTy}}, Want: "uint64[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 256, T: abi.UintTy}}, Want: "uint256[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 256, T: abi.UintTy}}, Want: "uint256[2]"},
+		{Type: &abi.Type{T: abi.FixedBytesTy, Size: 32}, Want: "bytes32"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.BytesTy}}, Want: "bytes[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.BytesTy}}, Want: "bytes[2]"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.FixedBytesTy, Size: 32}}, Want: "bytes32[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.FixedBytesTy, Size: 32}}, Want: "bytes32[2]"},
+		{Type: &abi.Type{T: abi.HashTy, Size: 20}, Want: "hash"},
+		{Type: &abi.Type{T: abi.StringTy}, Want: "string"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.StringTy}}, Want: "string[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{T: abi.StringTy}}, Want: "string[2]"},
+		{Type: &abi.Type{Size: 20, T: abi.AddressTy}, Want: "address"},
+		{Type: &abi.Type{T: abi.SliceTy, Elem: &abi.Type{Size: 20, T: abi.AddressTy}}, Want: "address[]"},
+		{Type: &abi.Type{T: abi.ArrayTy, Size: 2, Elem: &abi.Type{Size: 20, T: abi.AddressTy}}, Want: "address[2]"},
+		{Type: &abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}}, Want: "(uint256,uint256)"},
+		{Type: &abi.Type{T: abi.TupleTy, TupleElems: []*abi.Type{{T: abi.TupleTy, TupleElems: []*abi.Type{&typeUint256, &typeUint256}}, &typeUint256}}, Want: "((uint256,uint256),uint256)"},
 	}
 
 	for i, test := range tests {
@@ -347,53 +381,3 @@ func TestTypeToString(t *testing.T) {
 		})
 	}
 }
-
-func TestCopyValue(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		T       byte
-		Dst     any
-		Src     any
-		WantErr error
-	}{
-		{
-			T:   abi.UintTy,
-			Dst: new(big.Int),
-			Src: big.NewInt(42),
-		},
-		{
-			T:   abi.UintTy,
-			Dst: new(big.Int),
-			Src: big.NewInt(42),
-		},
-		{
-			T:       abi.UintTy,
-			Dst:     new(big.Int),
-			Src:     []byte{1, 2, 3},
-			WantErr: errInvalidType,
-		},
-		{
-			T:   abi.BytesTy,
-			Dst: &[]byte{},
-			Src: &[]byte{1, 2, 3},
-		},
-	}
-
-	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			err := copyVal(test.T, test.Dst, test.Src)
-			if diff := cmp.Diff(test.WantErr, err, cmpopts.EquateErrors()); diff != "" {
-				t.Fatalf("(-want, +got)\n%s", diff)
-			} else if err != nil {
-				return
-			}
-
-			if diff := cmp.Diff(test.Dst, test.Src, cmp.AllowUnexported(big.Int{})); diff != "" {
-				t.Fatalf("(-want, +got)\n%s", diff)
-			}
-		})
-	}
-}
-
-func addrPtr(addr common.Address) *common.Address { return &addr }
