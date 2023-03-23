@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/ethereum/go-ethereum v1.11.4
 	github.com/google/go-cmp v0.5.9
-	github.com/holiman/uint256 v1.2.1
+	github.com/holiman/uint256 v1.2.2
 )
 
 require (
