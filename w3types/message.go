@@ -34,10 +34,10 @@ type Message struct {
 }
 
 // SetTx sets msg to the [types.Transaction] tx and returns msg.
-func (msg *Message) SetTx(tx *types.Transaction, signer types.Signer) *Message {
+func (msg *Message) SetTx(tx *types.Transaction, signer types.Signer) (*Message, error) {
 	from, err := signer.Sender(tx)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	msg.From = from
@@ -50,6 +50,15 @@ func (msg *Message) SetTx(tx *types.Transaction, signer types.Signer) *Message {
 	msg.Value = tx.Value()
 	msg.Input = tx.Data()
 	msg.AccessList = tx.AccessList()
+	return msg, nil
+}
+
+// MustSetTx is like [SetTx] but panics if the sender retrieval failes.
+func (msg *Message) MustSetTx(tx *types.Transaction, signer types.Signer) *Message {
+	msg, err := msg.SetTx(tx, signer)
+	if err != nil {
+		panic(err)
+	}
 	return msg
 }
 
