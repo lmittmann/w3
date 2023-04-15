@@ -22,7 +22,7 @@ func NewClient(client *rpc.Client) *Client {
 }
 
 // Dial returns a new Client connected to the URL rawurl. An error is returned
-// if the connection establishment failes.
+// if the connection establishment fails.
 //
 // The supported URL schemes are "http", "https", "ws" and "wss". If rawurl is a
 // file name with no URL scheme, a local IPC socket connection is established.
@@ -36,7 +36,7 @@ func Dial(rawurl string) (*Client, error) {
 	}, nil
 }
 
-// MustDial is like [Dial] but panics if the connection establishment failes.
+// MustDial is like [Dial] but panics if the connection establishment fails.
 func MustDial(rawurl string) *Client {
 	client, err := Dial(rawurl)
 	if err != nil {
@@ -57,7 +57,7 @@ func (c *Client) Close() error {
 // response.
 //
 // An error is returned if RPC request creation, networking, or RPC response
-// handeling fails.
+// handling fails.
 func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 	// no requests = nothing to do
 	if len(calls) <= 0 {

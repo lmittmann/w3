@@ -53,7 +53,7 @@ func (msg *Message) SetTx(tx *types.Transaction, signer types.Signer) (*Message,
 	return msg, nil
 }
 
-// MustSetTx is like [SetTx] but panics if the sender retrieval failes.
+// MustSetTx is like [SetTx] but panics if the sender retrieval fails.
 func (msg *Message) MustSetTx(tx *types.Transaction, signer types.Signer) *Message {
 	msg, err := msg.SetTx(tx, signer)
 	if err != nil {

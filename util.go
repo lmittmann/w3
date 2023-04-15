@@ -53,7 +53,7 @@ func APtr(hexAddress string) *common.Address {
 }
 
 // B returns a byte slice from a hexstring or panics if the hexstring does not
-// represent a vaild byte slice.
+// represent a valid byte slice.
 //
 // Use [common.FromHex] to get the byte slice from a hexstring without
 // panicking.

@@ -160,7 +160,7 @@ func (p *parser) parseArgs() error {
 	return nil
 }
 
-// parseType parses a non-tupple type of form "type (indexed)? (name)?"
+// parseType parses a non-tuple type of form "type (indexed)? (name)?"
 func (p *parser) parseType() (*abi.Type, error) {
 	var (
 		typ *abi.Type

@@ -59,8 +59,6 @@ func MustNewEvent(signature string) *Event {
 }
 
 // DecodeArgs decodes the topics and data of the given log to the given args.
-//
-// DecodeArgs is insensitiv to indexed fields.
 func (e *Event) DecodeArgs(log *types.Log, args ...any) error {
 	if len(log.Topics) <= 0 || e.Topic0 != log.Topics[0] {
 		return fmt.Errorf("w3: topic0 mismatch")
