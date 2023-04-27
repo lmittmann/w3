@@ -65,7 +65,7 @@ func TestClientCall(t *testing.T) {
 				&testCaller{ReturnErr: errors.New("err")},
 				&testCaller{},
 			},
-			WantErr: errors.New("w3: one ore more calls failed"),
+			WantErr: errors.New("w3: 1 call failed:\ncall[0]: err"),
 		},
 		{
 			Buf: bytes.NewBufferString(jsonCalls2),
@@ -73,7 +73,7 @@ func TestClientCall(t *testing.T) {
 				&testCaller{},
 				&testCaller{ReturnErr: errors.New("err")},
 			},
-			WantErr: errors.New("w3: one ore more calls failed"),
+			WantErr: errors.New("w3: 1 call failed:\ncall[1]: err"),
 		},
 		{
 			Buf: bytes.NewBufferString(jsonCalls2),
@@ -81,7 +81,7 @@ func TestClientCall(t *testing.T) {
 				&testCaller{ReturnErr: errors.New("err")},
 				&testCaller{ReturnErr: errors.New("err")},
 			},
-			WantErr: errors.New("w3: one ore more calls failed"),
+			WantErr: errors.New("w3: 2 calls failed:\ncall[0]: err\ncall[1]: err"),
 		},
 	}
 

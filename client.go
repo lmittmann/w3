@@ -126,7 +126,7 @@ func (c *Client) Call(calls ...w3types.Caller) error {
 type CallErrors []error
 
 func (e CallErrors) Error() string {
-	if len(e) == 1 {
+	if len(e) == 1 && e[0] != nil {
 		return fmt.Sprintf("w3: call failed: %s", e[0])
 	}
 
@@ -137,7 +137,12 @@ func (e CallErrors) Error() string {
 		}
 		errors = append(errors, fmt.Sprintf("call[%d]: %s", i, err))
 	}
-	return fmt.Sprintf("w3: %d calls failed:\n%s", len(errors), strings.Join(errors, "\n"))
+
+	var plr string
+	if len(errors) > 1 {
+		plr = "s"
+	}
+	return fmt.Sprintf("w3: %d call%s failed:\n%s", len(errors), plr, strings.Join(errors, "\n"))
 }
 
 func (e CallErrors) Is(target error) bool {
