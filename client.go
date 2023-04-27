@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/lmittmann/w3/w3types"
@@ -128,7 +129,15 @@ func (e CallErrors) Error() string {
 	if len(e) == 1 {
 		return fmt.Sprintf("w3: call failed: %s", e[0])
 	}
-	return "w3: one ore more calls failed"
+
+	var errors []string
+	for i, err := range e {
+		if err == nil {
+			continue
+		}
+		errors = append(errors, fmt.Sprintf("call[%d]: %s", i, err))
+	}
+	return fmt.Sprintf("w3: %d calls failed:\n%s", len(errors), strings.Join(errors, "\n"))
 }
 
 func (e CallErrors) Is(target error) bool {
