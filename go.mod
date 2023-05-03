@@ -6,6 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.11.6
 	github.com/google/go-cmp v0.5.9
 	github.com/holiman/uint256 v1.2.2
+	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af
 )
 
 require (

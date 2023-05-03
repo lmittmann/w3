@@ -8,18 +8,24 @@ import (
 
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/lmittmann/w3/w3types"
+	"golang.org/x/time/rate"
 )
 
 // Client represents a connection to an RPC endpoint.
 type Client struct {
 	client *rpc.Client
+	rl     *rate.Limiter
 }
 
 // NewClient returns a new Client given an rpc.Client client.
-func NewClient(client *rpc.Client) *Client {
-	return &Client{
+func NewClient(client *rpc.Client, opts ...ClientOption) *Client {
+	c := &Client{
 		client: client,
 	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
 }
 
 // Dial returns a new Client connected to the URL rawurl. An error is returned
@@ -27,19 +33,17 @@ func NewClient(client *rpc.Client) *Client {
 //
 // The supported URL schemes are "http", "https", "ws" and "wss". If rawurl is a
 // file name with no URL scheme, a local IPC socket connection is established.
-func Dial(rawurl string) (*Client, error) {
+func Dial(rawurl string, opts ...ClientOption) (*Client, error) {
 	client, err := rpc.Dial(rawurl)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{
-		client: client,
-	}, nil
+	return NewClient(client, opts...), nil
 }
 
 // MustDial is like [Dial] but panics if the connection establishment fails.
-func MustDial(rawurl string) *Client {
-	client, err := Dial(rawurl)
+func MustDial(rawurl string, opts ...ClientOption) *Client {
+	client, err := Dial(rawurl, opts...)
 	if err != nil {
 		panic(fmt.Sprintf("w3: %s", err))
 	}
@@ -65,10 +69,16 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 		return nil
 	}
 
-	batchElems := make([]rpc.BatchElem, len(calls))
-	var err error
+	// invoke rate limiter
+	if c.rl != nil {
+		if err := c.rl.WaitN(ctx, len(calls)); err != nil {
+			return err
+		}
+	}
 
 	// create requests
+	batchElems := make([]rpc.BatchElem, len(calls))
+	var err error
 	for i, req := range calls {
 		batchElems[i], err = req.CreateRequest()
 		if err != nil {
