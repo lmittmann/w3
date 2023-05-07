@@ -14,7 +14,10 @@ import (
 // Client represents a connection to an RPC endpoint.
 type Client struct {
 	client *rpc.Client
-	rl     *rate.Limiter
+
+	// rate limiter
+	rl        *rate.Limiter
+	rlPerCall bool
 }
 
 // NewClient returns a new Client given an rpc.Client client.
@@ -70,10 +73,8 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 	}
 
 	// invoke rate limiter
-	if c.rl != nil {
-		if err := c.rl.WaitN(ctx, len(calls)); err != nil {
-			return err
-		}
+	if err := c.rateLimit(ctx, len(calls)); err != nil {
+		return err
 	}
 
 	// create requests
@@ -127,6 +128,17 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 // Call is like [Client.CallCtx] with ctx equal to context.Background().
 func (c *Client) Call(calls ...w3types.Caller) error {
 	return c.CallCtx(context.Background(), calls...)
+}
+
+func (c *Client) rateLimit(ctx context.Context, n int) error {
+	if c.rl == nil {
+		return nil
+	}
+
+	if c.rlPerCall {
+		return c.rl.WaitN(ctx, n)
+	}
+	return c.rl.Wait(ctx)
 }
 
 // CallErrors is an error type that contains the errors of multiple calls. The

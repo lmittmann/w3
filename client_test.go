@@ -296,9 +296,10 @@ func BenchmarkCall_Block100(b *testing.B) {
 }
 
 func ExampleWithRateLimiter() {
-	// Limit the client to 30 requests per second.
+	// Limit the client to 30 requests per second and allow bursts of up to
+	// 100 requests.
 	client := w3.MustDial("https://rpc.ankr.com/eth",
-		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second), 30)),
+		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second/30), 100), false),
 	)
 	defer client.Close()
 }
