@@ -21,7 +21,7 @@ type Client struct {
 }
 
 // NewClient returns a new Client given an rpc.Client client.
-func NewClient(client *rpc.Client, opts ...ClientOption) *Client {
+func NewClient(client *rpc.Client, opts ...Option) *Client {
 	c := &Client{
 		client: client,
 	}
@@ -36,7 +36,7 @@ func NewClient(client *rpc.Client, opts ...ClientOption) *Client {
 //
 // The supported URL schemes are "http", "https", "ws" and "wss". If rawurl is a
 // file name with no URL scheme, a local IPC socket connection is established.
-func Dial(rawurl string, opts ...ClientOption) (*Client, error) {
+func Dial(rawurl string, opts ...Option) (*Client, error) {
 	client, err := rpc.Dial(rawurl)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func Dial(rawurl string, opts ...ClientOption) (*Client, error) {
 }
 
 // MustDial is like [Dial] but panics if the connection establishment fails.
-func MustDial(rawurl string, opts ...ClientOption) *Client {
+func MustDial(rawurl string, opts ...Option) *Client {
 	client, err := Dial(rawurl, opts...)
 	if err != nil {
 		panic(fmt.Sprintf("w3: %s", err))
