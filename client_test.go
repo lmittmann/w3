@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,6 +21,7 @@ import (
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/rpctest"
 	"github.com/lmittmann/w3/w3types"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -291,4 +293,12 @@ func BenchmarkCall_Block100(b *testing.B) {
 			}
 		}
 	})
+}
+
+func ExampleWithRateLimiter() {
+	// Limit the client to 30 requests per second.
+	client := w3.MustDial("https://rpc.ankr.com/eth",
+		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second), 30)),
+	)
+	defer client.Close()
 }
