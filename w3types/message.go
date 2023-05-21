@@ -33,6 +33,23 @@ type Message struct {
 	Args []any // Arguments for Func
 }
 
+// Set sets msg to the given Message and returns it.
+func (msg *Message) Set(msg2 *Message) *Message {
+	msg.From = msg2.From
+	msg.To = msg2.To
+	msg.Nonce = msg2.Nonce
+	msg.GasPrice = msg2.GasPrice
+	msg.GasFeeCap = msg2.GasFeeCap
+	msg.GasTipCap = msg2.GasTipCap
+	msg.Gas = msg2.Gas
+	msg.Value = msg2.Value
+	msg.Input = msg2.Input
+	msg.AccessList = msg2.AccessList
+	msg.Func = msg2.Func
+	msg.Args = msg2.Args
+	return msg
+}
+
 // SetTx sets msg to the [types.Transaction] tx and returns msg.
 func (msg *Message) SetTx(tx *types.Transaction, signer types.Signer) (*Message, error) {
 	from, err := signer.Sender(tx)
