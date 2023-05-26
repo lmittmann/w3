@@ -177,6 +177,8 @@ func parseDecimal(strBig string) *big.Int {
 }
 
 // Keccak returns the Keccak256 hash of data. It is short for crypto.Keccak256Hash(…)
+//
+// Deprecated: Use [crypto.Keccak256Hash] instead.
 func Keccak(data []byte) common.Hash {
 	return crypto.Keccak256Hash(data)
 }
