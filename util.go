@@ -1,6 +1,7 @@
 package w3
 
 import (
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -24,7 +25,7 @@ var (
 //
 // Use [common.HexToAddress] to get the address from a hexstring without
 // panicking.
-func A(hexAddress string) common.Address {
+func A(hexAddress string) (addr common.Address) {
 	if !has0xPrefix(hexAddress) {
 		panic(fmt.Sprintf("hex address %q must have 0x prefix", hexAddress))
 	}
@@ -35,9 +36,7 @@ func A(hexAddress string) common.Address {
 		panic(fmt.Sprintf("hex address %q must have 20 bytes", hexAddress))
 	}
 
-	var addr common.Address
-	b, _ := hex.DecodeString(hexAddress[2:])
-	copy(addr[:], b)
+	hex.Decode(addr[:], []byte(hexAddress[2:]))
 
 	if hexAddress != addr.Hex() {
 		panic(fmt.Sprintf("hex address %q must be checksum encoded", hexAddress))
@@ -52,12 +51,18 @@ func APtr(hexAddress string) *common.Address {
 	return &addr
 }
 
+// RandA returns a random address.
+func RandA() (addr common.Address) {
+	rand.Read(addr[:])
+	return addr
+}
+
 // B returns a byte slice from a hexstring or panics if the hexstring does not
 // represent a valid byte slice.
 //
 // Use [common.FromHex] to get the byte slice from a hexstring without
 // panicking.
-func B(hexBytes string) []byte {
+func B(hexBytes string) (bytes []byte) {
 	if !has0xPrefix(hexBytes) {
 		panic(fmt.Sprintf("hex bytes %q must have 0x prefix", hexBytes))
 	}
@@ -68,7 +73,7 @@ func B(hexBytes string) []byte {
 		panic(fmt.Sprintf("hex bytes %q must have even number of hex chars", hexBytes))
 	}
 
-	bytes, _ := hex.DecodeString(hexBytes[2:])
+	bytes, _ = hex.DecodeString(hexBytes[2:])
 	return bytes
 }
 
@@ -76,7 +81,7 @@ func B(hexBytes string) []byte {
 // represent a valid hash.
 //
 // Use [common.HexToHash] to get the hash from a hexstring without panicking.
-func H(hexHash string) common.Hash {
+func H(hexHash string) (hash common.Hash) {
 	if !has0xPrefix(hexHash) {
 		panic(fmt.Sprintf("hex hash %q must have 0x prefix", hexHash))
 	}
@@ -87,9 +92,7 @@ func H(hexHash string) common.Hash {
 		panic(fmt.Sprintf("hex hash %q must have 32 bytes", hexHash))
 	}
 
-	var hash common.Hash
-	b, _ := hex.DecodeString(hexHash[2:])
-	copy(hash[:], b)
+	hex.Decode(hash[:], []byte(hexHash[2:]))
 	return hash
 }
 
