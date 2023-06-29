@@ -3,13 +3,8 @@
 @tailwind utilities;
 
 @layer base {
-    nav a[target="_blank"] > span::after {
-        content: url("../public/_blank.svg");
-        @apply ml-1;
-    }
-
     main {
-        @apply dark:text-gray-400;
+        @apply dark:text-neutral-400;
     }
 
     main strong,

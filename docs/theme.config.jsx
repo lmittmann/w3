@@ -3,10 +3,10 @@ import Image from 'next/image'
 
 export default {
     logo: <>
-        <div className="rounded-full h-12 w-12 mr-2 overflow-hidden bg-black/10 dark:bg-white/10">
+        <div className="rounded-full h-10 w-10 mr-2 overflow-hidden bg-black/10 dark:bg-white/10">
             <Image src="/gopher.png" alt="w3" width={48} height={48} className='w-11/12 mx-auto' />
         </div>
-        <span className="text-3xl font-bold">w3</span>
+        <span className="text-2xl font-bold">w3</span>
     </>,
     useNextSeoProps() {
         const { pathname } = useRouter()
@@ -24,7 +24,7 @@ export default {
     feedback: {
         content: null,
     },
-    docsRepositoryBase: 'https://github.com/lmittmann/w3/blob/main/doc/pages',
+    docsRepositoryBase: 'https://github.com/lmittmann/w3/blob/main/docs/pages',
     primaryHue: {
         dark: 189,
         light: 191
