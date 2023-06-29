@@ -16,8 +16,8 @@ type Client struct {
 	client *rpc.Client
 
 	// rate limiter
-	rl        *rate.Limiter
-	rlPerCall bool
+	rl         *rate.Limiter
+	rlCostFunc func(method string) (cost int)
 }
 
 // NewClient returns a new Client given an rpc.Client client.
@@ -72,11 +72,6 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 		return nil
 	}
 
-	// invoke rate limiter
-	if err := c.rateLimit(ctx, len(calls)); err != nil {
-		return err
-	}
-
 	// create requests
 	batchElems := make([]rpc.BatchElem, len(calls))
 	var err error
@@ -85,6 +80,11 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	// invoke rate limiter
+	if err := c.rateLimit(ctx, batchElems); err != nil {
+		return err
 	}
 
 	// do requests
@@ -130,15 +130,22 @@ func (c *Client) Call(calls ...w3types.Caller) error {
 	return c.CallCtx(context.Background(), calls...)
 }
 
-func (c *Client) rateLimit(ctx context.Context, n int) error {
+func (c *Client) rateLimit(ctx context.Context, batchElems []rpc.BatchElem) error {
 	if c.rl == nil {
 		return nil
 	}
 
-	if c.rlPerCall {
-		return c.rl.WaitN(ctx, n)
+	if c.rlCostFunc == nil {
+		// limit requests
+		return c.rl.Wait(ctx)
 	}
-	return c.rl.Wait(ctx)
+
+	// limit requests based on Compute Units (CUs)
+	var cost int
+	for _, batchElem := range batchElems {
+		cost += c.rlCostFunc(batchElem.Method)
+	}
+	return c.rl.WaitN(ctx, cost)
 }
 
 // CallErrors is an error type that contains the errors of multiple calls. The
@@ -170,4 +177,18 @@ func (e CallErrors) Error() string {
 func (e CallErrors) Is(target error) bool {
 	_, ok := target.(CallErrors)
 	return ok
+}
+
+// An Option configures a Client.
+type Option func(*Client)
+
+// WithRateLimiter sets the rate limiter for the client. Set the optional argument
+// costFunc to nil to limit the number of requests. Supply a costFunc to limit
+// the the number of requests based on individual RPC calls for advanced rate
+// limiting by Compute Units (CUs).
+func WithRateLimiter(rl *rate.Limiter, costFunc func(method string) (cost int)) Option {
+	return func(c *Client) {
+		c.rl = rl
+		c.rlCostFunc = costFunc
+	}
 }

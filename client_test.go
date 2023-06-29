@@ -299,7 +299,7 @@ func ExampleWithRateLimiter() {
 	// Limit the client to 30 requests per second and allow bursts of up to
 	// 100 requests.
 	client := w3.MustDial("https://rpc.ankr.com/eth",
-		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second/30), 100), false),
+		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second/30), 100), nil),
 	)
 	defer client.Close()
 }
