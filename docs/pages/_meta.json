@@ -12,13 +12,7 @@
         "newWindow": true
     },
     "index": {},
-    "rpc": {
-        "title": "RPC"
-    },
-    "vm": {
-        "title": "VM"
-    },
-    "abi": {
-        "title": "ABI Bindings"
-    }
+    "rpc": {},
+    "vm": {},
+    "abi": {}
 }
