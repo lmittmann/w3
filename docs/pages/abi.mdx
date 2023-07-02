@@ -4,4 +4,76 @@ title: ABI Bindings
 
 # ABI
 
-Coming soon...
+ABI bindings allow the encoding and decoding of Smart Contract function calls or the decoding of events.
+In `w3` ABI bindings are defined for individual functions or events at runtime using Solidity syntax.
+
+* **Easy to write:** Creating an ABI binding only requires the Solidity function signature. No need
+  to firstly generate an ABI json file using `solc` and secondly generate ABI bindings using `abigen`.
+* **Flexible:** ABI bindings for a function or event can be used with any Smart Contract. No need to
+  generate overlapping bindings for multiple Smart Contracts.
+
+
+## Functions
+
+Function ABI bindings can be defined using
+* `func NewFunc(signature, returns string) (*Func, error)`, or
+* `func MustNewFunc(signature, returns string) *Func` which panics on error.
+
+### Examples
+
+#### ERC20 `transfer`
+
+The ERC20 `transfer` function can be defined as follows:
+```go
+funcTransfer := w3.MustNewFunc("transfer(address,uint256)", "bool")
+```
+
+Alternatively the function arguments and returns can also be named. Note, that Solidity type aliases
+are also supported (e.g. `uint` for `uint256`):
+```go
+funcTransfer := w3.MustNewFunc("transfer(address to, uint amount)", "bool success")
+```
+
+#### Tuples
+
+The Uniswap V3 [`IQuoterV2.sol`](https://github.com/Uniswap/v3-periphery/blob/main/contracts/interfaces/IQuoterV2.sol#L27-L53)
+uses a tuple as argument for e.g. `quoteExactInputSingle`, which can be defined as follows:
+
+```go
+funcQuoteExactInputSingle := w3.MustNewFunc(
+    `quoteExactInputSingle((
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint24 fee,
+        uint160 sqrtPriceLimitX96
+    ) params)`,
+    `uint256 amountOut,
+     uint160 sqrtPriceX96After,
+     uint32 initializedTicksCrossed,
+     uint256 gasEstimate`,
+)
+```
+
+Note, that the Solidity struct arguments are wrapped in parenthesis and names are mandatory.
+
+### `EncodeArgs`
+
+### `DecodeArgs` and `DecodeReturns`
+
+
+
+
+## Events
+
+Event ABI bindings can be defined using
+* `func NewEvent(signature string) (*Event, error)`, or
+* `func MustNewEvent(signature string) *Event` which panics on error.
+
+### Examples
+
+#### ERC20 `Transfer`
+
+```go
+evtTransfer := w3.MustNewEvent("Transfer(address indexed from, address indexed to, uint256 value)")
+```
