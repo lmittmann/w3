@@ -85,6 +85,9 @@ func (f *Func) DecodeArgs(input []byte, args ...any) error {
 	if len(input) < 4 {
 		return errors.New("w3: insufficient input length")
 	}
+	if !bytes.Equal(input[:4], f.Selector[:]) {
+		return errors.New("w3: input does not match selector")
+	}
 	return _abi.Arguments(f.Args).Decode(input[4:], args...)
 }
 
