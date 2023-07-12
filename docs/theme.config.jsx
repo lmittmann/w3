@@ -8,6 +8,9 @@ export default {
         </div>
         <span className="text-2xl font-bold">w3</span>
     </>,
+    banner: {
+        text: '🚧 This site is currently under construction 🚧'
+    },
     useNextSeoProps() {
         const { pathname } = useRouter()
         return { titleTemplate: pathname === '/' ? 'w3' : '%s – w3' }
