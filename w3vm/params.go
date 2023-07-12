@@ -6,6 +6,10 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 )
 
+var (
+	uint0 uint64
+)
+
 // defaultChainConfig contains every protocol change introduced for Mainnet.
 var defaultChainConfig = &params.ChainConfig{
 	ChainID:                       big.NewInt(1),
