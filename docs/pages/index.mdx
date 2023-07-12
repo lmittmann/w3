@@ -148,7 +148,7 @@ var funcTransfer = w3.MustNewFunc("transfer(address,uint256)", "bool")
 input, err := funcTransfer.EncodeArgs(w3.A("0x…"), w3.I("1 ether"))
 ```
 
-2. Create a signed transaction to the contract using [go-ethereum/types](https://github.com/ethereum/go-ethereum).
+2. Create a signed transaction to the contract using [go-ethereum/core/types](https://pkg.go.dev/github.com/ethereum/go-ethereum/core/types).
 
 ```go
 signer := types.LatestSigner(params.MainnetChainConfig)
