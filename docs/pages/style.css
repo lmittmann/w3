@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    main {
+        @apply dark:text-neutral-400;
+    }
+
+    main strong,
+    main :not(a) > code{
+        @apply dark:text-white;
+    }
+}
