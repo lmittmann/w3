@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/ethereum/go-ethereum/trie"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
@@ -57,40 +58,58 @@ type noopKeyValueStore struct {
 }
 
 // ethdb.KeyValueReader methods
-func (noopKeyValueStore) Get(key []byte) ([]byte, error) { panic("not implemented") }
-func (noopKeyValueStore) Has(key []byte) (bool, error)   { panic("not implemented") }
+func (*noopKeyValueStore) Get(key []byte) ([]byte, error) { panic("not implemented") }
+func (*noopKeyValueStore) Has(key []byte) (bool, error)   { panic("not implemented") }
 
 // ethdb.KeyValueWriter methods
-func (noopKeyValueStore) Put(key []byte, value []byte) error { panic("not implemented") }
-func (noopKeyValueStore) Delete(key []byte) error            { panic("not implemented") }
+func (*noopKeyValueStore) Put(key, value []byte) error { panic("not implemented") }
+func (*noopKeyValueStore) Delete(key []byte) error     { panic("not implemented") }
 
 // ethdb.KeyValueStater methods
-func (noopKeyValueStore) Stat(property string) (string, error) { panic("not implemented") }
+func (*noopKeyValueStore) Stat(property string) (string, error) { panic("not implemented") }
 
 // ethdb.Batcher methods
-func (noopKeyValueStore) NewBatch() ethdb.Batch                 { return new(noopBatch) }
-func (noopKeyValueStore) NewBatchWithSize(size int) ethdb.Batch { return new(noopBatch) }
+func (*noopKeyValueStore) NewBatch() ethdb.Batch                 { return new(noopBatch) }
+func (*noopKeyValueStore) NewBatchWithSize(size int) ethdb.Batch { return new(noopBatch) }
 
 // ethdb.Iteratee methods
-func (noopKeyValueStore) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
+func (noopKeyValueStore) NewIterator(prefix, start []byte) ethdb.Iterator {
 	panic("not implemented")
 }
 
 // eth.Compacter methods
-func (noopKeyValueStore) Compact(start []byte, limit []byte) error { panic("not implemented") }
+func (*noopKeyValueStore) Compact(start, limit []byte) error { panic("not implemented") }
 
 // ethdb.Snapshotter methods
-func (noopKeyValueStore) Snapshot() int { panic("not implemented") }
+func (*noopKeyValueStore) Snapshot() int { panic("not implemented") }
 
 // io.Closer methods
-func (noopKeyValueStore) Close() error { return nil }
+func (*noopKeyValueStore) Close() error { return nil }
 
 // noopBatch implements a [ethdb.Batch] that does nothing.
 type noopBatch struct {
 	ethdb.Batch
 }
 
-func (noopBatch) ValueSize() int                      { return 0 }
-func (noopBatch) Write() error                        { return nil }
-func (noopBatch) Reset()                              {}
-func (noopBatch) Replay(w ethdb.KeyValueWriter) error { return nil }
+func (*noopBatch) Put(key, value []byte) error { return nil }
+func (*noopBatch) Delete(key []byte) error     { panic("not implemented") }
+
+func (*noopBatch) ValueSize() int                      { return 0 }
+func (*noopBatch) Write() error                        { return nil }
+func (*noopBatch) Reset()                              {}
+func (*noopBatch) Replay(w ethdb.KeyValueWriter) error { return nil }
+
+type noopNodeIterator struct {
+	trie.NodeIterator
+}
+
+func (*noopNodeIterator) Next(bool) bool                { return false }
+func (*noopNodeIterator) Error() error                  { return nil }
+func (*noopNodeIterator) Parent() common.Hash           { return hash0 }
+func (*noopNodeIterator) Path() []byte                  { return nil }
+func (*noopNodeIterator) NodeBlob() []byte              { return nil }
+func (*noopNodeIterator) Leaf() bool                    { return false }
+func (*noopNodeIterator) LeafKey() []byte               { return nil }
+func (*noopNodeIterator) LeafBlob() []byte              { return nil }
+func (*noopNodeIterator) LeafProof() [][]byte           { return nil }
+func (*noopNodeIterator) AddResolver(trie.NodeResolver) {}
