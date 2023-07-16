@@ -3,16 +3,25 @@ package state
 import (
 	"encoding/hex"
 	"math/big"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/trie"
 	"github.com/holiman/uint256"
+	"github.com/lmittmann/w3/internal/mod"
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
 )
 
 var hash0 common.Hash
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// w3types.Caller's ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ethBalance is like [eth.Balance], but returns the balance as [uint256.Int].
 func ethBalance(addr common.Address, blockNumber *big.Int) w3types.CallerFactory[uint256.Int] {
@@ -55,6 +64,10 @@ func (i *uint256OrHash) UnmarshalText(text []byte) error {
 func (i uint256OrHash) MarshalText() ([]byte, error) {
 	return (*uint256.Int)(&i).MarshalText()
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// KeyValueStore ///////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // noopKeyValueStore implements a [ethdb.KeyValueStore] that does nothing.
 type noopKeyValueStore struct {
@@ -117,3 +130,36 @@ func (*noopNodeIterator) LeafKey() []byte               { return nil }
 func (*noopNodeIterator) LeafBlob() []byte              { return nil }
 func (*noopNodeIterator) LeafProof() [][]byte           { return nil }
 func (*noopNodeIterator) AddResolver(trie.NodeResolver) {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Testing  ////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func getTbFilepath(tb testing.TB) string {
+	// Find test name of the root test (drop subtests from name).
+	if tb == nil || tb.Name() == "" {
+		return ""
+	}
+	tn := strings.SplitN(tb.Name(), "/", 2)[0]
+
+	// Find the test function in the call stack. Don't go deeper than 32 frames.
+	for i := 0; i < 32; i++ {
+		pc, file, _, ok := runtime.Caller(i)
+		if !ok {
+			break
+		}
+
+		fn := runtime.FuncForPC(pc).Name()
+		_, fn = filepath.Split(fn)
+		fn = strings.SplitN(fn, ".", 3)[1]
+
+		if fn == tn {
+			return filepath.Dir(file)
+		}
+	}
+	return ""
+}
+
+func isTbInMod(fp string) bool {
+	return mod.Root != "" && strings.HasPrefix(fp, mod.Root)
+}
