@@ -1,12 +1,18 @@
 package w3vm
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/core"
+	gethState "github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/w3types"
@@ -15,13 +21,22 @@ import (
 
 type VM struct {
 	opts *vmOptions
+
+	chainConfig *params.ChainConfig
+	blockCtx    *vm.BlockContext
+	noBaseFee   bool
+	db          *state.DB
+	fetcher     state.Fetcher
 }
 
 type vmOptions struct {
-	chainConfig     *params.ChainConfig
-	preState        w3types.State
-	blockCtx        *vm.BlockContext
-	header          *types.Header
+	chainConfig *params.ChainConfig
+	preState    w3types.State
+	noBaseFee   bool
+
+	blockCtx *vm.BlockContext
+	header   *types.Header
+
 	forkClient      *w3.Client
 	forkBlockNumber *big.Int
 	fetcher         state.Fetcher
@@ -33,15 +48,90 @@ func New(opts ...Option) *VM {
 	for _, opt := range opts {
 		opt(c)
 	}
+
+	c.fetcher = c.opts.fetcher
+
+	// set chain config
+	c.chainConfig = c.opts.chainConfig
+	if c.chainConfig == nil {
+		if c.fetcher != nil {
+			c.chainConfig = params.MainnetChainConfig
+		} else {
+			c.chainConfig = allEthashProtocolChanges
+		}
+	}
+
+	c.blockCtx = c.opts.blockCtx
+	if c.blockCtx == nil {
+		if c.opts.header != nil {
+			c.blockCtx = newBlockContext(c.opts.header, c.fetcherHashFunc(c.fetcher))
+		} else {
+			c.blockCtx = defaultBlockContext()
+		}
+	}
+
+	// set DB
+	c.db = state.NewDB(c.fetcher)
+	if c.opts.preState != nil {
+		c.db.SetState(c.opts.preState)
+	}
 	return c
 }
 
 func (vm *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
-	return nil, nil
+	return vm.apply(msg, false, newMultiEVMLogger(tracers))
+}
+
+func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Receipt, error) {
+	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
+	if err != nil {
+		return nil, err
+	}
+
+	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
+	stateDB, _ := gethState.New(hash0, v.db, nil)
+	evm := vm.NewEVM(*v.blockCtx, *txCtx, stateDB, v.chainConfig, vm.Config{
+		Tracer:    tracer,
+		NoBaseFee: v.noBaseFee,
+	})
+
+	// apply the message to the evm
+	result, err := core.ApplyMessage(evm, coreMsg, gp)
+	if err != nil {
+		return nil, err
+	}
+
+	// build receipt
+	receipt := &Receipt{
+		f:        msg.Func,
+		GasUsed:  result.UsedGas,
+		GasLimit: result.UsedGas + stateDB.GetRefund(),
+		Output:   result.ReturnData,
+		Logs:     stateDB.Logs(),
+	}
+
+	if err := result.Err; err != nil {
+		if reason, unpackErr := abi.UnpackRevert(result.ReturnData); unpackErr != nil {
+			receipt.Err = err
+		} else {
+			receipt.Err = fmt.Errorf("%w: %s", err, reason)
+		}
+	}
+	if msg.To == nil {
+		contractAddr := crypto.CreateAddress(msg.From, msg.Nonce)
+		receipt.ContractAddress = &contractAddr
+	}
+
+	if isCall {
+		stateDB.RevertToSnapshot(0)
+	} else {
+		stateDB.Commit(false)
+	}
+	return receipt, receipt.Err
 }
 
 func (vm *VM) Call(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
-	return nil, nil
+	return vm.apply(msg, true, newMultiEVMLogger(tracers))
 }
 
 func (vm *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) Returner {
@@ -74,23 +164,122 @@ func (r *returner) Returns(returns ...any) error {
 
 // Nonce returns the nonce of Address addr.
 func (vm *VM) Nonce(addr common.Address) uint64 {
-	return 0
+	acc, err := vm.db.GetAccount(addr)
+	if err != nil {
+		return 0
+	}
+	return acc.Nonce
 }
 
 // Balance returns the balance of Address addr.
 func (vm *VM) Balance(addr common.Address) *big.Int {
-	return nil
+	acc, err := vm.db.GetAccount(addr)
+	if err != nil {
+		return new(big.Int)
+	}
+	return acc.Balance
 }
 
 // Code returns the code of Address addr.
 func (vm *VM) Code(addr common.Address) []byte {
-	return nil
+	code, err := vm.db.ContractCode(addr, hash0)
+	if err != nil {
+		return nil
+	}
+	return code
 }
 
 // StorageAt returns the state of Address addr at the give storage Hash slot.
 func (vm *VM) StorageAt(addr common.Address, slot common.Hash) common.Hash {
-	return common.Hash{}
+	storageVal, err := vm.db.GetStorage(addr, slot[:])
+	if err != nil {
+		return hash0
+	}
+	return common.BytesToHash(storageVal)
 }
+
+func (c *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
+	nonce := msg.Nonce
+	if nonce == 0 && !skipAccChecks && msg.From != addr0 {
+		nonce = c.Nonce(msg.From)
+	}
+
+	gasLimit := msg.Gas
+	if maxGasLimit := c.blockCtx.GasLimit; gasLimit == 0 {
+		gasLimit = maxGasLimit
+	} else if gasLimit > maxGasLimit {
+		gasLimit = maxGasLimit
+	}
+
+	var input []byte
+	if msg.Input == nil && msg.Func != nil {
+		var err error
+		input, err = msg.Func.EncodeArgs(msg.Args...)
+		if err != nil {
+			return nil, nil, err
+		}
+	} else {
+		input = msg.Input
+	}
+
+	gasPrice := nilToZero(msg.GasPrice)
+	gasFeeCap := nilToZero(msg.GasFeeCap)
+	gasTipCap := nilToZero(msg.GasTipCap)
+	if baseFee := c.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
+		gasPrice = math.BigMin(gasFeeCap, new(big.Int).Add(baseFee, gasTipCap))
+	}
+
+	return &core.Message{
+			To:                msg.To,
+			From:              msg.From,
+			Nonce:             nonce,
+			Value:             nilToZero(msg.Value),
+			GasLimit:          gasLimit,
+			GasPrice:          gasPrice,
+			GasFeeCap:         gasFeeCap,
+			GasTipCap:         gasFeeCap,
+			Data:              input,
+			AccessList:        msg.AccessList,
+			SkipAccountChecks: skipAccChecks,
+		},
+		&vm.TxContext{
+			Origin:   msg.From,
+			GasPrice: gasPrice,
+		},
+		nil
+}
+
+func (vm *VM) fetcherHashFunc(fetcher state.Fetcher) vm.GetHashFunc {
+	return func(n uint64) common.Hash {
+		blockNumber := new(big.Int).SetUint64(n)
+		hash, _ := fetcher.HeaderHash(blockNumber)
+		return hash
+	}
+}
+
+func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
+	var random *common.Hash
+	if h.Difficulty == nil || h.Difficulty.Sign() == 0 {
+		random = &h.MixDigest
+	}
+
+	return &vm.BlockContext{
+		CanTransfer: core.CanTransfer,
+		Transfer:    core.Transfer,
+		GetHash:     getHash,
+		Coinbase:    h.Coinbase,
+		BlockNumber: nilToZero(h.Number),
+		Time:        h.Time,
+		Difficulty:  nilToZero(h.Difficulty),
+		BaseFee:     nilToZero(h.BaseFee),
+		GasLimit:    h.GasLimit,
+		Random:      random,
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// VM Option ///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // An Option configures a VM.
 type Option func(*VM)
@@ -108,6 +297,10 @@ func WithBlockContext(ctx *vm.BlockContext) Option {
 // WithState sets the VM's pre state.
 func WithState(state w3types.State) Option {
 	return func(vm *VM) { vm.opts.preState = state }
+}
+
+func WithNoBaseFee() Option {
+	return func(vm *VM) { vm.opts.noBaseFee = true }
 }
 
 func WithFork(client *w3.Client, blockNumber *big.Int) Option {
