@@ -38,7 +38,7 @@ type RPCFetcher struct {
 
 	g            *singleflight.Group
 	mux          sync.RWMutex
-	accounts     map[common.Address]account2
+	accounts     map[common.Address]account
 	mux2         sync.RWMutex
 	headerHashes map[uint64]common.Hash
 }
@@ -48,7 +48,7 @@ func NewRPCFetcher(client *w3.Client, blockNumber *big.Int) *RPCFetcher {
 		client:       client,
 		blockNumber:  blockNumber,
 		g:            new(singleflight.Group),
-		accounts:     make(map[common.Address]account2),
+		accounts:     make(map[common.Address]account),
 		headerHashes: make(map[uint64]common.Hash),
 	}
 }
@@ -89,7 +89,7 @@ func (f *RPCFetcher) HeaderHash(blockNumber *big.Int) (common.Hash, error) {
 	return f.fetchHeaderHash(blockNumber)
 }
 
-func (f *RPCFetcher) fetchAccount(addr common.Address) (account2, error) {
+func (f *RPCFetcher) fetchAccount(addr common.Address) (account, error) {
 	accAny, err, _ := f.g.Do(string(addr[:]), func() (interface{}, error) {
 		// check if account is already cached
 		f.mux.RLock()
@@ -112,7 +112,7 @@ func (f *RPCFetcher) fetchAccount(addr common.Address) (account2, error) {
 		); err != nil {
 			return nil, err
 		}
-		acc = account2{
+		acc = account{
 			Nonce:   nonce,
 			Balance: balance,
 			Code:    code,
@@ -126,9 +126,9 @@ func (f *RPCFetcher) fetchAccount(addr common.Address) (account2, error) {
 		return acc, nil
 	})
 	if err != nil {
-		return account2{}, err
+		return account{}, err
 	}
-	return accAny.(account2), nil
+	return accAny.(account), nil
 }
 
 func (f *RPCFetcher) fetchStorageAt(addr common.Address, slot uint256.Int) (uint256.Int, error) {
@@ -204,7 +204,7 @@ func (f *RPCFetcher) call(calls ...w3types.Caller) error {
 	return f.client.Call(calls...)
 }
 
-type account2 struct {
+type account struct {
 	Nonce   uint64
 	Balance uint256.Int
 	Code    []byte
