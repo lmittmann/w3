@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"math/big"
 	"strconv"
 	"testing"
@@ -32,6 +33,75 @@ var (
 	jsonCalls2 = `> [{"jsonrpc":"2.0","id":1},{"jsonrpc":"2.0","id":2}]` + "\n" +
 		`< [{"jsonrpc":"2.0","id":1,"result":"0x1"},{"jsonrpc":"2.0","id":2,"result":"0x1"}]`
 )
+
+func ExampleDial() {
+	client, err := w3.Dial("https://rpc.ankr.com/eth")
+	if err != nil {
+		// ...
+	}
+	defer client.Close()
+}
+
+func ExampleMustDial() {
+	client := w3.MustDial("https://rpc.ankr.com/eth")
+	defer client.Close()
+}
+
+func ExampleClient_Call() {
+	// Connect to RPC endpoint (or panic on error) and
+	// close the connection when you are done.
+	client := w3.MustDial("https://rpc.ankr.com/eth")
+	defer client.Close()
+
+	var (
+		addr  = w3.A("0x000000000000000000000000000000000000dEaD")
+		weth9 = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+
+		// Declare a Smart Contract function using Solidity syntax,
+		// no "abigen" and ABI JSON file needed.
+		balanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
+
+		// Declare variables for the RPC responses.
+		ethBalance   big.Int
+		weth9Balance big.Int
+	)
+
+	// Do batch request (both RPC requests are send in the same
+	// HTTP request).
+	if err := client.Call(
+		eth.Balance(addr, nil).Returns(&ethBalance),
+		eth.CallFunc(balanceOf, weth9, addr).Returns(&weth9Balance),
+	); err != nil {
+		fmt.Printf("Request failed: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Combined balance: %v wei",
+		new(big.Int).Add(&ethBalance, &weth9Balance),
+	)
+}
+
+func ExampleClient_Call_nonceAndBalance() {
+	client := w3.MustDial("https://rpc.ankr.com/eth")
+	defer client.Close()
+
+	var (
+		addr = w3.A("0x000000000000000000000000000000000000c0Fe")
+
+		nonce   uint64
+		balance big.Int
+	)
+
+	if err := client.Call(
+		eth.Nonce(addr, nil).Returns(&nonce),
+		eth.Balance(addr, nil).Returns(&balance),
+	); err != nil {
+		fmt.Printf("Request failed: %v\n", err)
+		return
+	}
+
+	fmt.Printf("%s: Nonce: %d, Balance: ♦%s\n", addr, nonce, w3.FromWei(&balance, 18))
+}
 
 func TestClientCall(t *testing.T) {
 	tests := []struct {

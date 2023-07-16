@@ -1,13 +1,34 @@
-package w3
+package w3_test
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"strconv"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/lmittmann/w3"
 )
+
+func ExampleI() {
+	fmt.Printf("%v wei\n", w3.I("0x2b98d99b09e3c000"))
+	fmt.Printf("%v wei\n", w3.I("3141500000000000000"))
+	fmt.Printf("%v wei\n", w3.I("3.1415 ether"))
+	fmt.Printf("%v wei\n", w3.I("31.415 gwei"))
+	// Output:
+	// 3141500000000000000 wei
+	// 3141500000000000000 wei
+	// 3141500000000000000 wei
+	// 31415000000 wei
+}
+
+func ExampleFromWei() {
+	wei := big.NewInt(1_230000000_000000000)
+	fmt.Printf("%s Ether\n", w3.FromWei(wei, 18))
+	// Output:
+	// 1.23 Ether
+}
 
 func TestA(t *testing.T) {
 	t.Parallel()
@@ -39,7 +60,7 @@ func TestA(t *testing.T) {
 				}
 			}()
 
-			gotAddr := A(test.HexAddress)
+			gotAddr := w3.A(test.HexAddress)
 			if test.WantPanic == "" && test.WantAddress != gotAddr {
 				t.Fatalf("want: %s, got: %s", test.WantAddress, gotAddr)
 			}
@@ -76,7 +97,7 @@ func TestB(t *testing.T) {
 				}
 			}()
 
-			gotBytes := B(test.HexBytes)
+			gotBytes := w3.B(test.HexBytes)
 			if test.WantPanic == "" && !bytes.Equal(test.WantBytes, gotBytes) {
 				t.Fatalf("want: %x, got: %x", test.WantBytes, gotBytes)
 			}
@@ -113,7 +134,7 @@ func TestH(t *testing.T) {
 				}
 			}()
 
-			gotHash := H(test.HexHash)
+			gotHash := w3.H(test.HexHash)
 			if test.WantPanic == "" && test.WantHash != gotHash {
 				t.Fatalf("want: %s, got: %s", test.WantHash, gotHash)
 			}
@@ -185,7 +206,7 @@ func TestI(t *testing.T) {
 				}
 			}()
 
-			gotBig := I(test.StrInt)
+			gotBig := w3.I(test.StrInt)
 			if test.WantPanic == "" && test.WantBig.Cmp(gotBig) != 0 {
 				t.Fatalf("want %v, got %v", test.WantBig, gotBig)
 			}
@@ -203,12 +224,12 @@ func FuzzI(f *testing.F) {
 	f.Fuzz(func(t *testing.T, b []byte) {
 		wantBig := new(big.Int).SetBytes(b)
 		bigStr := wantBig.String()
-		if gotBig := I(bigStr); wantBig.Cmp(gotBig) != 0 {
+		if gotBig := w3.I(bigStr); wantBig.Cmp(gotBig) != 0 {
 			t.Fatalf("want %v, got %v", wantBig, gotBig)
 		}
 
 		bigHexstr := wantBig.Text(16)
-		if gotBig := I("0x" + bigHexstr); wantBig.Cmp(gotBig) != 0 {
+		if gotBig := w3.I("0x" + bigHexstr); wantBig.Cmp(gotBig) != 0 {
 			t.Fatalf("want %v, got %v", wantBig, gotBig)
 		}
 	})
@@ -227,7 +248,7 @@ func BenchmarkI(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				I(bench)
+				w3.I(bench)
 			}
 		})
 	}
@@ -269,7 +290,7 @@ func TestFromWei(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			got := FromWei(test.Wei, test.Decimals)
+			got := w3.FromWei(test.Wei, test.Decimals)
 			if got != test.Want {
 				t.Fatalf("%q != %q", got, test.Want)
 			}
