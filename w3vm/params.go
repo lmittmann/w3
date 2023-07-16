@@ -1,8 +1,12 @@
 package w3vm
 
 import (
+	"crypto/rand"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
 )
 
@@ -33,4 +37,25 @@ var allEthashProtocolChanges = &params.ChainConfig{
 	TerminalTotalDifficultyPassed: true,
 	Ethash:                        new(params.EthashConfig),
 	Clique:                        nil,
+}
+
+func defaultBlockContext() *vm.BlockContext {
+	var coinbase common.Address
+	rand.Read(coinbase[:])
+
+	var random common.Hash
+	rand.Read(random[:])
+
+	return &vm.BlockContext{
+		CanTransfer: core.CanTransfer,
+		Transfer:    core.Transfer,
+		GetHash:     zeroHashFunc,
+		Coinbase:    coinbase,
+		BlockNumber: new(big.Int),
+		Time:        uint0,
+		Difficulty:  new(big.Int),
+		BaseFee:     new(big.Int),
+		GasLimit:    params.MaxGasLimit,
+		Random:      &random,
+	}
 }

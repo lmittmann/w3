@@ -16,3 +16,8 @@ func nilToZero[T any](ptr *T) *T {
 	}
 	return ptr
 }
+
+// zeroHashFunc implements a [vm.GetHashFunc] that always returns the zero hash.
+func zeroHashFunc(uint64) common.Hash {
+	return hash0
+}
