@@ -2,8 +2,11 @@ package state
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/big"
+	"path/filepath"
 	"sync"
+	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -40,7 +43,7 @@ type RPCFetcher struct {
 
 	g            *singleflight.Group
 	mux          sync.RWMutex
-	accounts     map[common.Address]Account
+	accounts     map[common.Address]*Account
 	mux2         sync.RWMutex
 	headerHashes map[uint64]common.Hash
 }
@@ -50,7 +53,7 @@ func NewRPCFetcher(client *w3.Client, blockNumber *big.Int) *RPCFetcher {
 		client:       client,
 		blockNumber:  blockNumber,
 		g:            new(singleflight.Group),
-		accounts:     make(map[common.Address]Account),
+		accounts:     make(map[common.Address]*Account),
 		headerHashes: make(map[uint64]common.Hash),
 	}
 }
@@ -91,7 +94,7 @@ func (f *RPCFetcher) HeaderHash(blockNumber *big.Int) (common.Hash, error) {
 	return f.fetchHeaderHash(blockNumber)
 }
 
-func (f *RPCFetcher) fetchAccount(addr common.Address) (Account, error) {
+func (f *RPCFetcher) fetchAccount(addr common.Address) (*Account, error) {
 	accAny, err, _ := f.g.Do(string(addr[:]), func() (interface{}, error) {
 		// check if account is already cached
 		f.mux.RLock()
@@ -114,7 +117,7 @@ func (f *RPCFetcher) fetchAccount(addr common.Address) (Account, error) {
 		); err != nil {
 			return nil, err
 		}
-		acc = Account{
+		acc = &Account{
 			Nonce:   nonce,
 			Balance: balance,
 			Code:    code,
@@ -128,9 +131,9 @@ func (f *RPCFetcher) fetchAccount(addr common.Address) (Account, error) {
 		return acc, nil
 	})
 	if err != nil {
-		return Account{}, err
+		return nil, err
 	}
-	return accAny.(Account), nil
+	return accAny.(*Account), nil
 }
 
 func (f *RPCFetcher) fetchStorageAt(addr common.Address, slot uint256.Int) (uint256.Int, error) {
@@ -206,6 +209,85 @@ func (f *RPCFetcher) call(calls ...w3types.Caller) error {
 	return f.client.Call(calls...)
 }
 
+func (f *RPCFetcher) setForkState(s *forkState) {
+	f.mux.Lock()
+	f.mux2.Lock()
+	defer f.mux.Unlock()
+	defer f.mux2.Unlock()
+
+	for addr, acc := range s.Accounts {
+		f.accounts[addr] = acc
+	}
+
+	for blockNumber, hash := range s.HeaderHashes {
+		f.headerHashes[uint64(blockNumber)] = hash
+	}
+}
+
+func (f *RPCFetcher) getForkState() *forkState {
+	f.mux.Lock()
+	f.mux2.Lock()
+	defer f.mux.Unlock()
+	defer f.mux2.Unlock()
+
+	s := new(forkState)
+	if len(f.accounts) > 0 {
+		s.Accounts = make(map[common.Address]*Account, len(f.accounts))
+		for addr, acc := range f.accounts {
+			accCop := *acc
+			s.Accounts[addr] = &accCop
+		}
+	}
+
+	if len(f.headerHashes) > 0 {
+		s.HeaderHashes = make(map[hexutil.Uint64]common.Hash, len(f.headerHashes))
+		for blockNumber, hash := range f.headerHashes {
+			s.HeaderHashes[hexutil.Uint64(blockNumber)] = hash
+		}
+	}
+	return s
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// TestingRPCFetcher ///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, blockNumber *big.Int) *RPCFetcher {
+	fp := getTbFilepath(tb)
+	if ok := isTbInMod(fp); !ok {
+		panic("must be called from a test in a module")
+	}
+
+	if blockNumber == nil {
+		tb.Fatal("w3vm: block number must not be <nil>")
+	}
+
+	var chainID uint64
+	if err := client.Call(
+		eth.ChainID().Returns(&chainID),
+	); err != nil {
+		tb.Fatalf("w3vm: failed to fetch chain ID: %v", err)
+	}
+
+	fp = filepath.Join(fp, "testdata", "w3vm", fmt.Sprintf("%d_%v.json", chainID, blockNumber))
+	testdataState, err := readTestdataState(fp)
+	if err != nil {
+		tb.Fatalf("w3vm: failed to read state from testdata: %v", err)
+	}
+
+	fetcher := NewRPCFetcher(client, blockNumber)
+	fetcher.setForkState(testdataState)
+
+	tb.Cleanup(func() {
+		postTestdataState := fetcher.getForkState()
+		if err := writeTestdataState(fp, postTestdataState); err != nil {
+			tb.Errorf("w3test: failed to write state to testdata: %v", err)
+		}
+	})
+
+	return fetcher
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // account /////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,7 +303,7 @@ type accountMarshaling struct {
 	Nonce   hexutil.Uint64                  `json:"nonce"`
 	Balance uint256OrHash                   `json:"balance"`
 	Code    hexutil.Bytes                   `json:"code"`
-	Storage map[uint256OrHash]uint256OrHash `json:"storage"`
+	Storage map[uint256OrHash]uint256OrHash `json:"storage,omitempty"`
 }
 
 func (acc Account) MarshalJSON() ([]byte, error) {
