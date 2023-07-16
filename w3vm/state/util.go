@@ -52,6 +52,10 @@ func (i *uint256OrHash) UnmarshalText(text []byte) error {
 	return nil
 }
 
+func (i uint256OrHash) MarshalText() ([]byte, error) {
+	return (*uint256.Int)(&i).MarshalText()
+}
+
 // noopKeyValueStore implements a [ethdb.KeyValueStore] that does nothing.
 type noopKeyValueStore struct {
 	ethdb.KeyValueStore

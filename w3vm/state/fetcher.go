@@ -1,10 +1,12 @@
 package state
 
 import (
+	"encoding/json"
 	"math/big"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3"
@@ -38,7 +40,7 @@ type RPCFetcher struct {
 
 	g            *singleflight.Group
 	mux          sync.RWMutex
-	accounts     map[common.Address]account
+	accounts     map[common.Address]Account
 	mux2         sync.RWMutex
 	headerHashes map[uint64]common.Hash
 }
@@ -48,7 +50,7 @@ func NewRPCFetcher(client *w3.Client, blockNumber *big.Int) *RPCFetcher {
 		client:       client,
 		blockNumber:  blockNumber,
 		g:            new(singleflight.Group),
-		accounts:     make(map[common.Address]account),
+		accounts:     make(map[common.Address]Account),
 		headerHashes: make(map[uint64]common.Hash),
 	}
 }
@@ -89,7 +91,7 @@ func (f *RPCFetcher) HeaderHash(blockNumber *big.Int) (common.Hash, error) {
 	return f.fetchHeaderHash(blockNumber)
 }
 
-func (f *RPCFetcher) fetchAccount(addr common.Address) (account, error) {
+func (f *RPCFetcher) fetchAccount(addr common.Address) (Account, error) {
 	accAny, err, _ := f.g.Do(string(addr[:]), func() (interface{}, error) {
 		// check if account is already cached
 		f.mux.RLock()
@@ -112,7 +114,7 @@ func (f *RPCFetcher) fetchAccount(addr common.Address) (account, error) {
 		); err != nil {
 			return nil, err
 		}
-		acc = account{
+		acc = Account{
 			Nonce:   nonce,
 			Balance: balance,
 			Code:    code,
@@ -126,9 +128,9 @@ func (f *RPCFetcher) fetchAccount(addr common.Address) (account, error) {
 		return acc, nil
 	})
 	if err != nil {
-		return account{}, err
+		return Account{}, err
 	}
-	return accAny.(account), nil
+	return accAny.(Account), nil
 }
 
 func (f *RPCFetcher) fetchStorageAt(addr common.Address, slot uint256.Int) (uint256.Int, error) {
@@ -204,9 +206,49 @@ func (f *RPCFetcher) call(calls ...w3types.Caller) error {
 	return f.client.Call(calls...)
 }
 
-type account struct {
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// account /////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type Account struct {
 	Nonce   uint64
 	Balance uint256.Int
 	Code    []byte
 	Storage map[uint256.Int]uint256.Int
+}
+
+type accountMarshaling struct {
+	Nonce   hexutil.Uint64                  `json:"nonce"`
+	Balance uint256OrHash                   `json:"balance"`
+	Code    hexutil.Bytes                   `json:"code"`
+	Storage map[uint256OrHash]uint256OrHash `json:"storage"`
+}
+
+func (acc Account) MarshalJSON() ([]byte, error) {
+	storage := make(map[uint256OrHash]uint256OrHash, len(acc.Storage))
+	for slot, val := range acc.Storage {
+		storage[uint256OrHash(slot)] = uint256OrHash(val)
+	}
+	return json.Marshal(accountMarshaling{
+		Nonce:   hexutil.Uint64(acc.Nonce),
+		Balance: uint256OrHash(acc.Balance),
+		Code:    acc.Code,
+		Storage: storage,
+	})
+}
+
+func (acc *Account) UnmarshalJSON(data []byte) error {
+	var dec accountMarshaling
+	if err := json.Unmarshal(data, &dec); err != nil {
+		return err
+	}
+
+	acc.Nonce = uint64(dec.Nonce)
+	acc.Balance = uint256.Int(dec.Balance)
+	acc.Code = dec.Code
+	acc.Storage = make(map[uint256.Int]uint256.Int)
+	for slot, val := range dec.Storage {
+		acc.Storage[uint256.Int(slot)] = uint256.Int(val)
+	}
+	return nil
 }
