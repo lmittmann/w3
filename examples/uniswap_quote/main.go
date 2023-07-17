@@ -69,12 +69,12 @@ func main() {
 		tokenOutDecimals uint8
 	)
 	if err := client.Call(
-		eth.CallFunc(funcName, addrTokenIn).Returns(&tokenInName),
-		eth.CallFunc(funcSymbol, addrTokenIn).Returns(&tokenInSymbol),
-		eth.CallFunc(funcDecimals, addrTokenIn).Returns(&tokenInDecimals),
-		eth.CallFunc(funcName, addrTokenOut).Returns(&tokenOutName),
-		eth.CallFunc(funcSymbol, addrTokenOut).Returns(&tokenOutSymbol),
-		eth.CallFunc(funcDecimals, addrTokenOut).Returns(&tokenOutDecimals),
+		eth.CallFunc(addrTokenIn, funcName).Returns(&tokenInName),
+		eth.CallFunc(addrTokenIn, funcSymbol).Returns(&tokenInSymbol),
+		eth.CallFunc(addrTokenIn, funcDecimals).Returns(&tokenInDecimals),
+		eth.CallFunc(addrTokenOut, funcName).Returns(&tokenOutName),
+		eth.CallFunc(addrTokenOut, funcSymbol).Returns(&tokenOutSymbol),
+		eth.CallFunc(addrTokenOut, funcDecimals).Returns(&tokenOutDecimals),
 	); err != nil {
 		fmt.Printf("Failed to fetch token details: %v\n", err)
 		return
@@ -87,7 +87,7 @@ func main() {
 		amountsOut = make([]big.Int, len(fees))
 	)
 	for i, fee := range fees {
-		calls[i] = eth.CallFunc(funcQuoteExactInputSingle, addrUniV3Quoter, addrTokenIn, addrTokenOut, fee, &amountIn, w3.Big0).Returns(&amountsOut[i])
+		calls[i] = eth.CallFunc(addrUniV3Quoter, funcQuoteExactInputSingle, addrTokenIn, addrTokenOut, fee, &amountIn, w3.Big0).Returns(&amountsOut[i])
 	}
 	err := client.Call(calls...)
 	callErrs, ok := err.(w3.CallErrors)
