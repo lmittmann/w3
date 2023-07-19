@@ -1,0 +1,2 @@
+> {"jsonrpc":"2.0","id":1,"method":"txpool_status"}
+< {"jsonrpc":"2.0","id":1,"result":{"pending":"0xa","queued":"0x7"}}
