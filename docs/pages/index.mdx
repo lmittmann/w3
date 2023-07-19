@@ -239,6 +239,14 @@ List of supported RPC methods.
 | `debug_traceCall`        | `debug.TraceCall(msg *w3types.Message, blockNumber *big.Int, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br />`debug.CallTraceCall(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(trace *debug.CallTrace)`
 | `debug_traceTransaction` | `debug.TraceTx(txHash common.Hash, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br />`debug.CallTraceTx(txHash common.Hash, overrides w3types.State).Returns(trace *debug.CallTrace)`
 
+### [`txpool`](https://pkg.go.dev/github.com/lmittmann/w3/module/debug)
+
+| Method               | Go Code
+| :--------------------| :-------
+| `txpool_content`     | `txpool.Content().Returns(resp *txpool.ContentResponse)`
+| `txpool_contentFrom` | `txpool.ContentFrom(addr common.Address).Returns(resp *txpool.ContentFromResponse)`
+| `txpool_status`      | `txpool.Status().Returns(resp *txpool.StatusResponse)`
+
 ### [`web3`](https://pkg.go.dev/github.com/lmittmann/w3/module/web3)
 
 | Method               | Go Code
