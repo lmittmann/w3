@@ -8,7 +8,7 @@ import (
 	"github.com/lmittmann/w3/w3types"
 )
 
-// Status requests the txpool status.
+// Status requests the number of pending and queued transactions in the transaction pool.
 func Status() w3types.CallerFactory[StatusResponse] {
 	return module.NewFactory[StatusResponse](
 		"txpool_status",
@@ -21,14 +21,14 @@ type StatusResponse struct {
 	Queued  uint
 }
 
-func (s *StatusResponse) UnmarshalJSON(input []byte) error {
+func (s *StatusResponse) UnmarshalJSON(data []byte) error {
 	type statusResponse struct {
 		Pending hexutil.Uint `json:"pending"`
 		Queued  hexutil.Uint `json:"queued"`
 	}
 
 	var dec statusResponse
-	if err := json.Unmarshal(input, &dec); err != nil {
+	if err := json.Unmarshal(data, &dec); err != nil {
 		return err
 	}
 	s.Pending = uint(dec.Pending)
