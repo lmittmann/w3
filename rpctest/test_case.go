@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
@@ -51,7 +52,8 @@ func comp[T any](t *testing.T, wantVal, gotVal T, wantErr, gotErr error, opts ..
 
 	// compare values
 	opts = append(opts,
-		cmp.AllowUnexported(big.Int{}),
+		cmp.AllowUnexported(big.Int{}, types.Transaction{}),
+		cmpopts.IgnoreFields(types.Transaction{}, "time", "hash", "size", "from"),
 		cmpopts.EquateEmpty(),
 	)
 	if diff := cmp.Diff(wantVal, gotVal, opts...); diff != "" {

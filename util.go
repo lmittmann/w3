@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/lmittmann/w3/internal/crypto"
 )
 
 // Common [big.Int]'s.
@@ -177,13 +176,6 @@ func parseDecimal(strBig string) *big.Int {
 	}
 
 	return integer.Add(integer, fraction)
-}
-
-// Keccak returns the Keccak256 hash of data. It is short for crypto.Keccak256Hash(…)
-//
-// Deprecated: Use [crypto.Keccak256Hash] instead.
-func Keccak(data []byte) common.Hash {
-	return crypto.Keccak256Hash(data)
 }
 
 // FromWei returns the given Wei as decimal with the given number of decimals.
