@@ -10,7 +10,12 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/rawdb"
+	coreState "github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -352,4 +357,83 @@ func must[T any](t T, err error) T {
 		panic(err)
 	}
 	return t
+}
+
+func BenchmarkTransferWETH9(b *testing.B) {
+	addr0 := w3vm.RandA()
+	addr1 := w3vm.RandA()
+
+	// encode input
+	input := must(funcTransfer.EncodeArgs(addr1, w3.I("1 gwei")))
+
+	blockCtx := vm.BlockContext{
+		CanTransfer: core.CanTransfer,
+		Transfer:    core.Transfer,
+		GetHash:     func(n uint64) common.Hash { return common.Hash{} },
+
+		BlockNumber: new(big.Int),
+		Difficulty:  new(big.Int),
+		BaseFee:     new(big.Int),
+		GasLimit:    30_000_000,
+	}
+
+	b.Run("w3vm", func(b *testing.B) {
+		vm := w3vm.New(
+			w3vm.WithBlockContext(&blockCtx),
+			w3vm.WithChainConfig(params.AllEthashProtocolChanges),
+			w3vm.WithState(w3types.State{
+				addrWETH: {
+					Code: codeWETH,
+					Storage: map[common.Hash]common.Hash{
+						w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
+					},
+				},
+			}),
+		)
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_, err := vm.Apply(&w3types.Message{
+				From:  addr0,
+				To:    &addrWETH,
+				Gas:   100_000,
+				Nonce: uint64(i),
+				Input: input,
+			})
+			if err != nil {
+				b.Fatalf("Failed to apply msg: %v", err)
+			}
+		}
+	})
+
+	b.Run("geth", func(b *testing.B) {
+		stateDB, _ := coreState.New(common.Hash{}, coreState.NewDatabase(rawdb.NewMemoryDatabase()), nil)
+		stateDB.SetCode(addrWETH, codeWETH)
+		stateDB.SetState(addrWETH, w3vm.WETHBalanceSlot(addr0), common.BigToHash(w3.I("1 ether")))
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			msg := &core.Message{
+				To:                &addrWETH,
+				From:              addr0,
+				Nonce:             uint64(i),
+				Value:             new(big.Int),
+				GasLimit:          100_000,
+				GasPrice:          new(big.Int),
+				GasFeeCap:         new(big.Int),
+				GasTipCap:         new(big.Int),
+				Data:              input,
+				AccessList:        nil,
+				SkipAccountChecks: false,
+			}
+			txCtx := core.NewEVMTxContext(msg)
+			evm := vm.NewEVM(blockCtx, txCtx, stateDB, params.AllEthashProtocolChanges, vm.Config{NoBaseFee: true})
+			gp := new(core.GasPool).AddGas(math.MaxUint64)
+			_, err := core.ApplyMessage(evm, msg, gp)
+			if err != nil {
+				b.Fatalf("Failed to apply msg: %v", err)
+			}
+			stateDB.Finalise(false)
+		}
+	})
 }
