@@ -11,6 +11,27 @@ import (
 type multiEVMLogger []vm.EVMLogger
 
 func newMultiEVMLogger(tracers []vm.EVMLogger) vm.EVMLogger {
+	// hot path
+	switch len(tracers) {
+	case 0:
+		return nil
+	case 1:
+		return tracers[0]
+	}
+
+	// filter nil tracers
+	// NOTE: this edits the tracers slice in place.
+	var j int
+	for i := range tracers {
+		if tracers[i] == nil {
+			continue
+		} else if i > j {
+			tracers[j], tracers[i] = tracers[i], tracers[j]
+		}
+		j++
+	}
+	tracers = tracers[:j]
+
 	switch len(tracers) {
 	case 0:
 		return nil
