@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -22,8 +23,16 @@ import (
 )
 
 var (
-	addr0 common.Address
-	addr1 = common.Address{0x1}
+	addr0    = common.Address{0x0}
+	addr1    = common.Address{0x1}
+	addrWETH = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+
+	//go:embed testdata/weth9.bytecode
+	hexCodeWETH string
+	codeWETH    = w3.B(strings.TrimSpace(hexCodeWETH))
+
+	funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
+	funcTransfer  = w3.MustNewFunc("transfer(address,uint256)", "bool")
 
 	client = w3.MustDial("https://eth.llamarpc.com")
 )
@@ -71,6 +80,79 @@ func TestVMApply(t *testing.T) {
 				GasLimit: 21_000,
 			},
 		},
+		{ // WETH transfer
+			PreState: w3types.State{
+				addr0: {Balance: w3.I("1 ether")},
+				addrWETH: {
+					Code: codeWETH,
+					Storage: map[common.Hash]common.Hash{
+						w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
+					},
+				},
+			},
+			Message: &w3types.Message{
+				From:  addr0,
+				To:    &addrWETH,
+				Input: must(funcTransfer.EncodeArgs(addr1, w3.I("1 ether"))),
+				Gas:   100_000,
+			},
+			WantReceipt: &w3vm.Receipt{
+				GasUsed:  38_853,
+				GasLimit: 58_753,
+				Logs: []*types.Log{
+					{
+						Address: addrWETH,
+						Topics: []common.Hash{
+							w3.H("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
+							w3.H("0x0000000000000000000000000000000000000000000000000000000000000000"),
+							w3.H("0x0000000000000000000000000100000000000000000000000000000000000000"),
+						},
+						Data: w3.B("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"),
+					},
+				},
+				Output: w3.B("0x0000000000000000000000000000000000000000000000000000000000000001"),
+			},
+		},
+		{ // WETH transfer with insufficient balance
+			PreState: w3types.State{
+				addr0: {Balance: w3.I("1 ether")},
+				addrWETH: {
+					Code: codeWETH,
+					Storage: map[common.Hash]common.Hash{
+						w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
+					},
+				},
+			},
+			Message: &w3types.Message{
+				From:  addr0,
+				To:    &addrWETH,
+				Input: must(funcTransfer.EncodeArgs(addr1, w3.I("10 ether"))),
+				Gas:   100_000,
+			},
+			WantReceipt: &w3vm.Receipt{
+				GasUsed:  24_019,
+				GasLimit: 24_019,
+				Err:      errors.New("execution reverted"),
+			},
+			WantErr: errors.New("execution reverted"),
+		},
+		{ // revert with output
+			PreState: w3types.State{
+				addr0: {Balance: w3.I("1 ether")},
+				addr1: {Code: w3.B("0x60015ffd")}, // PUSH1 0x1, PUSH0, REVERT
+			},
+			Message: &w3types.Message{
+				From: addr0,
+				To:   &addr1,
+			},
+			WantReceipt: &w3vm.Receipt{
+				GasUsed:  21_008,
+				GasLimit: 21_008,
+				Output:   w3.B("0x00"),
+				Err:      errors.New("execution reverted"),
+			},
+			WantErr: errors.New("execution reverted"),
+		},
 	}
 
 	for i, test := range tests {
@@ -91,6 +173,79 @@ func TestVMApply(t *testing.T) {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestVMCall(t *testing.T) {
+	tests := []struct {
+		PreState    w3types.State
+		Message     *w3types.Message
+		WantReceipt *w3vm.Receipt
+		WantErr     error
+	}{
+		{
+			PreState: w3types.State{
+				addrWETH: {
+					Code: codeWETH,
+					Storage: map[common.Hash]common.Hash{
+						w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
+					},
+				},
+			},
+			Message: &w3types.Message{
+				From:  addr0,
+				To:    &addrWETH,
+				Input: must(funcBalanceOf.EncodeArgs(addr0)),
+			},
+			WantReceipt: &w3vm.Receipt{
+				GasUsed:  23_726,
+				GasLimit: 23_726,
+				Output:   w3.B("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"),
+			},
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			vm := w3vm.New(
+				w3vm.WithState(test.PreState),
+			)
+			gotReceipt, gotErr := vm.Call(test.Message)
+			if diff := cmp.Diff(test.WantErr, gotErr,
+				internal.EquateErrors(),
+			); diff != "" {
+				t.Fatalf("(-want +got)\n%s", diff)
+			}
+			if diff := cmp.Diff(test.WantReceipt, gotReceipt,
+				internal.EquateErrors(),
+				cmpopts.IgnoreUnexported(w3vm.Receipt{}),
+			); diff != "" {
+				t.Fatalf("(-want +got)\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestVMCallFunc(t *testing.T) {
+	vm := w3vm.New(
+		w3vm.WithState(w3types.State{
+			addrWETH: {
+				Code: codeWETH,
+				Storage: map[common.Hash]common.Hash{
+					w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
+				},
+			},
+		}),
+	)
+
+	var gotBalance *big.Int
+	if err := vm.CallFunc(addrWETH, funcBalanceOf, addr0).Returns(&gotBalance); err != nil {
+		t.Fatalf("Failed to call balanceOf: %v", err)
+	}
+
+	wantBalance := w3.I("1 ether")
+	if wantBalance.Cmp(gotBalance) != 0 {
+		t.Fatalf("Balance: want %s, got %s", wantBalance, gotBalance)
 	}
 }
 
@@ -190,4 +345,11 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
