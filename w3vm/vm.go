@@ -44,42 +44,42 @@ type vmOptions struct {
 }
 
 func New(opts ...Option) *VM {
-	c := &VM{opts: new(vmOptions)}
+	v := &VM{opts: new(vmOptions)}
 	for _, opt := range opts {
-		opt(c)
+		opt(v)
 	}
 
-	c.fetcher = c.opts.fetcher
+	v.fetcher = v.opts.fetcher
 
 	// set chain config
-	c.chainConfig = c.opts.chainConfig
-	if c.chainConfig == nil {
-		if c.fetcher != nil {
-			c.chainConfig = params.MainnetChainConfig
+	v.chainConfig = v.opts.chainConfig
+	if v.chainConfig == nil {
+		if v.fetcher != nil {
+			v.chainConfig = params.MainnetChainConfig
 		} else {
-			c.chainConfig = allEthashProtocolChanges
+			v.chainConfig = allEthashProtocolChanges
 		}
 	}
 
-	c.blockCtx = c.opts.blockCtx
-	if c.blockCtx == nil {
-		if c.opts.header != nil {
-			c.blockCtx = newBlockContext(c.opts.header, c.fetcherHashFunc(c.fetcher))
+	v.blockCtx = v.opts.blockCtx
+	if v.blockCtx == nil {
+		if v.opts.header != nil {
+			v.blockCtx = newBlockContext(v.opts.header, v.fetcherHashFunc(v.fetcher))
 		} else {
-			c.blockCtx = defaultBlockContext()
+			v.blockCtx = defaultBlockContext()
 		}
 	}
 
 	// set DB
-	c.db = state.NewDB(c.fetcher)
-	if c.opts.preState != nil {
-		c.db.SetState(c.opts.preState)
+	v.db = state.NewDB(v.fetcher)
+	if v.opts.preState != nil {
+		v.db.SetState(v.opts.preState)
 	}
-	return c
+	return v
 }
 
-func (vm *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
-	return vm.apply(msg, false, newMultiEVMLogger(tracers))
+func (v *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
+	return v.apply(msg, false, newMultiEVMLogger(tracers))
 }
 
 func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Receipt, error) {
@@ -125,18 +125,18 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 	if isCall {
 		stateDB.RevertToSnapshot(0)
 	} else {
-		stateDB.Commit(false)
+		stateDB.Commit(0, false)
 	}
 	return receipt, receipt.Err
 }
 
-func (vm *VM) Call(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
-	return vm.apply(msg, true, newMultiEVMLogger(tracers))
+func (v *VM) Call(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
+	return v.apply(msg, true, newMultiEVMLogger(tracers))
 }
 
-func (vm *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) Returner {
+func (v *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) Returner {
 	return &returner{
-		vm: vm,
+		vm: v,
 		msg: &w3types.Message{
 			To:   &contract,
 			Func: f,
@@ -163,8 +163,8 @@ func (r *returner) Returns(returns ...any) error {
 }
 
 // Nonce returns the nonce of Address addr.
-func (vm *VM) Nonce(addr common.Address) uint64 {
-	acc, err := vm.db.GetAccount(addr)
+func (v *VM) Nonce(addr common.Address) uint64 {
+	acc, err := v.db.GetAccount(addr)
 	if err != nil {
 		return 0
 	}
@@ -172,8 +172,8 @@ func (vm *VM) Nonce(addr common.Address) uint64 {
 }
 
 // Balance returns the balance of Address addr.
-func (vm *VM) Balance(addr common.Address) *big.Int {
-	acc, err := vm.db.GetAccount(addr)
+func (v *VM) Balance(addr common.Address) *big.Int {
+	acc, err := v.db.GetAccount(addr)
 	if err != nil {
 		return new(big.Int)
 	}
@@ -181,8 +181,8 @@ func (vm *VM) Balance(addr common.Address) *big.Int {
 }
 
 // Code returns the code of Address addr.
-func (vm *VM) Code(addr common.Address) []byte {
-	code, err := vm.db.ContractCode(addr, hash0)
+func (v *VM) Code(addr common.Address) []byte {
+	code, err := v.db.ContractCode(addr, hash0)
 	if err != nil {
 		return nil
 	}
@@ -190,22 +190,22 @@ func (vm *VM) Code(addr common.Address) []byte {
 }
 
 // StorageAt returns the state of Address addr at the give storage Hash slot.
-func (vm *VM) StorageAt(addr common.Address, slot common.Hash) common.Hash {
-	storageVal, err := vm.db.GetStorage(addr, slot[:])
+func (v *VM) StorageAt(addr common.Address, slot common.Hash) common.Hash {
+	storageVal, err := v.db.GetStorage(addr, slot[:])
 	if err != nil {
 		return hash0
 	}
 	return common.BytesToHash(storageVal)
 }
 
-func (c *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
+func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
 	if nonce == 0 && !skipAccChecks && msg.From != addr0 {
-		nonce = c.Nonce(msg.From)
+		nonce = v.Nonce(msg.From)
 	}
 
 	gasLimit := msg.Gas
-	if maxGasLimit := c.blockCtx.GasLimit; gasLimit == 0 {
+	if maxGasLimit := v.blockCtx.GasLimit; gasLimit == 0 {
 		gasLimit = maxGasLimit
 	} else if gasLimit > maxGasLimit {
 		gasLimit = maxGasLimit
@@ -225,7 +225,7 @@ func (c *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 	gasPrice := nilToZero(msg.GasPrice)
 	gasFeeCap := nilToZero(msg.GasFeeCap)
 	gasTipCap := nilToZero(msg.GasTipCap)
-	if baseFee := c.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
+	if baseFee := v.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
 		gasPrice = math.BigMin(gasFeeCap, new(big.Int).Add(baseFee, gasTipCap))
 	}
 
@@ -249,7 +249,7 @@ func (c *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		nil
 }
 
-func (vm *VM) fetcherHashFunc(fetcher state.Fetcher) vm.GetHashFunc {
+func (v *VM) fetcherHashFunc(fetcher state.Fetcher) vm.GetHashFunc {
 	return func(n uint64) common.Hash {
 		blockNumber := new(big.Int).SetUint64(n)
 		hash, _ := fetcher.HeaderHash(blockNumber)
