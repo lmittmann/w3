@@ -1,6 +1,7 @@
 package w3vm
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"testing"
@@ -25,8 +26,10 @@ type VM struct {
 	chainConfig *params.ChainConfig
 	blockCtx    *vm.BlockContext
 	noBaseFee   bool
-	db          *state.DB
-	fetcher     state.Fetcher
+	txIndex     uint64
+	db          *gethState.StateDB
+
+	fetcher state.Fetcher
 }
 
 type vmOptions struct {
@@ -71,9 +74,19 @@ func New(opts ...Option) *VM {
 	}
 
 	// set DB
-	v.db = state.NewDB(v.fetcher)
-	if v.opts.preState != nil {
-		v.db.SetState(v.opts.preState)
+	db := newDB(v.fetcher)
+	v.db, _ = gethState.New(hash0, db, nil)
+	for addr, acc := range v.opts.preState {
+		v.db.SetNonce(addr, acc.Nonce)
+		if acc.Balance != nil {
+			v.db.SetBalance(addr, acc.Balance)
+		}
+		if acc.Code != nil {
+			v.db.SetCode(addr, acc.Code)
+		}
+		if acc.Storage != nil {
+			v.db.SetStorage(addr, acc.Storage)
+		}
 	}
 	return v
 }
@@ -88,9 +101,13 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 		return nil, err
 	}
 
+	var txHash common.Hash
+	binary.BigEndian.PutUint64(txHash[:], v.txIndex)
+	v.txIndex++
+	v.db.SetTxContext(txHash, 0)
+
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
-	stateDB, _ := gethState.New(hash0, v.db, nil)
-	evm := vm.NewEVM(*v.blockCtx, *txCtx, stateDB, v.chainConfig, vm.Config{
+	evm := vm.NewEVM(*v.blockCtx, *txCtx, v.db, v.chainConfig, vm.Config{
 		Tracer:    tracer,
 		NoBaseFee: v.noBaseFee,
 	})
@@ -105,9 +122,9 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 	receipt := &Receipt{
 		f:        msg.Func,
 		GasUsed:  result.UsedGas,
-		GasLimit: result.UsedGas + stateDB.GetRefund(),
+		GasLimit: result.UsedGas + v.db.GetRefund(),
 		Output:   result.ReturnData,
-		Logs:     stateDB.Logs(),
+		Logs:     v.db.GetLogs(txHash, 0, hash0),
 	}
 
 	if err := result.Err; err != nil {
@@ -123,9 +140,9 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 	}
 
 	if isCall {
-		stateDB.RevertToSnapshot(0)
+		v.db.RevertToSnapshot(0)
 	} else {
-		stateDB.Commit(0, false)
+		v.db.Finalise(false)
 	}
 	return receipt, receipt.Err
 }
@@ -164,38 +181,22 @@ func (r *returner) Returns(returns ...any) error {
 
 // Nonce returns the nonce of Address addr.
 func (v *VM) Nonce(addr common.Address) uint64 {
-	acc, err := v.db.GetAccount(addr)
-	if err != nil {
-		return 0
-	}
-	return acc.Nonce
+	return v.db.GetNonce(addr)
 }
 
 // Balance returns the balance of Address addr.
 func (v *VM) Balance(addr common.Address) *big.Int {
-	acc, err := v.db.GetAccount(addr)
-	if err != nil {
-		return new(big.Int)
-	}
-	return acc.Balance
+	return v.db.GetBalance(addr)
 }
 
 // Code returns the code of Address addr.
 func (v *VM) Code(addr common.Address) []byte {
-	code, err := v.db.ContractCode(addr, hash0)
-	if err != nil {
-		return nil
-	}
-	return code
+	return v.db.GetCode(addr)
 }
 
 // StorageAt returns the state of Address addr at the give storage Hash slot.
 func (v *VM) StorageAt(addr common.Address, slot common.Hash) common.Hash {
-	storageVal, err := v.db.GetStorage(addr, slot[:])
-	if err != nil {
-		return hash0
-	}
-	return common.BytesToHash(storageVal)
+	return v.db.GetState(addr, slot)
 }
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
