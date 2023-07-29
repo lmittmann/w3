@@ -1,8 +1,11 @@
 package w3vm_test
 
 import (
+	_ "embed"
+	"errors"
 	"fmt"
 	"math/big"
+	"strconv"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -11,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
+	"github.com/lmittmann/w3/internal"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 	"github.com/lmittmann/w3/w3vm"
@@ -19,9 +23,76 @@ import (
 
 var (
 	addr0 common.Address
+	addr1 = common.Address{0x1}
 
 	client = w3.MustDial("https://eth.llamarpc.com")
 )
+
+func TestVMApply(t *testing.T) {
+	tests := []struct {
+		PreState    w3types.State
+		Message     *w3types.Message
+		WantReceipt *w3vm.Receipt
+		WantErr     error
+	}{
+		{
+			Message: &w3types.Message{
+				From:  addr0,
+				To:    &addr1,
+				Gas:   21_000,
+				Value: big.NewInt(1),
+			},
+			WantErr: errors.New("insufficient funds for gas * price + value: address 0x0000000000000000000000000000000000000000 have 0 want 1"),
+		},
+		{
+			Message: &w3types.Message{
+				From:      addr0,
+				To:        &addr1,
+				Gas:       21_000,
+				GasFeeCap: big.NewInt(1),
+				Value:     big.NewInt(1),
+			},
+			WantErr: errors.New("insufficient funds for gas * price + value: address 0x0000000000000000000000000000000000000000 have 0 want 21001"),
+		},
+		{
+			PreState: w3types.State{
+				addr0: {
+					Balance: w3.I("1 ether"),
+				},
+			},
+			Message: &w3types.Message{
+				From:  addr0,
+				To:    &addr1,
+				Gas:   21_000,
+				Value: w3.I("1 ether"),
+			},
+			WantReceipt: &w3vm.Receipt{
+				GasUsed:  21_000,
+				GasLimit: 21_000,
+			},
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			vm := w3vm.New(
+				w3vm.WithState(test.PreState),
+			)
+			gotReceipt, gotErr := vm.Apply(test.Message)
+			if diff := cmp.Diff(test.WantErr, gotErr,
+				internal.EquateErrors(),
+			); diff != "" {
+				t.Fatalf("(-want +got)\n%s", diff)
+			}
+			if diff := cmp.Diff(test.WantReceipt, gotReceipt,
+				internal.EquateErrors(),
+				cmpopts.IgnoreUnexported(w3vm.Receipt{}),
+			); diff != "" {
+				t.Fatalf("(-want +got)\n%s", diff)
+			}
+		})
+	}
+}
 
 func TestVMApply_Integration(t *testing.T) {
 	blocks := []*big.Int{
