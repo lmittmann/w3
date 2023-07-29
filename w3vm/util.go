@@ -1,6 +1,10 @@
 package w3vm
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"crypto/rand"
+
+	"github.com/ethereum/go-ethereum/common"
+)
 
 // zero values
 var (
@@ -8,6 +12,12 @@ var (
 	hash0 common.Hash
 	uint0 uint64
 )
+
+// RandA returns a random address.
+func RandA() (addr common.Address) {
+	rand.Read(addr[:])
+	return addr
+}
 
 // nilToZero converts sets a pointer to the zero value if it is nil.
 func nilToZero[T any](ptr *T) *T {
