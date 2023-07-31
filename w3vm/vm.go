@@ -109,7 +109,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
 	evm := vm.NewEVM(*v.blockCtx, *txCtx, v.db, v.chainConfig, vm.Config{
 		Tracer:    tracer,
-		NoBaseFee: v.noBaseFee,
+		NoBaseFee: v.noBaseFee || isCall,
 	})
 
 	snap := v.db.Snapshot()
