@@ -112,6 +112,8 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 		NoBaseFee: v.noBaseFee,
 	})
 
+	snap := v.db.Snapshot()
+
 	// apply the message to the evm
 	result, err := core.ApplyMessage(evm, coreMsg, gp)
 	if err != nil {
@@ -139,11 +141,11 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 		receipt.ContractAddress = &contractAddr
 	}
 
-	if isCall {
-		v.db.RevertToSnapshot(0)
-	} else {
-		v.db.Finalise(false)
+	if isCall && !result.Failed() {
+		v.db.RevertToSnapshot(snap)
 	}
+	v.db.Finalise(false)
+
 	return receipt, receipt.Err
 }
 
