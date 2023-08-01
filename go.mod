@@ -10,7 +10,7 @@ require (
 	golang.org/x/time v0.3.0
 )
 
-replace github.com/ethereum/go-ethereum => github.com/ethereum/go-ethereum v1.12.1-0.20230728070838-8f2ae29b8f77
+replace github.com/ethereum/go-ethereum => github.com/ethereum/go-ethereum v1.12.1-0.20230801121732-7de748d3f62c
 
 require (
 	github.com/DataDog/zstd v1.5.2 // indirect
