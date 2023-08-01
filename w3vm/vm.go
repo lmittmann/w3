@@ -84,8 +84,8 @@ func New(opts ...Option) *VM {
 		if acc.Code != nil {
 			v.db.SetCode(addr, acc.Code)
 		}
-		if acc.Storage != nil {
-			v.db.SetStorage(addr, acc.Storage)
+		for slot, val := range acc.Storage {
+			v.db.SetState(addr, slot, val)
 		}
 	}
 	return v
