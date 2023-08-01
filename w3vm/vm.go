@@ -16,8 +16,14 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/lmittmann/w3"
+	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 	"github.com/lmittmann/w3/w3vm/state"
+)
+
+var (
+	big1               = big.NewInt(1)
+	pendingBlockNumber = big.NewInt(-1)
 )
 
 type VM struct {
@@ -53,6 +59,31 @@ func New(opts ...Option) *VM {
 	}
 
 	v.fetcher = v.opts.fetcher
+	if v.fetcher == nil && v.opts.forkClient != nil {
+		var calls []w3types.Caller
+
+		latest := v.opts.forkBlockNumber == nil
+		if latest {
+			v.opts.forkBlockNumber = new(big.Int)
+			calls = append(calls, eth.BlockNumber().Returns(v.opts.forkBlockNumber))
+		}
+		if v.opts.header == nil && v.opts.blockCtx == nil {
+			v.opts.header = new(types.Header)
+			if latest {
+				calls = append(calls, eth.HeaderByNumber(pendingBlockNumber).Returns(v.opts.header))
+			} else {
+				calls = append(calls, eth.HeaderByNumber(v.opts.forkBlockNumber).Returns(v.opts.header))
+			}
+		}
+
+		v.opts.forkClient.Call(calls...) // TODO: check error
+
+		if latest || v.opts.tb == nil {
+			v.fetcher = state.NewRPCFetcher(v.opts.forkClient, v.opts.forkBlockNumber)
+		} else {
+			v.fetcher = state.NewTestingRPCFetcher(v.opts.tb, v.opts.forkClient, new(big.Int).Sub(v.opts.forkBlockNumber, big1))
+		}
+	}
 
 	// set chain config
 	v.chainConfig = v.opts.chainConfig
