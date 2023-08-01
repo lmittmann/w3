@@ -256,6 +256,41 @@ func TestVMCallFunc(t *testing.T) {
 
 func TestVMApply_Integration(t *testing.T) {
 	blocks := []*big.Int{
+		big.NewInt(4_369_998),
+		big.NewInt(4_369_999),
+		big.NewInt(4_370_000), // Byzantium
+		big.NewInt(4_370_001),
+
+		big.NewInt(7_279_998),
+		big.NewInt(7_279_999),
+		big.NewInt(7_280_000), // Constantinople & Petersburg
+		big.NewInt(7_280_001),
+
+		big.NewInt(9_068_998),
+		big.NewInt(9_068_999),
+		big.NewInt(9_069_000), // Istanbul
+		big.NewInt(9_069_001),
+
+		big.NewInt(9_199_998),
+		big.NewInt(9_199_999),
+		big.NewInt(9_200_000), // Muir Glacier
+		big.NewInt(9_200_001),
+
+		big.NewInt(12_243_998),
+		big.NewInt(12_243_999),
+		big.NewInt(12_244_000), // Berlin
+		big.NewInt(12_244_001),
+
+		big.NewInt(12_964_998),
+		big.NewInt(12_964_999),
+		big.NewInt(12_965_000), // London
+		big.NewInt(12_965_001),
+
+		big.NewInt(13_772_998),
+		big.NewInt(13_772_999),
+		big.NewInt(13_773_000), // Arrow Glacier
+		big.NewInt(13_773_001),
+
 		big.NewInt(15_054_998),
 		big.NewInt(15_054_999),
 		big.NewInt(15_050_000), // Gray Glacier
