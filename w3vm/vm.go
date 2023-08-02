@@ -55,6 +55,9 @@ type vmOptions struct {
 func New(opts ...Option) *VM {
 	v := &VM{opts: new(vmOptions)}
 	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
 		opt(v)
 	}
 

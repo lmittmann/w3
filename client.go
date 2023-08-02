@@ -30,6 +30,9 @@ func NewClient(client *rpc.Client, opts ...Option) *Client {
 		client: client,
 	}
 	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
 		opt(c)
 	}
 	return c
