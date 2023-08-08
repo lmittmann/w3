@@ -18,7 +18,7 @@ type Receipt struct {
 	Output          []byte          // Output bytes of the applied message
 	ContractAddress *common.Address // Contract address created by a contract creation transaction
 
-	Err error // Err returned on revert
+	Err error // Revert reason
 }
 
 func (r Receipt) DecodeReturns(returns ...any) error {
