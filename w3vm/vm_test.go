@@ -380,13 +380,6 @@ func fetchReceipts(txs []*types.Transaction) ([]*types.Receipt, error) {
 	return receipts, nil
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func must[T any](t T, err error) T {
 	if err != nil {
 		panic(err)

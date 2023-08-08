@@ -3,13 +3,13 @@ package state
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"os"
 	"path/filepath"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"golang.org/x/exp/maps"
 	"golang.org/x/sync/singleflight"
 )
 
