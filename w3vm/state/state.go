@@ -9,13 +9,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"golang.org/x/exp/maps"
 	"golang.org/x/sync/singleflight"
 )
-
-type forkState struct {
-	Accounts     map[common.Address]*Account    `json:"accounts,omitempty"`
-	HeaderHashes map[hexutil.Uint64]common.Hash `json:"headerHashes,omitempty"`
-}
 
 var (
 	stateMux sync.Mutex
@@ -24,6 +20,18 @@ var (
 	readGroup  = new(singleflight.Group)
 	writeGroup = new(singleflight.Group)
 )
+
+type forkState struct {
+	Accounts     map[common.Address]*Account    `json:"accounts,omitempty"`
+	HeaderHashes map[hexutil.Uint64]common.Hash `json:"headerHashes,omitempty"`
+}
+
+func (s *forkState) Clone() *forkState {
+	return &forkState{
+		Accounts:     maps.Clone(s.Accounts),
+		HeaderHashes: maps.Clone(s.HeaderHashes),
+	}
+}
 
 func (s *forkState) Merge(s2 *forkState) (changed bool) {
 	if s2 == nil || len(s2.Accounts) == 0 && len(s2.HeaderHashes) == 0 {
@@ -79,7 +87,7 @@ func readTestdataState(fp string) (*forkState, error) {
 		stateMux.Lock()
 		if s, ok := state[fp]; ok {
 			stateMux.Unlock()
-			return s, nil
+			return s.Clone(), nil
 		}
 		stateMux.Unlock()
 
@@ -123,7 +131,7 @@ Retry:
 		if testdataState == nil {
 			testdataState = new(forkState)
 		}
-		if changed := s.Merge(testdataState); !changed {
+		if changed := testdataState.Merge(s); !changed {
 			return nil, nil
 		}
 
@@ -136,7 +144,7 @@ Retry:
 
 		// update state cache
 		stateMux.Lock()
-		state[fp] = s
+		state[fp] = testdataState
 		stateMux.Unlock()
 
 		// persist new state
@@ -148,7 +156,7 @@ Retry:
 
 		dec := json.NewEncoder(f)
 		dec.SetIndent("", "\t")
-		if err := dec.Encode(s); err != nil {
+		if err := dec.Encode(testdataState); err != nil {
 			return nil, err
 		}
 		return nil, nil
