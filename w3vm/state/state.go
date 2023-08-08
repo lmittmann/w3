@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -15,6 +16,14 @@ type forkState struct {
 	Accounts     map[common.Address]*Account    `json:"accounts,omitempty"`
 	HeaderHashes map[hexutil.Uint64]common.Hash `json:"headerHashes,omitempty"`
 }
+
+var (
+	stateMux sync.Mutex
+	state    = make(map[string]*forkState)
+
+	readGroup  = new(singleflight.Group)
+	writeGroup = new(singleflight.Group)
+)
 
 func (s *forkState) Merge(s2 *forkState) (changed bool) {
 	if s2 == nil || len(s2.Accounts) == 0 && len(s2.HeaderHashes) == 0 {
@@ -64,10 +73,17 @@ func (s *forkState) Merge(s2 *forkState) (changed bool) {
 	return
 }
 
-var readGroup = new(singleflight.Group)
-
 func readTestdataState(fp string) (*forkState, error) {
 	forkStateAny, err, _ := readGroup.Do(fp, func() (any, error) {
+		// check state cache
+		stateMux.Lock()
+		if s, ok := state[fp]; ok {
+			stateMux.Unlock()
+			return s, nil
+		}
+		stateMux.Unlock()
+
+		// read state from file
 		f, err := os.Open(fp)
 		if errors.Is(err, os.ErrNotExist) {
 			return &forkState{}, nil
@@ -80,6 +96,12 @@ func readTestdataState(fp string) (*forkState, error) {
 		if err := json.NewDecoder(f).Decode(&s); err != nil {
 			return nil, err
 		}
+
+		// set state cache
+		stateMux.Lock()
+		defer stateMux.Unlock()
+		state[fp] = s
+
 		return s, nil
 	})
 	if err != nil {
@@ -87,8 +109,6 @@ func readTestdataState(fp string) (*forkState, error) {
 	}
 	return forkStateAny.(*forkState), nil
 }
-
-var writeGroup = new(singleflight.Group)
 
 func writeTestdataState(fp string, s *forkState) error {
 Retry:
@@ -103,7 +123,7 @@ Retry:
 		if testdataState == nil {
 			testdataState = new(forkState)
 		}
-		if changed := testdataState.Merge(s); !changed {
+		if changed := s.Merge(testdataState); !changed {
 			return nil, nil
 		}
 
@@ -114,6 +134,11 @@ Retry:
 			}
 		}
 
+		// update state cache
+		stateMux.Lock()
+		state[fp] = s
+		stateMux.Unlock()
+
 		// persist new state
 		f, err := os.OpenFile(fp, os.O_CREATE|os.O_WRONLY, 0664)
 		if err != nil {
@@ -123,7 +148,7 @@ Retry:
 
 		dec := json.NewEncoder(f)
 		dec.SetIndent("", "\t")
-		if err := dec.Encode(testdataState); err != nil {
+		if err := dec.Encode(s); err != nil {
 			return nil, err
 		}
 		return nil, nil
