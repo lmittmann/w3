@@ -6,12 +6,12 @@ require (
 	github.com/ethereum/go-ethereum v1.12.0
 	github.com/google/go-cmp v0.5.9
 	github.com/holiman/uint256 v1.2.3
-	golang.org/x/exp v0.0.0-20230807204917-050eac23e9de
+	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc
 	golang.org/x/sync v0.3.0
 	golang.org/x/time v0.3.0
 )
 
-replace github.com/ethereum/go-ethereum => github.com/ethereum/go-ethereum v1.12.1-0.20230808125419-e13fa32cea34
+replace github.com/ethereum/go-ethereum => github.com/ethereum/go-ethereum v1.12.1-0.20230801121732-7de748d3f62c
 
 require (
 	github.com/DataDog/zstd v1.5.2 // indirect
