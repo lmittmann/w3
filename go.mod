@@ -3,14 +3,12 @@ module github.com/lmittmann/w3
 go 1.21
 
 require (
-	github.com/ethereum/go-ethereum v1.12.0
+	github.com/ethereum/go-ethereum v1.12.1
 	github.com/google/go-cmp v0.5.9
 	github.com/holiman/uint256 v1.2.3
 	golang.org/x/sync v0.3.0
 	golang.org/x/time v0.3.0
 )
-
-replace github.com/ethereum/go-ethereum => github.com/ethereum/go-ethereum v1.12.1-0.20230801121732-7de748d3f62c
 
 require (
 	github.com/DataDog/zstd v1.5.2 // indirect
