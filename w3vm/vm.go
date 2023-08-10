@@ -187,8 +187,8 @@ func (v *VM) Call(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, erro
 	return v.apply(msg, true, newMultiEVMLogger(tracers))
 }
 
-func (v *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) Returner {
-	return &returner{
+func (v *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) *CallFuncFactory {
+	return &CallFuncFactory{
 		vm: v,
 		msg: &w3types.Message{
 			To:   &contract,
@@ -198,17 +198,13 @@ func (v *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) Retu
 	}
 }
 
-type Returner interface {
-	Returns(...any) error
-}
-
-type returner struct {
+type CallFuncFactory struct {
 	vm  *VM
 	msg *w3types.Message
 }
 
-func (r *returner) Returns(returns ...any) error {
-	receipt, err := r.vm.Call(r.msg)
+func (cff *CallFuncFactory) Returns(returns ...any) error {
+	receipt, err := cff.vm.Call(cff.msg)
 	if err != nil {
 		return err
 	}
