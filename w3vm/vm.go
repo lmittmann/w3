@@ -2,6 +2,7 @@ package w3vm
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/big"
 	"testing"
@@ -24,6 +25,9 @@ import (
 var (
 	big1               = big.NewInt(1)
 	pendingBlockNumber = big.NewInt(-1)
+
+	ErrFetch  = errors.New("fetch error")
+	ErrRevert = errors.New("revert error")
 )
 
 type VM struct {
@@ -52,7 +56,7 @@ type vmOptions struct {
 	tb              testing.TB
 }
 
-func New(opts ...Option) *VM {
+func New(opts ...Option) (*VM, error) {
 	v := &VM{opts: new(vmOptions)}
 	for _, opt := range opts {
 		if opt == nil {
@@ -79,7 +83,9 @@ func New(opts ...Option) *VM {
 			}
 		}
 
-		v.opts.forkClient.Call(calls...) // TODO: check error
+		if err := v.opts.forkClient.Call(calls...); err != nil {
+			return nil, fmt.Errorf("%w: failed to fetch header: %v", ErrFetch, err)
+		}
 
 		if latest || v.opts.tb == nil {
 			v.fetcher = state.NewRPCFetcher(v.opts.forkClient, v.opts.forkBlockNumber)
@@ -122,7 +128,7 @@ func New(opts ...Option) *VM {
 			v.db.SetState(addr, slot, val)
 		}
 	}
-	return v
+	return v, nil
 }
 
 func (v *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
@@ -130,6 +136,10 @@ func (v *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, err
 }
 
 func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Receipt, error) {
+	if v.db.Error() != nil {
+		return nil, ErrFetch
+	}
+
 	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
 	if err != nil {
 		return nil, err
@@ -212,29 +222,49 @@ func (cff *CallFuncFactory) Returns(returns ...any) error {
 }
 
 // Nonce returns the nonce of Address addr.
-func (v *VM) Nonce(addr common.Address) uint64 {
-	return v.db.GetNonce(addr)
+func (v *VM) Nonce(addr common.Address) (uint64, error) {
+	nonce := v.db.GetNonce(addr)
+	if v.db.Error() != nil {
+		return 0, fmt.Errorf("%w: failed to fetch nonce of %s", ErrFetch, addr)
+	}
+	return nonce, nil
 }
 
 // Balance returns the balance of Address addr.
-func (v *VM) Balance(addr common.Address) *big.Int {
-	return v.db.GetBalance(addr)
+func (v *VM) Balance(addr common.Address) (*big.Int, error) {
+	balance := v.db.GetBalance(addr)
+	if v.db.Error() != nil {
+		return nil, fmt.Errorf("%w: failed to fetch balance of %s", ErrFetch, addr)
+	}
+	return balance, nil
 }
 
 // Code returns the code of Address addr.
-func (v *VM) Code(addr common.Address) []byte {
-	return v.db.GetCode(addr)
+func (v *VM) Code(addr common.Address) ([]byte, error) {
+	code := v.db.GetCode(addr)
+	if v.db.Error() != nil {
+		return nil, fmt.Errorf("%w: failed to fetch code of %s", ErrFetch, addr)
+	}
+	return code, nil
 }
 
 // StorageAt returns the state of Address addr at the give storage Hash slot.
-func (v *VM) StorageAt(addr common.Address, slot common.Hash) common.Hash {
-	return v.db.GetState(addr, slot)
+func (v *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
+	val := v.db.GetState(addr, slot)
+	if v.db.Error() != nil {
+		return hash0, fmt.Errorf("%w: failed to fetch storage of %s at %s", ErrFetch, addr, slot)
+	}
+	return val, nil
 }
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
 	if nonce == 0 && !skipAccChecks && msg.From != addr0 {
-		nonce = v.Nonce(msg.From)
+		var err error
+		nonce, err = v.Nonce(msg.From)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	gasLimit := msg.Gas

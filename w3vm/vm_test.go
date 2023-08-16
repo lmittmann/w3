@@ -162,7 +162,7 @@ func TestVMApply(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			vm := w3vm.New(
+			vm, _ := w3vm.New(
 				w3vm.WithState(test.PreState),
 			)
 			gotReceipt, gotErr := vm.Apply(test.Message)
@@ -212,7 +212,7 @@ func TestVMCall(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			vm := w3vm.New(
+			vm, _ := w3vm.New(
 				w3vm.WithState(test.PreState),
 			)
 			gotReceipt, gotErr := vm.Call(test.Message)
@@ -232,7 +232,7 @@ func TestVMCall(t *testing.T) {
 }
 
 func TestVMCallFunc(t *testing.T) {
-	vm := w3vm.New(
+	vm, _ := w3vm.New(
 		w3vm.WithState(w3types.State{
 			addrWETH: {
 				Code: codeWETH,
@@ -252,6 +252,63 @@ func TestVMCallFunc(t *testing.T) {
 	if wantBalance.Cmp(gotBalance) != 0 {
 		t.Fatalf("Balance: want %s, got %s", wantBalance, gotBalance)
 	}
+}
+
+func TestVM_Fetcher(t *testing.T) {
+	f := new(testFetcher)
+	vm, err := w3vm.New(
+		w3vm.WithFetcher(f),
+	)
+	if err != nil {
+		t.Fatalf("Failed to create VM: %v", err)
+	}
+
+	_, err = vm.Nonce(addr0)
+	want := "fetch error: failed to fetch nonce of 0x0000000000000000000000000000000000000000"
+	if !errors.Is(err, w3vm.ErrFetch) || want != err.Error() {
+		t.Errorf("Nonce: want %q, got %q", want, err)
+	}
+
+	_, err = vm.Balance(addr0)
+	want = "fetch error: failed to fetch balance of 0x0000000000000000000000000000000000000000"
+	if !errors.Is(err, w3vm.ErrFetch) || want != err.Error() {
+		t.Errorf("Balance: want %q, got %q", want, err)
+	}
+
+	_, err = vm.Code(addr0)
+	want = "fetch error: failed to fetch code of 0x0000000000000000000000000000000000000000"
+	if !errors.Is(err, w3vm.ErrFetch) || want != err.Error() {
+		t.Errorf("Code: want %q, got %q", want, err)
+	}
+
+	_, err = vm.StorageAt(addr0, common.Hash{})
+	want = "fetch error: failed to fetch storage of 0x0000000000000000000000000000000000000000 at 0x0000000000000000000000000000000000000000000000000000000000000000"
+	if !errors.Is(err, w3vm.ErrFetch) || want != err.Error() {
+		t.Errorf("StorageAt: want %q, got %q", want, err)
+	}
+}
+
+type testFetcher struct{}
+
+func (f *testFetcher) Nonce(addr common.Address) (uint64, error) {
+	return 0, fmt.Errorf("%w: failed to fetch nonce", w3vm.ErrFetch)
+}
+
+func (f *testFetcher) Balance(addr common.Address) (*big.Int, error) {
+	// return nil, fmt.Errorf("%w: failed to fetch balance", w3vm.ErrFetch)
+	return big.NewInt(1), nil
+}
+
+func (f *testFetcher) Code(addr common.Address) ([]byte, error) {
+	return nil, fmt.Errorf("%w: failed to code", w3vm.ErrFetch)
+}
+
+func (f *testFetcher) StorageAt(addr common.Address, key common.Hash) (common.Hash, error) {
+	return common.Hash{}, fmt.Errorf("%w: failed to fetch storage", w3vm.ErrFetch)
+}
+
+func (f *testFetcher) HeaderHash(blockNumber *big.Int) (common.Hash, error) {
+	return common.Hash{}, fmt.Errorf("%w: failed to fetch code hash", w3vm.ErrFetch)
 }
 
 func TestVMApply_Integration(t *testing.T) {
@@ -320,7 +377,7 @@ func TestVMApply_Integration(t *testing.T) {
 			}
 
 			f := state.NewTestingRPCFetcher(t, client, new(big.Int).Sub(number, w3.Big1))
-			vm := w3vm.New(
+			vm, _ := w3vm.New(
 				w3vm.WithFetcher(f),
 				w3vm.WithHeader(block.Header()),
 			)
@@ -406,7 +463,7 @@ func BenchmarkTransferWETH9(b *testing.B) {
 	}
 
 	b.Run("w3vm", func(b *testing.B) {
-		vm := w3vm.New(
+		vm, _ := w3vm.New(
 			w3vm.WithBlockContext(&blockCtx),
 			w3vm.WithChainConfig(params.AllEthashProtocolChanges),
 			w3vm.WithState(w3types.State{
