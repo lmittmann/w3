@@ -57,82 +57,82 @@ type vmOptions struct {
 }
 
 func New(opts ...Option) (*VM, error) {
-	v := &VM{opts: new(vmOptions)}
+	vm := &VM{opts: new(vmOptions)}
 	for _, opt := range opts {
 		if opt == nil {
 			continue
 		}
-		opt(v)
+		opt(vm)
 	}
 
-	v.fetcher = v.opts.fetcher
-	if v.fetcher == nil && v.opts.forkClient != nil {
+	vm.fetcher = vm.opts.fetcher
+	if vm.fetcher == nil && vm.opts.forkClient != nil {
 		var calls []w3types.Caller
 
-		latest := v.opts.forkBlockNumber == nil
+		latest := vm.opts.forkBlockNumber == nil
 		if latest {
-			v.opts.forkBlockNumber = new(big.Int)
-			calls = append(calls, eth.BlockNumber().Returns(v.opts.forkBlockNumber))
+			vm.opts.forkBlockNumber = new(big.Int)
+			calls = append(calls, eth.BlockNumber().Returns(vm.opts.forkBlockNumber))
 		}
-		if v.opts.header == nil && v.opts.blockCtx == nil {
-			v.opts.header = new(types.Header)
+		if vm.opts.header == nil && vm.opts.blockCtx == nil {
+			vm.opts.header = new(types.Header)
 			if latest {
-				calls = append(calls, eth.HeaderByNumber(pendingBlockNumber).Returns(v.opts.header))
+				calls = append(calls, eth.HeaderByNumber(pendingBlockNumber).Returns(vm.opts.header))
 			} else {
-				calls = append(calls, eth.HeaderByNumber(v.opts.forkBlockNumber).Returns(v.opts.header))
+				calls = append(calls, eth.HeaderByNumber(vm.opts.forkBlockNumber).Returns(vm.opts.header))
 			}
 		}
 
-		if err := v.opts.forkClient.Call(calls...); err != nil {
+		if err := vm.opts.forkClient.Call(calls...); err != nil {
 			return nil, fmt.Errorf("%w: failed to fetch header: %v", ErrFetch, err)
 		}
 
-		if latest || v.opts.tb == nil {
-			v.fetcher = state.NewRPCFetcher(v.opts.forkClient, v.opts.forkBlockNumber)
+		if latest || vm.opts.tb == nil {
+			vm.fetcher = state.NewRPCFetcher(vm.opts.forkClient, vm.opts.forkBlockNumber)
 		} else {
-			v.fetcher = state.NewTestingRPCFetcher(v.opts.tb, v.opts.forkClient, new(big.Int).Sub(v.opts.forkBlockNumber, big1))
+			vm.fetcher = state.NewTestingRPCFetcher(vm.opts.tb, vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, big1))
 		}
 	}
 
 	// set chain config
-	v.chainConfig = v.opts.chainConfig
-	if v.chainConfig == nil {
-		if v.fetcher != nil {
-			v.chainConfig = params.MainnetChainConfig
+	vm.chainConfig = vm.opts.chainConfig
+	if vm.chainConfig == nil {
+		if vm.fetcher != nil {
+			vm.chainConfig = params.MainnetChainConfig
 		} else {
-			v.chainConfig = allEthashProtocolChanges
+			vm.chainConfig = allEthashProtocolChanges
 		}
 	}
 
-	v.blockCtx = v.opts.blockCtx
-	if v.blockCtx == nil {
-		if v.opts.header != nil {
-			v.blockCtx = newBlockContext(v.opts.header, v.fetcherHashFunc(v.fetcher))
+	vm.blockCtx = vm.opts.blockCtx
+	if vm.blockCtx == nil {
+		if vm.opts.header != nil {
+			vm.blockCtx = newBlockContext(vm.opts.header, vm.fetcherHashFunc(vm.fetcher))
 		} else {
-			v.blockCtx = defaultBlockContext()
+			vm.blockCtx = defaultBlockContext()
 		}
 	}
 
 	// set DB
-	db := newDB(v.fetcher)
-	v.db, _ = gethState.New(hash0, db, nil)
-	for addr, acc := range v.opts.preState {
-		v.db.SetNonce(addr, acc.Nonce)
+	db := newDB(vm.fetcher)
+	vm.db, _ = gethState.New(hash0, db, nil)
+	for addr, acc := range vm.opts.preState {
+		vm.db.SetNonce(addr, acc.Nonce)
 		if acc.Balance != nil {
-			v.db.SetBalance(addr, acc.Balance)
+			vm.db.SetBalance(addr, acc.Balance)
 		}
 		if acc.Code != nil {
-			v.db.SetCode(addr, acc.Code)
+			vm.db.SetCode(addr, acc.Code)
 		}
 		for slot, val := range acc.Storage {
-			v.db.SetState(addr, slot, val)
+			vm.db.SetState(addr, slot, val)
 		}
 	}
-	return v, nil
+	return vm, nil
 }
 
-func (v *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
-	return v.apply(msg, false, newMultiEVMLogger(tracers))
+func (vm *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
+	return vm.apply(msg, false, newMultiEVMLogger(tracers))
 }
 
 func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Receipt, error) {
@@ -193,13 +193,13 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 	return receipt, receipt.Err
 }
 
-func (v *VM) Call(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
-	return v.apply(msg, true, newMultiEVMLogger(tracers))
+func (vm *VM) Call(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
+	return vm.apply(msg, true, newMultiEVMLogger(tracers))
 }
 
-func (v *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) *CallFuncFactory {
+func (vm *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) *CallFuncFactory {
 	return &CallFuncFactory{
-		vm: v,
+		vm: vm,
 		msg: &w3types.Message{
 			To:   &contract,
 			Func: f,
@@ -222,36 +222,36 @@ func (cff *CallFuncFactory) Returns(returns ...any) error {
 }
 
 // Nonce returns the nonce of Address addr.
-func (v *VM) Nonce(addr common.Address) (uint64, error) {
-	nonce := v.db.GetNonce(addr)
-	if v.db.Error() != nil {
+func (vm *VM) Nonce(addr common.Address) (uint64, error) {
+	nonce := vm.db.GetNonce(addr)
+	if vm.db.Error() != nil {
 		return 0, fmt.Errorf("%w: failed to fetch nonce of %s", ErrFetch, addr)
 	}
 	return nonce, nil
 }
 
 // Balance returns the balance of Address addr.
-func (v *VM) Balance(addr common.Address) (*big.Int, error) {
-	balance := v.db.GetBalance(addr)
-	if v.db.Error() != nil {
+func (vm *VM) Balance(addr common.Address) (*big.Int, error) {
+	balance := vm.db.GetBalance(addr)
+	if vm.db.Error() != nil {
 		return nil, fmt.Errorf("%w: failed to fetch balance of %s", ErrFetch, addr)
 	}
 	return balance, nil
 }
 
 // Code returns the code of Address addr.
-func (v *VM) Code(addr common.Address) ([]byte, error) {
-	code := v.db.GetCode(addr)
-	if v.db.Error() != nil {
+func (vm *VM) Code(addr common.Address) ([]byte, error) {
+	code := vm.db.GetCode(addr)
+	if vm.db.Error() != nil {
 		return nil, fmt.Errorf("%w: failed to fetch code of %s", ErrFetch, addr)
 	}
 	return code, nil
 }
 
 // StorageAt returns the state of Address addr at the give storage Hash slot.
-func (v *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
-	val := v.db.GetState(addr, slot)
-	if v.db.Error() != nil {
+func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
+	val := vm.db.GetState(addr, slot)
+	if vm.db.Error() != nil {
 		return hash0, fmt.Errorf("%w: failed to fetch storage of %s at %s", ErrFetch, addr, slot)
 	}
 	return val, nil
@@ -312,7 +312,7 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		nil
 }
 
-func (v *VM) fetcherHashFunc(fetcher state.Fetcher) vm.GetHashFunc {
+func (vm *VM) fetcherHashFunc(fetcher state.Fetcher) vm.GetHashFunc {
 	return func(n uint64) common.Hash {
 		blockNumber := new(big.Int).SetUint64(n)
 		hash, _ := fetcher.HeaderHash(blockNumber)
