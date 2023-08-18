@@ -35,7 +35,6 @@ type VM struct {
 
 	chainConfig *params.ChainConfig
 	blockCtx    *vm.BlockContext
-	noBaseFee   bool
 	txIndex     uint64
 	db          *gethState.StateDB
 
@@ -153,7 +152,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
 	evm := vm.NewEVM(*v.blockCtx, *txCtx, v.db, v.chainConfig, vm.Config{
 		Tracer:    tracer,
-		NoBaseFee: v.noBaseFee || isCall,
+		NoBaseFee: v.opts.noBaseFee || isCall,
 	})
 
 	snap := v.db.Snapshot()
