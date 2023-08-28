@@ -24,7 +24,6 @@ import (
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 	"github.com/lmittmann/w3/w3vm"
-	"github.com/lmittmann/w3/w3vm/state"
 )
 
 var (
@@ -376,7 +375,7 @@ func TestVMApply_Integration(t *testing.T) {
 				t.Fatalf("Failed to fetch block: %v", err)
 			}
 
-			f := state.NewTestingRPCFetcher(t, client, new(big.Int).Sub(number, w3.Big1))
+			f := w3vm.NewTestingRPCFetcher(t, client, new(big.Int).Sub(number, w3.Big1))
 			vm, _ := w3vm.New(
 				w3vm.WithFetcher(f),
 				w3vm.WithHeader(block.Header()),

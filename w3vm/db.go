@@ -11,17 +11,16 @@ import (
 	"github.com/ethereum/go-ethereum/trie"
 	"github.com/ethereum/go-ethereum/trie/trienode"
 	"github.com/lmittmann/w3/internal/crypto"
-	"github.com/lmittmann/w3/w3vm/state"
 )
 
 var errNotFound = errors.New("not found")
 
 // db implements the [state.Database] and [state.Trie] interfaces.
 type db struct {
-	fetcher state.Fetcher
+	fetcher Fetcher
 }
 
-func newDB(fetcher state.Fetcher) *db {
+func newDB(fetcher Fetcher) *db {
 	return &db{
 		fetcher: fetcher,
 	}

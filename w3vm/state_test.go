@@ -1,4 +1,4 @@
-package state
+package w3vm
 
 import (
 	"os"

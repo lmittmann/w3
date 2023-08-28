@@ -19,7 +19,6 @@ import (
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
-	"github.com/lmittmann/w3/w3vm/state"
 )
 
 var (
@@ -38,7 +37,7 @@ type VM struct {
 	txIndex     uint64
 	db          *gethState.StateDB
 
-	fetcher state.Fetcher
+	fetcher Fetcher
 }
 
 type vmOptions struct {
@@ -51,7 +50,7 @@ type vmOptions struct {
 
 	forkClient      *w3.Client
 	forkBlockNumber *big.Int
-	fetcher         state.Fetcher
+	fetcher         Fetcher
 	tb              testing.TB
 }
 
@@ -87,9 +86,9 @@ func New(opts ...Option) (*VM, error) {
 		}
 
 		if latest || vm.opts.tb == nil {
-			vm.fetcher = state.NewRPCFetcher(vm.opts.forkClient, vm.opts.forkBlockNumber)
+			vm.fetcher = NewRPCFetcher(vm.opts.forkClient, vm.opts.forkBlockNumber)
 		} else {
-			vm.fetcher = state.NewTestingRPCFetcher(vm.opts.tb, vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, big1))
+			vm.fetcher = NewTestingRPCFetcher(vm.opts.tb, vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, big1))
 		}
 	}
 
@@ -311,7 +310,7 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		nil
 }
 
-func (vm *VM) fetcherHashFunc(fetcher state.Fetcher) vm.GetHashFunc {
+func (vm *VM) fetcherHashFunc(fetcher Fetcher) vm.GetHashFunc {
 	return func(n uint64) common.Hash {
 		blockNumber := new(big.Int).SetUint64(n)
 		hash, _ := fetcher.HeaderHash(blockNumber)
@@ -377,7 +376,7 @@ func WithHeader(header *types.Header) Option {
 	return func(vm *VM) { vm.opts.header = header }
 }
 
-func WithFetcher(fetcher state.Fetcher) Option {
+func WithFetcher(fetcher Fetcher) Option {
 	return func(vm *VM) { vm.opts.fetcher = fetcher }
 }
 
