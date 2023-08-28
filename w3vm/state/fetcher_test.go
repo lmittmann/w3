@@ -1,4 +1,4 @@
-package state_test
+package state
 
 import (
 	"bytes"
@@ -7,11 +7,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/holiman/uint256"
-	"github.com/lmittmann/w3/w3vm/state"
 )
 
 func TestTestAccountMarshaling(t *testing.T) {
-	acc := &state.Account{
+	acc := &account{
 		Nonce:   1,
 		Balance: *uint256.NewInt(1),
 		Code:    []byte{0xc0, 0xfe},
@@ -33,7 +32,7 @@ func TestTestAccountMarshaling(t *testing.T) {
 	})
 
 	t.Run("UnmarshalJSON", func(t *testing.T) {
-		var got state.Account
+		var got account
 		err := json.Unmarshal(enc, &got)
 		if err != nil {
 			t.Fatalf("Failed to unmarshal account: %v", err)

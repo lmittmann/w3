@@ -22,7 +22,7 @@ var (
 )
 
 type forkState struct {
-	Accounts     map[common.Address]*Account    `json:"accounts,omitempty"`
+	Accounts     map[common.Address]*account    `json:"accounts,omitempty"`
 	HeaderHashes map[hexutil.Uint64]common.Hash `json:"headerHashes,omitempty"`
 }
 

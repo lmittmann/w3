@@ -37,28 +37,32 @@ type Fetcher interface {
 	HeaderHash(*big.Int) (common.Hash, error)
 }
 
-type RPCFetcher struct {
+type rpcFetcher struct {
 	client      *w3.Client
 	blockNumber *big.Int
 
 	g            *singleflight.Group
 	mux          sync.RWMutex
-	accounts     map[common.Address]*Account
+	accounts     map[common.Address]*account
 	mux2         sync.RWMutex
 	headerHashes map[uint64]common.Hash
 }
 
-func NewRPCFetcher(client *w3.Client, blockNumber *big.Int) *RPCFetcher {
-	return &RPCFetcher{
+func NewRPCFetcher(client *w3.Client, blockNumber *big.Int) Fetcher {
+	return newRPCFetcher(client, blockNumber)
+}
+
+func newRPCFetcher(client *w3.Client, blockNumber *big.Int) *rpcFetcher {
+	return &rpcFetcher{
 		client:       client,
 		blockNumber:  blockNumber,
 		g:            new(singleflight.Group),
-		accounts:     make(map[common.Address]*Account),
+		accounts:     make(map[common.Address]*account),
 		headerHashes: make(map[uint64]common.Hash),
 	}
 }
 
-func (f *RPCFetcher) Nonce(addr common.Address) (uint64, error) {
+func (f *rpcFetcher) Nonce(addr common.Address) (uint64, error) {
 	acc, err := f.fetchAccount(addr)
 	if err != nil {
 		return 0, err
@@ -66,7 +70,7 @@ func (f *RPCFetcher) Nonce(addr common.Address) (uint64, error) {
 	return acc.Nonce, nil
 }
 
-func (f *RPCFetcher) Balance(addr common.Address) (*big.Int, error) {
+func (f *rpcFetcher) Balance(addr common.Address) (*big.Int, error) {
 	acc, err := f.fetchAccount(addr)
 	if err != nil {
 		return nil, err
@@ -74,7 +78,7 @@ func (f *RPCFetcher) Balance(addr common.Address) (*big.Int, error) {
 	return acc.Balance.ToBig(), nil
 }
 
-func (f *RPCFetcher) Code(addr common.Address) ([]byte, error) {
+func (f *rpcFetcher) Code(addr common.Address) ([]byte, error) {
 	acc, err := f.fetchAccount(addr)
 	if err != nil {
 		return nil, err
@@ -82,7 +86,7 @@ func (f *RPCFetcher) Code(addr common.Address) ([]byte, error) {
 	return acc.Code, nil
 }
 
-func (f *RPCFetcher) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
+func (f *rpcFetcher) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
 	storageVal, err := f.fetchStorageAt(addr, *new(uint256.Int).SetBytes32(slot[:]))
 	if err != nil {
 		return hash0, err
@@ -90,11 +94,11 @@ func (f *RPCFetcher) StorageAt(addr common.Address, slot common.Hash) (common.Ha
 	return storageVal.Bytes32(), nil
 }
 
-func (f *RPCFetcher) HeaderHash(blockNumber *big.Int) (common.Hash, error) {
+func (f *rpcFetcher) HeaderHash(blockNumber *big.Int) (common.Hash, error) {
 	return f.fetchHeaderHash(blockNumber)
 }
 
-func (f *RPCFetcher) fetchAccount(addr common.Address) (*Account, error) {
+func (f *rpcFetcher) fetchAccount(addr common.Address) (*account, error) {
 	accAny, err, _ := f.g.Do(string(addr[:]), func() (interface{}, error) {
 		// check if account is already cached
 		f.mux.RLock()
@@ -117,7 +121,7 @@ func (f *RPCFetcher) fetchAccount(addr common.Address) (*Account, error) {
 		); err != nil {
 			return nil, err
 		}
-		acc = &Account{
+		acc = &account{
 			Nonce:   nonce,
 			Balance: balance,
 			Code:    code,
@@ -133,10 +137,10 @@ func (f *RPCFetcher) fetchAccount(addr common.Address) (*Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	return accAny.(*Account), nil
+	return accAny.(*account), nil
 }
 
-func (f *RPCFetcher) fetchStorageAt(addr common.Address, slot uint256.Int) (uint256.Int, error) {
+func (f *rpcFetcher) fetchStorageAt(addr common.Address, slot uint256.Int) (uint256.Int, error) {
 	slotBytes := slot.Bytes32()
 	storageValAny, err, _ := f.g.Do(string(append(addr[:], slotBytes[:]...)), func() (interface{}, error) {
 		// check if account is already cached
@@ -172,7 +176,7 @@ func (f *RPCFetcher) fetchStorageAt(addr common.Address, slot uint256.Int) (uint
 	return storageValAny.(uint256.Int), nil
 }
 
-func (f *RPCFetcher) fetchHeaderHash(blockNumber *big.Int) (common.Hash, error) {
+func (f *rpcFetcher) fetchHeaderHash(blockNumber *big.Int) (common.Hash, error) {
 	hashAny, err, _ := f.g.Do(blockNumber.String(), func() (interface{}, error) {
 		n := blockNumber.Uint64()
 
@@ -205,11 +209,11 @@ func (f *RPCFetcher) fetchHeaderHash(blockNumber *big.Int) (common.Hash, error) 
 	return hashAny.(common.Hash), nil
 }
 
-func (f *RPCFetcher) call(calls ...w3types.Caller) error {
+func (f *rpcFetcher) call(calls ...w3types.Caller) error {
 	return f.client.Call(calls...)
 }
 
-func (f *RPCFetcher) setForkState(s *forkState) {
+func (f *rpcFetcher) setForkState(s *forkState) {
 	f.mux.Lock()
 	f.mux2.Lock()
 	defer f.mux.Unlock()
@@ -224,7 +228,7 @@ func (f *RPCFetcher) setForkState(s *forkState) {
 	}
 }
 
-func (f *RPCFetcher) getForkState() *forkState {
+func (f *rpcFetcher) getForkState() *forkState {
 	f.mux.Lock()
 	f.mux2.Lock()
 	defer f.mux.Unlock()
@@ -232,7 +236,7 @@ func (f *RPCFetcher) getForkState() *forkState {
 
 	s := new(forkState)
 	if len(f.accounts) > 0 {
-		s.Accounts = make(map[common.Address]*Account, len(f.accounts))
+		s.Accounts = make(map[common.Address]*account, len(f.accounts))
 		for addr, acc := range f.accounts {
 			accCop := *acc
 			s.Accounts[addr] = &accCop
@@ -252,7 +256,7 @@ func (f *RPCFetcher) getForkState() *forkState {
 // TestingRPCFetcher ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, blockNumber *big.Int) *RPCFetcher {
+func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, blockNumber *big.Int) Fetcher {
 	fp := getTbFilepath(tb)
 	if ok := isTbInMod(fp); !ok {
 		panic("must be called from a test in a module")
@@ -275,7 +279,7 @@ func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, blockNumber *big.Int
 		tb.Fatalf("w3vm: failed to read state from testdata: %v", err)
 	}
 
-	fetcher := NewRPCFetcher(client, blockNumber)
+	fetcher := newRPCFetcher(client, blockNumber)
 	fetcher.setForkState(testdataState)
 
 	tb.Cleanup(func() {
@@ -292,7 +296,7 @@ func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, blockNumber *big.Int
 // account /////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type Account struct {
+type account struct {
 	Nonce   uint64
 	Balance uint256.Int
 	Code    []byte
@@ -306,7 +310,7 @@ type accountMarshaling struct {
 	Storage map[uint256OrHash]uint256OrHash `json:"storage,omitempty"`
 }
 
-func (acc Account) MarshalJSON() ([]byte, error) {
+func (acc account) MarshalJSON() ([]byte, error) {
 	storage := make(map[uint256OrHash]uint256OrHash, len(acc.Storage))
 	for slot, val := range acc.Storage {
 		storage[uint256OrHash(slot)] = uint256OrHash(val)
@@ -319,7 +323,7 @@ func (acc Account) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (acc *Account) UnmarshalJSON(data []byte) error {
+func (acc *account) UnmarshalJSON(data []byte) error {
 	var dec accountMarshaling
 	if err := json.Unmarshal(data, &dec); err != nil {
 		return err

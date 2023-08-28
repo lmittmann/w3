@@ -50,7 +50,7 @@ func TestReadTestdataState(t *testing.T) {
 		}
 
 		wantState := &forkState{
-			Accounts: map[common.Address]*Account{
+			Accounts: map[common.Address]*account{
 				{0x1}: {Balance: uint1},
 			},
 		}
@@ -67,7 +67,7 @@ func TestWriteTestdataState(t *testing.T) {
 		dir := t.TempDir()
 		fp := filepath.Join(dir, "1_0.json")
 		wantState := &forkState{
-			Accounts: map[common.Address]*Account{
+			Accounts: map[common.Address]*account{
 				{0x1}: {Balance: uint1},
 			},
 		}
@@ -91,17 +91,17 @@ func TestWriteTestdataState(t *testing.T) {
 		dir := t.TempDir()
 		fp := filepath.Join(dir, "1_0.json")
 		preState := &forkState{
-			Accounts: map[common.Address]*Account{
+			Accounts: map[common.Address]*account{
 				{0x1}: {Balance: uint1},
 			},
 		}
 		newState := &forkState{
-			Accounts: map[common.Address]*Account{
+			Accounts: map[common.Address]*account{
 				{0x2}: {Balance: uint2},
 			},
 		}
 		wantState := &forkState{
-			Accounts: map[common.Address]*Account{
+			Accounts: map[common.Address]*account{
 				{0x1}: {Balance: uint1},
 				{0x2}: {Balance: uint2},
 			},
@@ -165,43 +165,43 @@ func TestForkStateMerge(t *testing.T) {
 			WantChanged: true,
 		},
 		{ // If the same key is present in both states, the value of S1 is NOT changed.
-			S1:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {Balance: uint1}}},
-			S2:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {Balance: uint2}}},
-			Want:        &forkState{Accounts: map[common.Address]*Account{{0x1}: {Balance: uint1}}},
+			S1:          &forkState{Accounts: map[common.Address]*account{{0x1}: {Balance: uint1}}},
+			S2:          &forkState{Accounts: map[common.Address]*account{{0x1}: {Balance: uint2}}},
+			Want:        &forkState{Accounts: map[common.Address]*account{{0x1}: {Balance: uint1}}},
 			WantChanged: false,
 		},
 		{
-			S1:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {}}},
-			S2:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
-			Want:        &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
+			S1:          &forkState{Accounts: map[common.Address]*account{{0x1}: {}}},
+			S2:          &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
+			Want:        &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
 			WantChanged: true,
 		},
 		{
-			S1:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
-			S2:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {}}},
-			Want:        &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
+			S1:          &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
+			S2:          &forkState{Accounts: map[common.Address]*account{{0x1}: {}}},
+			Want:        &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
 			WantChanged: false,
 		},
 		{
-			S1:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{}}}},
-			S2:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
-			Want:        &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
+			S1:          &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{}}}},
+			S2:          &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
+			Want:        &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
 			WantChanged: true,
 		},
 		{
-			S1:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
-			S2:          &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{}}}},
-			Want:        &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
+			S1:          &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
+			S2:          &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{}}}},
+			Want:        &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{uint1: uint1}}}},
 			WantChanged: false,
 		},
 		{
-			S1: &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{
+			S1: &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{
 				uint1: uint1,
 			}}}},
-			S2: &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{
+			S2: &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{
 				uint2: uint2,
 			}}}},
-			Want: &forkState{Accounts: map[common.Address]*Account{{0x1}: {Storage: map[uint256.Int]uint256.Int{
+			Want: &forkState{Accounts: map[common.Address]*account{{0x1}: {Storage: map[uint256.Int]uint256.Int{
 				uint1: uint1,
 				uint2: uint2,
 			}}}},
