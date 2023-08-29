@@ -3,6 +3,7 @@ package w3vm
 import (
 	"crypto/rand"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -52,7 +53,7 @@ func defaultBlockContext() *vm.BlockContext {
 		GetHash:     zeroHashFunc,
 		Coinbase:    coinbase,
 		BlockNumber: new(big.Int),
-		Time:        uint0,
+		Time:        uint64(time.Now().Unix()),
 		Difficulty:  new(big.Int),
 		BaseFee:     new(big.Int),
 		GasLimit:    params.MaxGasLimit,
