@@ -48,6 +48,11 @@ type rpcFetcher struct {
 	headerHashes map[uint64]common.Hash
 }
 
+// NewRPCFetcher returns a new [Fetcher] that fetches account state from the given
+// RPC client for the given block number.
+//
+// Note, that the returned state for a given block number is the state after the
+// execution of that block.
 func NewRPCFetcher(client *w3.Client, blockNumber *big.Int) Fetcher {
 	return newRPCFetcher(client, blockNumber)
 }
@@ -256,6 +261,8 @@ func (f *rpcFetcher) getForkState() *forkState {
 // TestingRPCFetcher ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// NewTestingRPCFetcher returns a new [Fetcher] like [NewRPCFetcher], but caches
+// the fetched state on disk in the testdata directory of the tests package.
 func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, blockNumber *big.Int) Fetcher {
 	fp := getTbFilepath(tb)
 	if ok := isTbInMod(fp); !ok {

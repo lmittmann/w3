@@ -8,6 +8,8 @@ import (
 	"github.com/lmittmann/w3/w3types"
 )
 
+var ErrMissingFunc = errors.New("missing function")
+
 // Receipt represents the result of an applied [w3types.Message].
 type Receipt struct {
 	f w3types.Func // Func of corresponding message
@@ -21,12 +23,14 @@ type Receipt struct {
 	Err error // Revert reason
 }
 
+// DecodeReturns is like [w3types.Func.DecodeReturns], but returns [ErrMissingFunc]
+// if the underlying [w3types.Message.Func] is nil.
 func (r Receipt) DecodeReturns(returns ...any) error {
 	if r.Err != nil {
 		return r.Err
 	}
 	if r.f == nil {
-		return errors.New("no function")
+		return ErrMissingFunc
 	}
 	return r.f.DecodeReturns(r.Output, returns...)
 }

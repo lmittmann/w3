@@ -342,20 +342,23 @@ func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
 // VM Option ///////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// An Option configures a VM.
+// An Option configures a [VM].
 type Option func(*VM)
 
-// WithChainConfig configures the VM's chain config.
+// WithChainConfig sets the chain config for the VM.
 func WithChainConfig(cfg *params.ChainConfig) Option {
 	return func(vm *VM) { vm.opts.chainConfig = cfg }
 }
 
-// WithBlockContext configures the VM's block context.
+// WithBlockContext sets the block context for the VM.
 func WithBlockContext(ctx *vm.BlockContext) Option {
 	return func(vm *VM) { vm.opts.blockCtx = ctx }
 }
 
-// WithState sets the VM's pre state.
+// WithState sets the pre state of the VM.
+//
+// WithState can be used together with [WithFork] to only set the state of some
+// accounts, or partially overwrite the storage of an account.
 func WithState(state w3types.State) Option {
 	return func(vm *VM) { vm.opts.preState = state }
 }
@@ -371,11 +374,12 @@ func WithFork(client *w3.Client, blockNumber *big.Int) Option {
 	}
 }
 
-// WithHeader configures the VM's block context based on the given header.
+// WithHeader sets the block context for the VM based on the given header
 func WithHeader(header *types.Header) Option {
 	return func(vm *VM) { vm.opts.header = header }
 }
 
+// WithFetcher sets the fetcher for the VM.
 func WithFetcher(fetcher Fetcher) Option {
 	return func(vm *VM) { vm.opts.fetcher = fetcher }
 }
