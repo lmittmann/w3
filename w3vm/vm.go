@@ -25,8 +25,8 @@ var (
 	big1               = big.NewInt(1)
 	pendingBlockNumber = big.NewInt(-1)
 
-	ErrFetch  = errors.New("fetch error")
-	ErrRevert = errors.New("revert error")
+	ErrFetch  = errors.New("fetching failed")
+	ErrRevert = errors.New("execution reverted")
 )
 
 type VM struct {
@@ -173,9 +173,9 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 
 	if err := result.Err; err != nil {
 		if reason, unpackErr := abi.UnpackRevert(result.ReturnData); unpackErr != nil {
-			receipt.Err = err
+			receipt.Err = ErrRevert
 		} else {
-			receipt.Err = fmt.Errorf("%w: %s", err, reason)
+			receipt.Err = fmt.Errorf("%w: %s", ErrRevert, reason)
 		}
 	}
 	if msg.To == nil {

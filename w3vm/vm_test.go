@@ -263,25 +263,25 @@ func TestVM_Fetcher(t *testing.T) {
 	}
 
 	_, err = vm.Nonce(addr0)
-	want := "fetch error: failed to fetch nonce of 0x0000000000000000000000000000000000000000"
+	want := "fetching failed: failed to fetch nonce of 0x0000000000000000000000000000000000000000"
 	if !errors.Is(err, w3vm.ErrFetch) || want != err.Error() {
 		t.Errorf("Nonce: want %q, got %q", want, err)
 	}
 
 	_, err = vm.Balance(addr0)
-	want = "fetch error: failed to fetch balance of 0x0000000000000000000000000000000000000000"
+	want = "fetching failed: failed to fetch balance of 0x0000000000000000000000000000000000000000"
 	if !errors.Is(err, w3vm.ErrFetch) || want != err.Error() {
 		t.Errorf("Balance: want %q, got %q", want, err)
 	}
 
 	_, err = vm.Code(addr0)
-	want = "fetch error: failed to fetch code of 0x0000000000000000000000000000000000000000"
+	want = "fetching failed: failed to fetch code of 0x0000000000000000000000000000000000000000"
 	if !errors.Is(err, w3vm.ErrFetch) || want != err.Error() {
 		t.Errorf("Code: want %q, got %q", want, err)
 	}
 
 	_, err = vm.StorageAt(addr0, common.Hash{})
-	want = "fetch error: failed to fetch storage of 0x0000000000000000000000000000000000000000 at 0x0000000000000000000000000000000000000000000000000000000000000000"
+	want = "fetching failed: failed to fetch storage of 0x0000000000000000000000000000000000000000 at 0x0000000000000000000000000000000000000000000000000000000000000000"
 	if !errors.Is(err, w3vm.ErrFetch) || want != err.Error() {
 		t.Errorf("StorageAt: want %q, got %q", want, err)
 	}
