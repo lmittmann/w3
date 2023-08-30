@@ -31,39 +31,31 @@ func RandA() (addr common.Address) {
 }
 
 var (
-	weth9BalancePos   = big.NewInt(3)
-	weth9AllowancePos = big.NewInt(4)
+	weth9BalancePos   = common.BigToHash(big.NewInt(3))
+	weth9AllowancePos = common.BigToHash(big.NewInt(4))
 )
 
 // WETHBalanceSlot returns the storage slot that stores the WETH balance of
 // the given addr.
 func WETHBalanceSlot(addr common.Address) common.Hash {
-	return slot(weth9BalancePos, addr)
+	return Slot(weth9BalancePos, addr.Hash())
 }
 
 // WETHAllowanceSlot returns the storage slot that stores the WETH allowance
 // of the given owner and spender.
 func WETHAllowanceSlot(owner, spender common.Address) common.Hash {
-	return slot2(weth9AllowancePos, owner, spender)
+	return Slot2(weth9AllowancePos, owner.Hash(), spender.Hash())
 }
 
-func slot(pos *big.Int, acc common.Address) common.Hash {
-	data := make([]byte, 64)
-	copy(data[12:32], acc[:])
-	pos.FillBytes(data[32:])
-
-	return crypto.Keccak256Hash(data)
+func Slot(pos, key common.Hash) common.Hash {
+	return crypto.Keccak256Hash(key[:], pos[:])
 }
 
-func slot2(pos *big.Int, acc, acc2 common.Address) common.Hash {
-	data := make([]byte, 64)
-	copy(data[12:32], acc[:])
-	pos.FillBytes(data[32:])
-
-	copy(data[32:], crypto.Keccak256(data))
-	copy(data[12:32], acc2[:])
-
-	return crypto.Keccak256Hash(data)
+func Slot2(pos, key, key2 common.Hash) common.Hash {
+	return crypto.Keccak256Hash(
+		key2[:],
+		crypto.Keccak256(key[:], pos[:]),
+	)
 }
 
 // nilToZero converts sets a pointer to the zero value if it is nil.
