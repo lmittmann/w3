@@ -219,7 +219,7 @@ func (cff *CallFuncFactory) Returns(returns ...any) error {
 	return receipt.DecodeReturns(returns...)
 }
 
-// Nonce returns the nonce of Address addr.
+// Nonce returns the nonce of the given address.
 func (vm *VM) Nonce(addr common.Address) (uint64, error) {
 	nonce := vm.db.GetNonce(addr)
 	if vm.db.Error() != nil {
@@ -228,7 +228,7 @@ func (vm *VM) Nonce(addr common.Address) (uint64, error) {
 	return nonce, nil
 }
 
-// Balance returns the balance of Address addr.
+// Balance returns the balance of the given address.
 func (vm *VM) Balance(addr common.Address) (*big.Int, error) {
 	balance := vm.db.GetBalance(addr)
 	if vm.db.Error() != nil {
@@ -237,7 +237,7 @@ func (vm *VM) Balance(addr common.Address) (*big.Int, error) {
 	return balance, nil
 }
 
-// Code returns the code of Address addr.
+// Code returns the code of the given address.
 func (vm *VM) Code(addr common.Address) ([]byte, error) {
 	code := vm.db.GetCode(addr)
 	if vm.db.Error() != nil {
@@ -246,7 +246,7 @@ func (vm *VM) Code(addr common.Address) ([]byte, error) {
 	return code, nil
 }
 
-// StorageAt returns the state of Address addr at the give storage Hash slot.
+// StorageAt returns the state of the given address at the give storage slot.
 func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
 	val := vm.db.GetState(addr, slot)
 	if vm.db.Error() != nil {
@@ -257,7 +257,7 @@ func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, err
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
-	if nonce == 0 && !skipAccChecks && msg.From != addr0 {
+	if !skipAccChecks && nonce == 0 && msg.From != addr0 {
 		var err error
 		nonce, err = v.Nonce(msg.From)
 		if err != nil {
@@ -363,6 +363,7 @@ func WithState(state w3types.State) Option {
 	return func(vm *VM) { vm.opts.preState = state }
 }
 
+// WithNoBaseFee forces the EIP-1559 base fee to 0 for the VM.
 func WithNoBaseFee() Option {
 	return func(vm *VM) { vm.opts.noBaseFee = true }
 }
@@ -384,6 +385,8 @@ func WithFetcher(fetcher Fetcher) Option {
 	return func(vm *VM) { vm.opts.fetcher = fetcher }
 }
 
+// WithTB enables persistent state caching when used together with [WithFork].
+// State is stored in the testdata directory of the tests package.
 func WithTB(tb testing.TB) Option {
 	return func(vm *VM) { vm.opts.tb = tb }
 }
