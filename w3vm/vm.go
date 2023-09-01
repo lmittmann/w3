@@ -85,8 +85,10 @@ func New(opts ...Option) (*VM, error) {
 			return nil, fmt.Errorf("%w: failed to fetch header: %v", ErrFetch, err)
 		}
 
-		if latest || vm.opts.tb == nil {
+		if latest {
 			vm.fetcher = NewRPCFetcher(vm.opts.forkClient, vm.opts.forkBlockNumber)
+		} else if vm.opts.tb == nil {
+			vm.fetcher = NewRPCFetcher(vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, big1))
 		} else {
 			vm.fetcher = NewTestingRPCFetcher(vm.opts.tb, vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, big1))
 		}
