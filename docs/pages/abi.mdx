@@ -1,5 +1,6 @@
 ---
 title: ABI Bindings
+draft: true
 ---
 
 # ABI
@@ -36,7 +37,7 @@ funcTransfer := w3.MustNewFunc("transfer(address to, uint amount)", "bool succes
 
 #### Tuples
 
-The Uniswap V3 [`IQuoterV2.sol`](https://github.com/Uniswap/v3-periphery/blob/main/contracts/interfaces/IQuoterV2.sol#L27-L53)
+The UniSwap V3 [`IQuoterV2.sol`](https://github.com/Uniswap/v3-periphery/blob/main/contracts/interfaces/IQuoterV2.sol#L27-L53)
 uses a tuple as argument for e.g. `quoteExactInputSingle`, which can be defined as follows:
 
 ```go
