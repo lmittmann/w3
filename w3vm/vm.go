@@ -1,3 +1,6 @@
+/*
+Package w3vm provides a VM for executing EVM messages.
+*/
 package w3vm
 
 import (
@@ -22,7 +25,6 @@ import (
 )
 
 var (
-	big1               = big.NewInt(1)
 	pendingBlockNumber = big.NewInt(-1)
 
 	ErrFetch  = errors.New("fetching failed")
@@ -54,6 +56,7 @@ type vmOptions struct {
 	tb              testing.TB
 }
 
+// New creates a new VM, that is configured with the given options.
 func New(opts ...Option) (*VM, error) {
 	vm := &VM{opts: new(vmOptions)}
 	for _, opt := range opts {
@@ -88,9 +91,9 @@ func New(opts ...Option) (*VM, error) {
 		if latest {
 			vm.fetcher = NewRPCFetcher(vm.opts.forkClient, vm.opts.forkBlockNumber)
 		} else if vm.opts.tb == nil {
-			vm.fetcher = NewRPCFetcher(vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, big1))
+			vm.fetcher = NewRPCFetcher(vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, w3.Big1))
 		} else {
-			vm.fetcher = NewTestingRPCFetcher(vm.opts.tb, vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, big1))
+			vm.fetcher = NewTestingRPCFetcher(vm.opts.tb, vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, w3.Big1))
 		}
 	}
 
@@ -131,6 +134,8 @@ func New(opts ...Option) (*VM, error) {
 	return vm, nil
 }
 
+// Apply applies the given message to the VM and returns a receipt. Multiple
+// tracers can be passed to trace the execution of the message.
 func (vm *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
 	return vm.apply(msg, false, newMultiEVMLogger(tracers))
 }
@@ -193,10 +198,26 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 	return receipt, receipt.Err
 }
 
+// Call calls the given message on the VM and returns a receipt. Any state changes
+// of a call are reverted. Multiple tracers can be passed to trace the execution
+// of the message.
 func (vm *VM) Call(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
 	return vm.apply(msg, true, newMultiEVMLogger(tracers))
 }
 
+// CallFunc is a utility function for [VM.Call] that calls the given function
+// on the given contract address with the given arguments and parses the
+// output into the given returns.
+//
+// Example:
+//
+//	funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
+//
+//	var balance *big.Int
+//	err := vm.CallFunc(contractAddr, funcBalanceOf, addr).Returns(&balance)
+//	if err != nil {
+//		// ...
+//	}
 func (vm *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) *CallFuncFactory {
 	return &CallFuncFactory{
 		vm: vm,
@@ -370,6 +391,12 @@ func WithNoBaseFee() Option {
 	return func(vm *VM) { vm.opts.noBaseFee = true }
 }
 
+// WithFork sets the client and block number to fetch state from and sets the
+// block context for the VM. If the block number is nil, the latest state is
+// fetched and the pending block is used for constructing the block context.
+//
+// If used together with [WithTB], fetched state is stored in the testdata
+// directory of the tests package.
 func WithFork(client *w3.Client, blockNumber *big.Int) Option {
 	return func(vm *VM) {
 		vm.opts.forkClient = client

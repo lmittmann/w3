@@ -47,10 +47,13 @@ func WETHAllowanceSlot(owner, spender common.Address) common.Hash {
 	return Slot2(weth9AllowancePos, owner.Hash(), spender.Hash())
 }
 
+// Slot returns the storage slot of a mapping with the given position and key.
 func Slot(pos, key common.Hash) common.Hash {
 	return crypto.Keccak256Hash(key[:], pos[:])
 }
 
+// Slot2 returns the storage slot of a double mapping with the given position
+// and keys.
 func Slot2(pos, key, key2 common.Hash) common.Hash {
 	return crypto.Keccak256Hash(
 		key2[:],
