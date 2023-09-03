@@ -89,17 +89,19 @@ func msgArgsWrapper(slice []any) ([]any, error) {
 	return slice, nil
 }
 
-// CallFunc requests the returns of Func fn at common.Address contract with the
+// CallFunc requests the returns of Func f at common.Address contract with the
 // given args.
-func CallFunc(fn w3types.Func, contract common.Address, args ...any) *CallFuncFactory {
-	return &CallFuncFactory{fn: fn, contract: contract, args: args}
+func CallFunc(contract common.Address, f w3types.Func, args ...any) *CallFuncFactory {
+	return &CallFuncFactory{msg: &w3types.Message{
+		To:   &contract,
+		Func: f,
+		Args: args,
+	}}
 }
 
 type CallFuncFactory struct {
 	// args
-	fn        w3types.Func
-	contract  common.Address
-	args      []any
+	msg       *w3types.Message
 	atBlock   *big.Int
 	overrides w3types.State
 
@@ -124,16 +126,14 @@ func (f *CallFuncFactory) Overrides(overrides w3types.State) *CallFuncFactory {
 }
 
 func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
-	input, err := f.fn.EncodeArgs(f.args...)
+	input, err := f.msg.Func.EncodeArgs(f.msg.Args...)
 	if err != nil {
 		return rpc.BatchElem{}, err
 	}
+	f.msg.Input = input
 
 	args := []any{
-		&w3types.Message{
-			To:    &f.contract,
-			Input: input,
-		},
+		f.msg,
 		module.BlockNumberArg(f.atBlock),
 	}
 	if len(f.overrides) > 0 {
@@ -152,7 +152,7 @@ func (f *CallFuncFactory) HandleResponse(elem rpc.BatchElem) error {
 		return err
 	}
 
-	if err := f.fn.DecodeReturns(f.result, f.returns...); err != nil {
+	if err := f.msg.Func.DecodeReturns(f.result, f.returns...); err != nil {
 		return err
 	}
 	return nil

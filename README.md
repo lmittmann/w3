@@ -113,8 +113,8 @@ var (
 )
 
 err := client.Call(
-	eth.CallFunc(funcBalanceOf, weth9, addr).Returns(&weth9Balance),
-	eth.CallFunc(funcBalanceOf, dai, addr).Returns(&daiBalance),
+	eth.CallFunc(weth9, funcBalanceOf, addr).Returns(&weth9Balance),
+	eth.CallFunc(dai, funcBalanceOf, addr).Returns(&daiBalance),
 )
 ```
 
@@ -157,7 +157,7 @@ err := client.Call(
 ## Custom RPC Methods
 
 Custom RPC methods can be called with the `w3` client by creating a
-[`core.Caller`](https://pkg.go.dev/github.com/lmittmann/w3/core#Caller)
+[`w3types.Caller`](https://pkg.go.dev/github.com/lmittmann/w3/w3types#Caller)
 implementation.
 The `w3/module/eth` package can be used as implementation reference.
 
@@ -190,7 +190,7 @@ List of supported RPC methods.
 | Method                                    | Go Code
 | :---------------------------------------- | :-------
 | `eth_blockNumber`                         | `eth.BlockNumber().Returns(blockNumber *big.Int)`
-| `eth_call`                                | `eth.Call(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(output *[]byte)`<br>`eth.CallFunc(fn core.Func, contract common.Address, args ...any).Returns(returns ...any)`
+| `eth_call`                                | `eth.Call(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(output *[]byte)`<br>`eth.CallFunc(contract common.Address, f w3types.Func, args ...any).Returns(returns ...any)`
 | `eth_chainId`                             | `eth.ChainID().Returns(chainID *uint64)`
 | `eth_createAccessList`                    | `eth.AccessList(msg *w3types.Message, blockNumber *big.Int).Returns(resp *eth.AccessListResponse)`
 | `eth_estimateGas`                         | `eth.EstimateGas(msg *w3types.Message, blockNumber *big.Int).Returns(gas *uint64)`
