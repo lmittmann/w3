@@ -70,7 +70,7 @@ func ExampleClient_Call() {
 	// HTTP request).
 	if err := client.Call(
 		eth.Balance(addr, nil).Returns(&ethBalance),
-		eth.CallFunc(balanceOf, weth9, addr).Returns(&weth9Balance),
+		eth.CallFunc(weth9, balanceOf, addr).Returns(&weth9Balance),
 	); err != nil {
 		fmt.Printf("Request failed: %v\n", err)
 		return
@@ -307,7 +307,7 @@ func BenchmarkCall_BalanceOf100(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			requests := make([]w3types.Caller, len(addr100))
 			for j := 0; j < len(requests); j++ {
-				requests[j] = eth.CallFunc(funcBalanceOf, addrWeth9, addr100[j]).Returns(&balance)
+				requests[j] = eth.CallFunc(addrWeth9, funcBalanceOf, addr100[j]).Returns(&balance)
 			}
 			w3Client.Call(requests...)
 		}

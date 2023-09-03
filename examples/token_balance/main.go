@@ -59,10 +59,10 @@ func main() {
 		balance      big.Int
 	)
 	if err := client.Call(
-		eth.CallFunc(funcName, addrToken).Returns(&name),
-		eth.CallFunc(funcSymbol, addrToken).Returns(&symbol),
-		eth.CallFunc(funcDecimals, addrToken).Returns(&decimals),
-		eth.CallFunc(funcBalanceOf, addrToken, addrAcc).Returns(&balance),
+		eth.CallFunc(addrToken, funcName).Returns(&name),
+		eth.CallFunc(addrToken, funcSymbol).Returns(&symbol),
+		eth.CallFunc(addrToken, funcDecimals).Returns(&decimals),
+		eth.CallFunc(addrToken, funcBalanceOf, addrAcc).Returns(&balance),
 	); err != nil {
 		fmt.Printf("Call failed: %v\n", err)
 		return

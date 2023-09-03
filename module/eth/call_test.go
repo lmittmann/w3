@@ -61,7 +61,7 @@ func TestCallFunc(t *testing.T) {
 		wantBalance = big.NewInt(0)
 	)
 	if err := client.Call(
-		eth.CallFunc(funcBalanceOf, w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"), w3.A("0x000000000000000000000000000000000000c0Fe")).Returns(balance),
+		eth.CallFunc(w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"), funcBalanceOf, w3.A("0x000000000000000000000000000000000000c0Fe")).Returns(balance),
 	); err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
