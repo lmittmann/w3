@@ -1,7 +1,6 @@
 package w3
 
 import (
-	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -48,12 +47,6 @@ func A(hexAddress string) (addr common.Address) {
 func APtr(hexAddress string) *common.Address {
 	addr := A(hexAddress)
 	return &addr
-}
-
-// RandA returns a random address.
-func RandA() (addr common.Address) {
-	rand.Read(addr[:])
-	return addr
 }
 
 // B returns a byte slice from a hexstring or panics if the hexstring does not

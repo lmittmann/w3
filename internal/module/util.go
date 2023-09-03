@@ -13,5 +13,11 @@ func BlockNumberArg(blockNumber *big.Int) string {
 	if blockNumber == nil {
 		return "latest"
 	}
+
+	switch blockNumber.Int64() {
+	case -1:
+		return "pending"
+	}
+
 	return hexutil.EncodeBig(blockNumber)
 }

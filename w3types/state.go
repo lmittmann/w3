@@ -7,10 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/lmittmann/w3/internal/crypto"
 )
-
-var emptyCodeHash = crypto.Keccak256Hash(nil)
 
 type State map[common.Address]*Account
 
@@ -44,7 +43,7 @@ func (acc *Account) CodeHash() common.Hash {
 		return *acc.codeHash
 	}
 	if len(acc.Code) == 0 {
-		return emptyCodeHash
+		return types.EmptyCodeHash
 	}
 
 	h := crypto.Keccak256Hash(acc.Code)
