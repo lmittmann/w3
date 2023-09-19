@@ -368,11 +368,15 @@ func TestVMApply_Integration(t *testing.T) {
 		t.Run(number.String(), func(t *testing.T) {
 			t.Parallel()
 
-			var block types.Block
+			var (
+				block    types.Block
+				receipts types.Receipts
+			)
 			if err := client.Call(
 				eth.BlockByNumber(number).Returns(&block),
+				eth.BlockReceipts(number).Returns(&receipts),
 			); err != nil {
-				t.Fatalf("Failed to fetch block: %v", err)
+				t.Fatalf("Failed to fetch block and receipts: %v", err)
 			}
 
 			f := w3vm.NewTestingRPCFetcher(t, client, new(big.Int).Sub(number, w3.Big1))
@@ -381,10 +385,6 @@ func TestVMApply_Integration(t *testing.T) {
 				w3vm.WithHeader(block.Header()),
 			)
 			signer := types.MakeSigner(params.MainnetChainConfig, number, block.Time())
-			receipts, err := fetchReceipts(block.Transactions())
-			if err != nil {
-				t.Fatalf("Failed to fetch receipts: %v", err)
-			}
 
 			for i, tx := range block.Transactions() {
 				t.Run(fmt.Sprintf("%d_%s", i, tx.Hash()), func(t *testing.T) {
@@ -416,24 +416,6 @@ func TestVMApply_Integration(t *testing.T) {
 			}
 		})
 	}
-}
-
-func fetchReceipts(txs []*types.Transaction) ([]*types.Receipt, error) {
-	const batchSize = 100
-
-	receipts := make([]*types.Receipt, len(txs))
-	caller := make([]w3types.Caller, len(txs))
-	for i, tx := range txs {
-		receipts[i] = new(types.Receipt)
-		caller[i] = eth.TxReceipt(tx.Hash()).Returns(receipts[i])
-	}
-
-	for i := 0; i < len(txs); i += batchSize {
-		if err := client.Call(caller[i:min(i+batchSize, len(txs))]...); err != nil {
-			return nil, err
-		}
-	}
-	return receipts, nil
 }
 
 func must[T any](t T, err error) T {
