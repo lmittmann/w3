@@ -198,6 +198,7 @@ List of supported RPC methods.
 | `eth_getBalance`                          | `eth.Balance(addr common.Address, blockNumber *big.Int).Returns(balance *big.Int)`
 | `eth_getBlockByHash`                      | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`
 | `eth_getBlockByNumber`                    | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`
+| `eth_getBlockReceipts`                    | `eth.BlockReceipts(blockNumber *big.Int).Returns(receipts *types.Receipts)`
 | `eth_getBlockTransactionCountByHash`      | `eth.BlockTxCountByHash(hash common.Hash).Returns(count *uint)`
 | `eth_getBlockTransactionCountByNumber`    | `eth.BlockTxCountByNumber(number *big.Int).Returns(count *uint)`
 | `eth_getCode`                             | `eth.Code(addr common.Address, blockNumber *big.Int).Returns(code *[]byte)`
