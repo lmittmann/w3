@@ -1,11 +1,11 @@
-# w3
+# `w3`: Enhanced Ethereum Integration for Go
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/lmittmann/w3.svg)](https://pkg.go.dev/github.com/lmittmann/w3)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lmittmann/w3)](https://goreportcard.com/report/github.com/lmittmann/w3)
 [![Coverage Status](https://coveralls.io/repos/github/lmittmann/w3/badge.svg?branch=main)](https://coveralls.io/github/lmittmann/w3?branch=main)
 [![Latest Release](https://img.shields.io/github/v/release/lmittmann/w3)](https://github.com/lmittmann/w3/releases)
 
-<img src="https://user-images.githubusercontent.com/3458786/153202258-24bf253e-5ab0-4efd-a0ed-43dc1bf093c9.png" align="right" alt="W3 Gopher" width="158" height="224">
+<img src="https://w3.cool/gopher.png" align="right" alt="W3 Gopher" width="158" height="224">
 
 Package `w3` implements a blazing fast and modular Ethereum JSON RPC client with
 first-class ABI support.
