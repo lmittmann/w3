@@ -3,7 +3,7 @@ module github.com/lmittmann/w3
 go 1.21
 
 require (
-	github.com/ethereum/go-ethereum v1.13.1
+	github.com/ethereum/go-ethereum v1.13.2
 	github.com/google/go-cmp v0.5.9
 	github.com/holiman/uint256 v1.2.3
 	golang.org/x/sync v0.3.0
