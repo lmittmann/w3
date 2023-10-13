@@ -38,13 +38,13 @@ var (
 // WETHBalanceSlot returns the storage slot that stores the WETH balance of
 // the given addr.
 func WETHBalanceSlot(addr common.Address) common.Hash {
-	return Slot(weth9BalancePos, addr.Hash())
+	return Slot(weth9BalancePos, common.BytesToHash(addr[:]))
 }
 
 // WETHAllowanceSlot returns the storage slot that stores the WETH allowance
 // of the given owner and spender.
 func WETHAllowanceSlot(owner, spender common.Address) common.Hash {
-	return Slot2(weth9AllowancePos, owner.Hash(), spender.Hash())
+	return Slot2(weth9AllowancePos, common.BytesToHash(owner[:]), common.BytesToHash(spender[:]))
 }
 
 // Slot returns the storage slot of a mapping with the given position and key.
@@ -121,7 +121,7 @@ func (i uint256OrHash) MarshalText() ([]byte, error) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Testing  ////////////////////////////////////////////////////////////////////////////////////////
+// Testing /////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func getTbFilepath(tb testing.TB) string {
