@@ -17,11 +17,10 @@ go get github.com/lmittmann/w3
 
 ## At a Glance
 
-* use [`w3.Client`](https://pkg.go.dev/github.com/lmittmann/w3#Client) to
-  connect to an RPC endpoint via HTTP, WebSocket, or IPC. It is designed for batch requests and extendibility.
-* use [`w3vm.VM`](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#VM) to simulate EVM execution with optional Mainnet state forking.
-* use [`w3.Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) and [`w3.Event`](https://pkg.go.dev/github.com/lmittmann/w3#Event) for creating ABI bindings from Solidity function and event signatures.
-* use [`w3.A`](https://pkg.go.dev/github.com/lmittmann/w3#A), [`w3.H`](https://pkg.go.dev/github.com/lmittmann/w3#H), and many other utility functions to parse addresses, hashes, and other common types from strings.
+* Use [`w3.Client`](https://pkg.go.dev/github.com/lmittmann/w3#Client) to connect to an RPC endpoint. The client features batch request support for up to **80x faster requests** and easy extendibility.
+* Use [`w3vm.VM`](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#VM) to simulate EVM execution with optional tracing and Mainnet state forking, or test Smart Contracts.
+* Use [`w3.Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) and [`w3.Event`](https://pkg.go.dev/github.com/lmittmann/w3#Event) to create ABI bindings from Solidity function and event signatures.
+* Use [`w3.A`](https://pkg.go.dev/github.com/lmittmann/w3#A), [`w3.H`](https://pkg.go.dev/github.com/lmittmann/w3#H), and many other utility functions to parse addresses, hashes, and other common types from strings.
 
 
 ## Getting Started
