@@ -193,7 +193,7 @@ func (p *parser) parseType() (*abi.Type, error) {
 	return typ, nil
 }
 
-func (p *parser) parseTupleType() (*abi.Type, string, error) {
+func (p *parser) parseTupleType(i int) (*abi.Type, string, error) {
 	typ, err := p.parseType()
 	if err != nil {
 		return nil, "", err
@@ -202,7 +202,9 @@ func (p *parser) parseTupleType() (*abi.Type, string, error) {
 	// parse name
 	next := p.next()
 	if next.Typ != itemTypeID {
-		return nil, "", fmt.Errorf(`unexpected %s, want name`, next)
+		// no name given; put the token back and make up a fake name
+		p.backup()
+		return typ, fmt.Sprintf("arg%d", i), nil
 	}
 
 	return typ, next.Val, nil
@@ -215,9 +217,9 @@ func (p *parser) parseTupleTypes() (*abi.Type, error) {
 
 	typ := &abi.Type{T: abi.TupleTy}
 	fields := make([]reflect.StructField, 0)
-	for {
+	for i := 0; ; i++ {
 		// parse type
-		elemTyp, name, err := p.parseTupleType()
+		elemTyp, name, err := p.parseTupleType(i)
 		if err != nil {
 			return nil, err
 		}
