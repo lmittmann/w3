@@ -42,10 +42,12 @@ func TestA(t *testing.T) {
 			HexAddress:  "0x000000000000000000000000000000000000c0Fe",
 			WantAddress: common.HexToAddress("0x000000000000000000000000000000000000c0Fe"),
 		},
-		{HexAddress: "000000000000000000000000000000000000c0Fe", WantPanic: `hex address "000000000000000000000000000000000000c0Fe" must have 0x prefix`},
-		{HexAddress: "0xcofe", WantPanic: `hex address "0xcofe" must be hex`},
-		{HexAddress: "0xc0Fe", WantPanic: `hex address "0xc0Fe" must have 20 bytes`},
-		{HexAddress: "0x000000000000000000000000000000000000c0fe", WantPanic: `hex address "0x000000000000000000000000000000000000c0fe" must be checksum encoded`},
+		{
+			HexAddress:  "000000000000000000000000000000000000c0Fe",
+			WantAddress: common.HexToAddress("0x000000000000000000000000000000000000c0Fe"),
+		},
+		{HexAddress: "0xcofe", WantPanic: `invalid address "cofe": encoding/hex: invalid byte: U+006F 'o'`},
+		{HexAddress: "0xc0Fe", WantPanic: `invalid address "c0Fe": must have 20 bytes`},
 	}
 
 	for i, test := range tests {
@@ -76,13 +78,10 @@ func TestB(t *testing.T) {
 		WantPanic string
 		WantBytes []byte
 	}{
-		{
-			HexBytes:  "0xc0fe",
-			WantBytes: []byte{0xc0, 0xfe},
-		},
-		{HexBytes: "c0fe", WantPanic: `hex bytes "c0fe" must have 0x prefix`},
-		{HexBytes: "0xcofe", WantPanic: `hex bytes "0xcofe" must be hex`},
-		{HexBytes: "0xc0f", WantPanic: `hex bytes "0xc0f" must have even number of hex chars`},
+		{HexBytes: "0xc0fe", WantBytes: []byte{0xc0, 0xfe}},
+		{HexBytes: "c0fe", WantBytes: []byte{0xc0, 0xfe}},
+		{HexBytes: "0xcofe", WantPanic: `invalid bytes "cofe": encoding/hex: invalid byte: U+006F 'o'`},
+		{HexBytes: "0xc0f", WantPanic: `invalid bytes "c0f": encoding/hex: odd length hex string`},
 	}
 
 	for i, test := range tests {
@@ -117,9 +116,12 @@ func TestH(t *testing.T) {
 			HexHash:  "0x000000000000000000000000000000000000000000000000000000000000c0fe",
 			WantHash: common.HexToHash("0x000000000000000000000000000000000000000000000000000000000000c0fe"),
 		},
-		{HexHash: "000000000000000000000000000000000000000000000000000000000000c0fe", WantPanic: `hex hash "000000000000000000000000000000000000000000000000000000000000c0fe" must have 0x prefix`},
-		{HexHash: "0xcofe", WantPanic: `hex hash "0xcofe" must be hex`},
-		{HexHash: "0xc0fe", WantPanic: `hex hash "0xc0fe" must have 32 bytes`},
+		{
+			HexHash:  "000000000000000000000000000000000000000000000000000000000000c0fe",
+			WantHash: common.HexToHash("0x000000000000000000000000000000000000000000000000000000000000c0fe"),
+		},
+		{HexHash: "0xcofe", WantPanic: `invalid hash "cofe": encoding/hex: invalid byte: U+006F 'o'`},
+		{HexHash: "0xc0fe", WantPanic: `invalid hash "c0fe": must have 32 bytes`},
 	}
 
 	for i, test := range tests {
@@ -154,7 +156,7 @@ func TestI(t *testing.T) {
 		{StrInt: "0x0", WantBig: big.NewInt(0)},
 		{StrInt: "0x1", WantBig: big.NewInt(1)},
 		{StrInt: "0xff", WantBig: big.NewInt(255)},
-		{StrInt: "0xO", WantPanic: `hex big "0xO" must be hex`},
+		{StrInt: "0xO", WantPanic: `invalid hex big "0xO"`},
 
 		// int big's
 		{StrInt: "0", WantBig: big.NewInt(0)},
