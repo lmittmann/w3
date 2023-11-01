@@ -2,7 +2,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build && next export"
+		"build": "next build"
 	},
 	"dependencies": {
 		"next": "^14.0.1",
