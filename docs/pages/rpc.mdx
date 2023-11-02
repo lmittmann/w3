@@ -1,3 +1,40 @@
-# RPC
+import { Steps } from 'nextra/components'
+import { RefLink } from '@components/RefLink'
 
-Coming soon...
+
+# RPC Client
+
+<RefLink title="w3.Client" /> is a blazing fast RPC client build on top of `go-ethereum/rpc.Client`. It is designed for batch requests and easy extendibility.
+
+## Get Started
+
+<Steps>
+
+### Connect to an RPC Endpoint
+
+Connect to an RPC endpoint via HTTP, WebSocket, or IPC using <RefLink title="w3.Dial" /> or <RefLink title="w3.MustDial" />.
+
+```go
+// Connect (or panic on error)
+client := w3.MustDial("https://rpc.ankr.com/eth")
+defer client.Close()
+```
+
+### Make a Request
+
+Make a single HTTP request that calls two RPC methods.
+
+```go
+var (
+    balance big.Int
+    nonce   uint64
+)
+if err := client.Call(
+    eth.Balance(addr, nil).To(&balance),
+    eth.Nonce(addr, nil).To(&nonce),
+); err != nil {
+    // ...
+}
+```
+
+</Steps>
