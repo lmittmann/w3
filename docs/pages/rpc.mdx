@@ -30,8 +30,8 @@ var (
     nonce   uint64
 )
 if err := client.Call(
-    eth.Balance(addr, nil).To(&balance),
-    eth.Nonce(addr, nil).To(&nonce),
+    eth.Balance(addr, nil).Returns(&balance),
+    eth.Nonce(addr, nil).Returns(&nonce),
 ); err != nil {
     // ...
 }
