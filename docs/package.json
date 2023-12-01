@@ -5,7 +5,7 @@
 		"build": "next build && next export"
 	},
 	"dependencies": {
-		"next": "^13.4.19",
+		"next": "^14.0.3",
 		"nextra": "^2.12.3",
 		"nextra-theme-docs": "^2.12.3",
 		"react": "^18.2.0",
