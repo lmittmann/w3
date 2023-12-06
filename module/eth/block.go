@@ -71,21 +71,22 @@ var blockRetWrapper = func(ret *types.Block) any { return (*rpcBlock)(ret) }
 type rpcBlock types.Block
 
 func (b *rpcBlock) UnmarshalJSON(data []byte) error {
-	type rpcBlockTxs struct {
-		Transactions []*types.Transaction `json:"transactions"`
-	}
-
 	var header types.Header
 	if err := json.Unmarshal(data, &header); err != nil {
 		return err
 	}
 
-	var blockTxs rpcBlockTxs
-	if err := json.Unmarshal(data, &blockTxs); err != nil {
+	var blockExtraData struct {
+		Transactions []*types.Transaction `json:"transactions"`
+		Withdrawals  []*types.Withdrawal  `json:"withdrawals"`
+	}
+	if err := json.Unmarshal(data, &blockExtraData); err != nil {
 		return err
 	}
 
-	block := types.NewBlockWithHeader(&header).WithBody(blockTxs.Transactions, nil)
+	block := types.NewBlockWithHeader(&header).
+		WithBody(blockExtraData.Transactions, nil).
+		WithWithdrawals(blockExtraData.Withdrawals)
 	*b = (rpcBlock)(*block)
 	return nil
 }
