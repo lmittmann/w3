@@ -75,6 +75,10 @@ func (b *rpcBlock) UnmarshalJSON(data []byte) error {
 		Transactions []*types.Transaction `json:"transactions"`
 	}
 
+	type rpcBlockWithrawals struct {
+		Withdrawals []*types.Withdrawal `json:"withdrawals"`
+	}
+
 	var header types.Header
 	if err := json.Unmarshal(data, &header); err != nil {
 		return err
@@ -85,7 +89,14 @@ func (b *rpcBlock) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	block := types.NewBlockWithHeader(&header).WithBody(blockTxs.Transactions, nil)
+	var blockWithdrawals rpcBlockWithrawals
+	if err := json.Unmarshal(data, &blockWithdrawals); err != nil {
+		return err
+	}
+
+	block := types.NewBlockWithHeader(&header).
+		WithBody(blockTxs.Transactions, nil).
+		WithWithdrawals(blockWithdrawals.Withdrawals)
 	*b = (rpcBlock)(*block)
 	return nil
 }
