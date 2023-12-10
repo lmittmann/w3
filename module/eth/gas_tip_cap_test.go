@@ -9,10 +9,10 @@ import (
 	"github.com/lmittmann/w3/rpctest"
 )
 
-func TesGasTipCap(t *testing.T) {
+func TestGasTipCap(t *testing.T) {
 	tests := []rpctest.TestCase[big.Int]{
 		{
-			Golden:  "eth_maxPriorityFeePerGas",
+			Golden:  "gas_tip_cap",
 			Call:    eth.GasTipCap(),
 			WantRet: *w3.I("0xc0fe"),
 		},
