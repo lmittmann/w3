@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3"
+	w3hexutil "github.com/lmittmann/w3/internal/hexutil"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 	"golang.org/x/sync/singleflight"
@@ -311,20 +312,20 @@ type account struct {
 }
 
 type accountMarshaling struct {
-	Nonce   hexutil.Uint64                  `json:"nonce"`
-	Balance uint256OrHash                   `json:"balance"`
-	Code    hexutil.Bytes                   `json:"code"`
-	Storage map[uint256OrHash]uint256OrHash `json:"storage,omitempty"`
+	Nonce   hexutil.Uint64                    `json:"nonce"`
+	Balance w3hexutil.U256                    `json:"balance"`
+	Code    hexutil.Bytes                     `json:"code"`
+	Storage map[w3hexutil.U256]w3hexutil.U256 `json:"storage,omitempty"`
 }
 
 func (acc account) MarshalJSON() ([]byte, error) {
-	storage := make(map[uint256OrHash]uint256OrHash, len(acc.Storage))
+	storage := make(map[w3hexutil.U256]w3hexutil.U256, len(acc.Storage))
 	for slot, val := range acc.Storage {
-		storage[uint256OrHash(slot)] = uint256OrHash(val)
+		storage[w3hexutil.U256(slot)] = w3hexutil.U256(val)
 	}
 	return json.Marshal(accountMarshaling{
 		Nonce:   hexutil.Uint64(acc.Nonce),
-		Balance: uint256OrHash(acc.Balance),
+		Balance: w3hexutil.U256(acc.Balance),
 		Code:    acc.Code,
 		Storage: storage,
 	})

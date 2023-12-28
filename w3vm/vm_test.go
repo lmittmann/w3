@@ -38,7 +38,7 @@ var (
 	funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 	funcTransfer  = w3.MustNewFunc("transfer(address,uint256)", "bool")
 
-	client = w3.MustDial("https://eth.llamarpc.com")
+	client = w3.MustDial("https://rpc.ankr.com/eth")
 )
 
 func TestVMApply(t *testing.T) {
@@ -311,6 +311,10 @@ func (f *testFetcher) HeaderHash(blockNumber *big.Int) (common.Hash, error) {
 }
 
 func TestVMApply_Integration(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
+
 	blocks := []*big.Int{
 		big.NewInt(4_369_998),
 		big.NewInt(4_369_999),

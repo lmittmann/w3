@@ -2,7 +2,6 @@ package w3vm
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"math/big"
 	"path/filepath"
 	"runtime"
@@ -12,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3/internal/crypto"
+	"github.com/lmittmann/w3/internal/hexutil"
 	"github.com/lmittmann/w3/internal/mod"
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
@@ -83,6 +83,7 @@ func ethBalance(addr common.Address, blockNumber *big.Int) w3types.CallerFactory
 	return module.NewFactory[uint256.Int](
 		"eth_getBalance",
 		[]any{addr, module.BlockNumberArg(blockNumber)},
+		module.WithRetWrapper(func(ret *uint256.Int) any { return (*hexutil.U256)(ret) }),
 	)
 }
 
@@ -91,33 +92,8 @@ func ethStorageAt(addr common.Address, slot uint256.Int, blockNumber *big.Int) w
 	return module.NewFactory[uint256.Int](
 		"eth_getStorageAt",
 		[]any{addr, &slot, module.BlockNumberArg(blockNumber)},
-		module.WithRetWrapper(func(ret *uint256.Int) any { return (*uint256OrHash)(ret) }),
+		module.WithRetWrapper(func(ret *uint256.Int) any { return (*hexutil.U256)(ret) }),
 	)
-}
-
-// uint256OrHash is like [uint256.Int], but can be unmarshaled from a hex number
-// with leading zeros.
-type uint256OrHash uint256.Int
-
-func (i *uint256OrHash) UnmarshalText(text []byte) error {
-	if len(text) >= 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X') {
-		text = text[2:]
-	}
-
-	if len(text)%2 != 0 {
-		text = append([]byte{'0'}, text...)
-	}
-	buf := make([]byte, hex.DecodedLen(len(text)))
-	if _, err := hex.Decode(buf, text); err != nil {
-		return err
-	}
-
-	(*uint256.Int)(i).SetBytes(buf)
-	return nil
-}
-
-func (i uint256OrHash) MarshalText() ([]byte, error) {
-	return (*uint256.Int)(&i).MarshalText()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
