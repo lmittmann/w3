@@ -32,7 +32,7 @@ func newDB(fetcher Fetcher) *db {
 
 func (db *db) OpenTrie(root common.Hash) (gethState.Trie, error) { return db, nil }
 
-func (db *db) OpenStorageTrie(stateRoot common.Hash, addr common.Address, root common.Hash) (gethState.Trie, error) {
+func (db *db) OpenStorageTrie(stateRoot common.Hash, addr common.Address, root common.Hash, trie gethState.Trie) (gethState.Trie, error) {
 	return db, nil
 }
 
