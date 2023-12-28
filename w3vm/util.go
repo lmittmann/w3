@@ -91,7 +91,7 @@ func ethBalance(addr common.Address, blockNumber *big.Int) w3types.CallerFactory
 func ethStorageAt(addr common.Address, slot uint256.Int, blockNumber *big.Int) w3types.CallerFactory[uint256.Int] {
 	return module.NewFactory[uint256.Int](
 		"eth_getStorageAt",
-		[]any{addr, &slot, module.BlockNumberArg(blockNumber)},
+		[]any{addr, hexutil.U256(slot), module.BlockNumberArg(blockNumber)},
 		module.WithRetWrapper(func(ret *uint256.Int) any { return (*hexutil.U256)(ret) }),
 	)
 }
