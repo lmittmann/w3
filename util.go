@@ -19,31 +19,26 @@ var (
 )
 
 // A returns an address from a hexstring or panics if the hexstring does not
-// represent a valid checksum encoded address.
+// represent a valid address.
 //
 // Use [common.HexToAddress] to get the address from a hexstring without
 // panicking.
 func A(hexAddress string) (addr common.Address) {
-	if !has0xPrefix(hexAddress) {
-		panic(fmt.Sprintf("hex address %q must have 0x prefix", hexAddress))
-	}
-	if !isHex(hexAddress[2:]) {
-		panic(fmt.Sprintf("hex address %q must be hex", hexAddress))
-	}
-	if len(hexAddress) != 42 {
-		panic(fmt.Sprintf("hex address %q must have 20 bytes", hexAddress))
+	if has0xPrefix(hexAddress) {
+		hexAddress = hexAddress[2:]
 	}
 
-	hex.Decode(addr[:], []byte(hexAddress[2:]))
-
-	if hexAddress != addr.Hex() {
-		panic(fmt.Sprintf("hex address %q must be checksum encoded", hexAddress))
+	n, err := hex.Decode(addr[:], []byte(hexAddress))
+	if err != nil {
+		panic(fmt.Sprintf("invalid address %q: %v", hexAddress, err))
+	} else if n != 20 {
+		panic(fmt.Sprintf("invalid address %q: must have 20 bytes", hexAddress))
 	}
 	return addr
 }
 
 // APtr returns an address pointer from a hexstring or panics if the hexstring
-// does not represent a valid checksum encoded address.
+// does not represent a valid address.
 func APtr(hexAddress string) *common.Address {
 	addr := A(hexAddress)
 	return &addr
@@ -54,18 +49,18 @@ func APtr(hexAddress string) *common.Address {
 //
 // Use [common.FromHex] to get the byte slice from a hexstring without
 // panicking.
-func B(hexBytes string) (bytes []byte) {
-	if !has0xPrefix(hexBytes) {
-		panic(fmt.Sprintf("hex bytes %q must have 0x prefix", hexBytes))
-	}
-	if !isHex(hexBytes[2:]) {
-		panic(fmt.Sprintf("hex bytes %q must be hex", hexBytes))
-	}
-	if len(hexBytes)%2 != 0 {
-		panic(fmt.Sprintf("hex bytes %q must have even number of hex chars", hexBytes))
-	}
+func B(hexBytes ...string) (bytes []byte) {
+	for _, s := range hexBytes {
+		if has0xPrefix(s) {
+			s = s[2:]
+		}
 
-	bytes, _ = hex.DecodeString(hexBytes[2:])
+		b, err := hex.DecodeString(s)
+		if err != nil {
+			panic(fmt.Sprintf("invalid bytes %q: %v", s, err))
+		}
+		bytes = append(bytes, b...)
+	}
 	return bytes
 }
 
@@ -74,17 +69,16 @@ func B(hexBytes string) (bytes []byte) {
 //
 // Use [common.HexToHash] to get the hash from a hexstring without panicking.
 func H(hexHash string) (hash common.Hash) {
-	if !has0xPrefix(hexHash) {
-		panic(fmt.Sprintf("hex hash %q must have 0x prefix", hexHash))
-	}
-	if !isHex(hexHash[2:]) {
-		panic(fmt.Sprintf("hex hash %q must be hex", hexHash))
-	}
-	if len(hexHash) != 66 {
-		panic(fmt.Sprintf("hex hash %q must have 32 bytes", hexHash))
+	if has0xPrefix(hexHash) {
+		hexHash = hexHash[2:]
 	}
 
-	hex.Decode(hash[:], []byte(hexHash[2:]))
+	n, err := hex.Decode(hash[:], []byte(hexHash))
+	if err != nil {
+		panic(fmt.Sprintf("invalid hash %q: %v", hexHash, err))
+	} else if n != 32 {
+		panic(fmt.Sprintf("invalid hash %q: must have 32 bytes", hexHash))
+	}
 	return hash
 }
 
@@ -95,7 +89,7 @@ func H(hexHash string) (hash common.Hash) {
 // E.g.:
 //
 //	w3.I("1 ether")   -> 1000000000000000000
-//	w3.I("1.2 ether") -> 1200000000000000000
+//	w3.I("10 gwei")   -> 10000000000
 //
 // Fractional digits that exceed the units maximum number of fractional digits
 // are ignored. E.g.:
@@ -103,16 +97,16 @@ func H(hexHash string) (hash common.Hash) {
 //	w3.I("0.000000123456 gwei") -> 123
 func I(strInt string) *big.Int {
 	if has0xPrefix(strInt) {
-		return parseHexBig(strInt)
+		return parseHexBig(strInt[2:])
 	}
 	return parseDecimal(strInt)
 }
 
 func parseHexBig(hexBig string) *big.Int {
-	if !isHex(hexBig[2:]) {
-		panic(fmt.Sprintf("hex big %q must be hex", hexBig))
+	bigInt, ok := new(big.Int).SetString(hexBig, 16)
+	if !ok {
+		panic(fmt.Sprintf("invalid hex big %q", "0x"+hexBig))
 	}
-	bigInt, _ := new(big.Int).SetString(hexBig[2:], 16)
 	return bigInt
 }
 
@@ -195,20 +189,5 @@ func FromWei(wei *big.Int, decimals uint8) string {
 
 // has0xPrefix validates hexStr begins with '0x' or '0X'.
 func has0xPrefix(hexStr string) bool {
-	return len(hexStr) >= 2 && hexStr[0] == '0' && hexStr[1] == 'x'
-}
-
-// isHexCharacter returns bool of c being a valid hexadecimal.
-func isHexCharacter(c rune) bool {
-	return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')
-}
-
-// isHex validates whether each byte is valid hexadecimal string.
-func isHex(str string) bool {
-	for _, c := range str {
-		if !isHexCharacter(c) {
-			return false
-		}
-	}
-	return true
+	return len(hexStr) >= 2 && hexStr[0] == '0' && (hexStr[1] == 'x' || hexStr[1] == 'X')
 }

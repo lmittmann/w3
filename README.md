@@ -175,6 +175,7 @@ List of supported RPC methods.
 | `eth_createAccessList`                    | `eth.AccessList(msg *w3types.Message, blockNumber *big.Int).Returns(resp *eth.AccessListResponse)`
 | `eth_estimateGas`                         | `eth.EstimateGas(msg *w3types.Message, blockNumber *big.Int).Returns(gas *uint64)`
 | `eth_gasPrice`                            | `eth.GasPrice().Returns(gasPrice *big.Int)`
+| `eth_maxPriorityFeePerGas`                | `eth.GasTipCap().Returns(gasTipCap *big.Int)`
 | `eth_getBalance`                          | `eth.Balance(addr common.Address, blockNumber *big.Int).Returns(balance *big.Int)`
 | `eth_getBlockByHash`                      | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`
 | `eth_getBlockByNumber`                    | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`

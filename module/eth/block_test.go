@@ -77,6 +77,31 @@ func TestBlockByHash(t *testing.T) {
 			Call:    eth.BlockByHash(common.Hash{}),
 			WantErr: errors.New("w3: call failed: not found"),
 		},
+		{
+			Golden: "get_block_by_hash__18000000",
+			Call:   eth.BlockByHash(w3.H("0x95b198e154acbfc64109dfd22d8224fe927fd8dfdedfae01587674482ba4baf3")),
+			WantRet: *types.NewBlockWithHeader(&types.Header{
+				BaseFee:         w3.I("0x50ead8e39"),
+				Difficulty:      w3.I("0x0"),
+				Extra:           w3.B("0x496c6c756d696e61746520446d6f63726174697a6520447374726962757465"),
+				GasLimit:        0x1c9c380,
+				GasUsed:         0xf7e9ab,
+				Bloom:           types.BytesToBloom(w3.B("0x53f146f2484e1cb4b24d5a028329290bd702c80fe8465d9e55e900682e28809f405df83fd48d530900908f3c62de69000a530db688092c03d9406056852a0152220084ec4f8daa3c2c226e9878b08578163190e80b482ad30604c3649c25002037100c2086aaa3291c0407418431ebaa851804a6212996a206840875360bd84d2123065273780b9d04e4950c029a40d3e062b2697b048e4f3629824234ba00318a680d70eab6a9d740e38de89394d492c4c2ad6424bac19d4bcf08ca4044435aca49069e6907893082841ca20446b2220f4053121e7cc4b8cb84095f1a32320e105a20c821f675418c0d13308a896040d67550322ac88444e20080b364670401")),
+				Coinbase:        w3.A("0xdafea492d9c6733ae3d56b7ed1adb60692c98bc5"),
+				MixDigest:       w3.H("0x8b14d8532c673877dcc735caf93392bd05603456b7745fc3f012a3e3b156acfa"),
+				Nonce:           types.EncodeNonce(0x0000000000000000),
+				Number:          w3.I("0x112a880"),
+				ParentHash:      w3.H("0x198723e0ddf20153951c6304093cbd97fd306c5db03287c5586c0430a986080d"),
+				ReceiptHash:     w3.H("0xd925652022fa6da2ca5b9781ab2fd50cb05d3b4741a327f52322e2b7917d3a2f"),
+				UncleHash:       w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
+				Root:            w3.H("0x08b7443c83a93d4711f5c63e738c27c54a932522405b37b4ca7868a944105deb"),
+				Time:            0x64ea268f,
+				TxHash:          w3.H("0x97dd0200249a35da2c73b366612c2d9c3d112e83ef5e0277cded1352c66628ba"),
+				WithdrawalsHash: ptr(w3.H("0x5362ee94b61e8cef92bf61353e62744b4fe6d1f2482aade614054527e6d5de7d")),
+			}).WithWithdrawals([]*types.Withdrawal{
+				{Index: 0xeb9b8c, Validator: 0xa474b, Address: w3.A("0xd7a0b38496064412a8d6b1f77bc30ada93e7b7a5"), Amount: 0xeb0d50},
+			}),
+		},
 	}
 
 	rpctest.RunTestCases(t, tests,
@@ -241,3 +266,5 @@ func TestHeaderByNumber(t *testing.T) {
 
 	rpctest.RunTestCases(t, tests)
 }
+
+func ptr[T any](v T) *T { return &v }
