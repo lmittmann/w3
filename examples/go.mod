@@ -3,7 +3,7 @@ module examples
 go 1.21
 
 require (
-	github.com/ethereum/go-ethereum v1.13.8
+	github.com/ethereum/go-ethereum v1.13.9
 	github.com/lmittmann/w3 v0.0.0
 )
 
