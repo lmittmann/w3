@@ -2,7 +2,6 @@ package w3vm
 
 import (
 	"errors"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethState "github.com/ethereum/go-ethereum/core/state"
@@ -10,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/trie"
 	"github.com/ethereum/go-ethereum/trie/trienode"
+	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3/internal/crypto"
 )
 
@@ -84,7 +84,7 @@ func (db *db) GetStorage(addr common.Address, key []byte) ([]byte, error) {
 func (db *db) GetAccount(addr common.Address) (*types.StateAccount, error) {
 	if db.fetcher == nil {
 		return &types.StateAccount{
-			Balance:  new(big.Int),
+			Balance:  new(uint256.Int),
 			CodeHash: types.EmptyCodeHash[:],
 		}, nil
 	}
@@ -111,7 +111,7 @@ func (db *db) GetAccount(addr common.Address) (*types.StateAccount, error) {
 
 	return &types.StateAccount{
 		Nonce:    nonce,
-		Balance:  balance,
+		Balance:  uint256.MustFromBig(balance),
 		CodeHash: codeHash,
 	}, nil
 }
