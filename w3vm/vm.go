@@ -19,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
@@ -122,7 +123,7 @@ func New(opts ...Option) (*VM, error) {
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
 		if acc.Balance != nil {
-			vm.db.SetBalance(addr, acc.Balance)
+			vm.db.SetBalance(addr, uint256.MustFromBig(acc.Balance))
 		}
 		if acc.Code != nil {
 			vm.db.SetCode(addr, acc.Code)
@@ -257,7 +258,7 @@ func (vm *VM) Balance(addr common.Address) (*big.Int, error) {
 	if vm.db.Error() != nil {
 		return nil, fmt.Errorf("%w: failed to fetch balance of %s", ErrFetch, addr)
 	}
-	return balance, nil
+	return balance.ToBig(), nil
 }
 
 // Code returns the code of the given address.
