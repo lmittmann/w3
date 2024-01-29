@@ -388,7 +388,6 @@ func TestVMApply_Integration(t *testing.T) {
 				w3vm.WithFetcher(f),
 				w3vm.WithHeader(block.Header()),
 			)
-			signer := types.MakeSigner(params.MainnetChainConfig, number, block.Time())
 
 			for i, tx := range block.Transactions() {
 				t.Run(fmt.Sprintf("%d_%s", i, tx.Hash()), func(t *testing.T) {
@@ -403,7 +402,7 @@ func TestVMApply_Integration(t *testing.T) {
 						wantReceipt.Err = cmpopts.AnyError
 					}
 
-					gotReceipt, err := vm.Apply(new(w3types.Message).MustSetTx(tx, signer))
+					gotReceipt, err := vm.ApplyTx(tx)
 					if err != nil && gotReceipt == nil {
 						t.Fatalf("Failed to apply tx: %v", err)
 					}
