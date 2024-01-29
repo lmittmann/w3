@@ -101,8 +101,9 @@ func TestVMApply(t *testing.T) {
 				Gas:   100_000,
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  38_853,
-				GasLimit: 58_753,
+				GasUsed:   38_853,
+				GasRefund: 9_713,
+				GasLimit:  58_753,
 				Logs: []*types.Log{
 					{
 						Address: addrWETH,
@@ -411,7 +412,7 @@ func TestVMApply_Integration(t *testing.T) {
 						cmpopts.EquateEmpty(),
 						cmpopts.EquateErrors(),
 						cmpopts.IgnoreUnexported(w3vm.Receipt{}),
-						cmpopts.IgnoreFields(w3vm.Receipt{}, "GasLimit", "Output"),
+						cmpopts.IgnoreFields(w3vm.Receipt{}, "GasRefund", "GasLimit", "Output"),
 						cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "TxHash", "TxIndex", "Index"),
 					); diff != "" {
 						t.Fatalf("(-want +got)\n%s", diff)
