@@ -1,1 +1,2 @@
 /examples https://github.com/lmittmann/w3/tree/main/examples
+/issue/:id https://github.com/lmittmann/w3/issues/:id
