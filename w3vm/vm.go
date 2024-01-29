@@ -33,33 +33,15 @@ var (
 )
 
 type VM struct {
-	opts *vmOptions
+	opts *options
 
-	chainConfig *params.ChainConfig
-	blockCtx    *vm.BlockContext
-	txIndex     uint64
-	db          *gethState.StateDB
-
-	fetcher Fetcher
-}
-
-type vmOptions struct {
-	chainConfig *params.ChainConfig
-	preState    w3types.State
-	noBaseFee   bool
-
-	blockCtx *vm.BlockContext
-	header   *types.Header
-
-	forkClient      *w3.Client
-	forkBlockNumber *big.Int
-	fetcher         Fetcher
-	tb              testing.TB
+	txIndex uint64
+	db      *gethState.StateDB
 }
 
 // New creates a new VM, that is configured with the given options.
 func New(opts ...Option) (*VM, error) {
-	vm := &VM{opts: new(vmOptions)}
+	vm := &VM{opts: new(options)}
 	for _, opt := range opts {
 		if opt == nil {
 			continue
@@ -67,58 +49,12 @@ func New(opts ...Option) (*VM, error) {
 		opt(vm)
 	}
 
-	vm.fetcher = vm.opts.fetcher
-	if vm.fetcher == nil && vm.opts.forkClient != nil {
-		var calls []w3types.Caller
-
-		latest := vm.opts.forkBlockNumber == nil
-		if latest {
-			vm.opts.forkBlockNumber = new(big.Int)
-			calls = append(calls, eth.BlockNumber().Returns(vm.opts.forkBlockNumber))
-		}
-		if vm.opts.header == nil && vm.opts.blockCtx == nil {
-			vm.opts.header = new(types.Header)
-			if latest {
-				calls = append(calls, eth.HeaderByNumber(pendingBlockNumber).Returns(vm.opts.header))
-			} else {
-				calls = append(calls, eth.HeaderByNumber(vm.opts.forkBlockNumber).Returns(vm.opts.header))
-			}
-		}
-
-		if err := vm.opts.forkClient.Call(calls...); err != nil {
-			return nil, fmt.Errorf("%w: failed to fetch header: %v", ErrFetch, err)
-		}
-
-		if latest {
-			vm.fetcher = NewRPCFetcher(vm.opts.forkClient, vm.opts.forkBlockNumber)
-		} else if vm.opts.tb == nil {
-			vm.fetcher = NewRPCFetcher(vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, w3.Big1))
-		} else {
-			vm.fetcher = NewTestingRPCFetcher(vm.opts.tb, vm.opts.forkClient, new(big.Int).Sub(vm.opts.forkBlockNumber, w3.Big1))
-		}
-	}
-
-	// set chain config
-	vm.chainConfig = vm.opts.chainConfig
-	if vm.chainConfig == nil {
-		if vm.fetcher != nil {
-			vm.chainConfig = params.MainnetChainConfig
-		} else {
-			vm.chainConfig = allEthashProtocolChanges
-		}
-	}
-
-	vm.blockCtx = vm.opts.blockCtx
-	if vm.blockCtx == nil {
-		if vm.opts.header != nil {
-			vm.blockCtx = newBlockContext(vm.opts.header, vm.fetcherHashFunc(vm.fetcher))
-		} else {
-			vm.blockCtx = defaultBlockContext()
-		}
+	if err := vm.opts.Init(); err != nil {
+		return nil, err
 	}
 
 	// set DB
-	db := newDB(vm.fetcher)
+	db := newDB(vm.opts.fetcher)
 	vm.db, _ = gethState.New(hash0, db, nil)
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
@@ -135,10 +71,19 @@ func New(opts ...Option) (*VM, error) {
 	return vm, nil
 }
 
-// Apply applies the given message to the VM and returns a receipt. Multiple
-// tracers can be passed to trace the execution of the message.
+// Apply the given message to the VM and return its receipt. Multiple tracers
+// can be given to trace the execution of the message.
 func (vm *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
 	return vm.apply(msg, false, newMultiEVMLogger(tracers))
+}
+
+// ApplyTx is like [VM.Apply], but takes a transaction instead of a message.
+func (vm *VM) ApplyTx(tx *types.Transaction, tracers ...vm.EVMLogger) (*Receipt, error) {
+	msg, err := new(w3types.Message).SetTx(tx, vm.opts.Signer())
+	if err != nil {
+		return nil, err
+	}
+	return vm.Apply(msg, tracers...)
 }
 
 func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Receipt, error) {
@@ -157,7 +102,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 	v.db.SetTxContext(txHash, 0)
 
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
-	evm := vm.NewEVM(*v.blockCtx, *txCtx, v.db, v.chainConfig, vm.Config{
+	evm := vm.NewEVM(*v.opts.blockCtx, *txCtx, v.db, v.opts.chainConfig, vm.Config{
 		Tracer:    tracer,
 		NoBaseFee: v.opts.noBaseFee || isCall,
 	})
@@ -291,7 +236,7 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 	}
 
 	gasLimit := msg.Gas
-	if maxGasLimit := v.blockCtx.GasLimit; gasLimit == 0 {
+	if maxGasLimit := v.opts.blockCtx.GasLimit; gasLimit == 0 {
 		gasLimit = maxGasLimit
 	} else if gasLimit > maxGasLimit {
 		gasLimit = maxGasLimit
@@ -311,7 +256,7 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 	gasPrice := nilToZero(msg.GasPrice)
 	gasFeeCap := nilToZero(msg.GasFeeCap)
 	gasTipCap := nilToZero(msg.GasTipCap)
-	if baseFee := v.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
+	if baseFee := v.opts.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
 		gasPrice = math.BigMin(gasFeeCap, new(big.Int).Add(baseFee, gasTipCap))
 	}
 
@@ -366,6 +311,86 @@ func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VM Option ///////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type options struct {
+	chainConfig *params.ChainConfig
+	preState    w3types.State
+	noBaseFee   bool
+
+	blockCtx *vm.BlockContext
+	header   *types.Header
+
+	forkClient      *w3.Client
+	forkBlockNumber *big.Int
+	fetcher         Fetcher
+	tb              testing.TB
+}
+
+func (opt *options) Signer() types.Signer {
+	if opt.fetcher == nil {
+		return types.LatestSigner(opt.chainConfig)
+	}
+	return types.MakeSigner(opt.chainConfig, opt.header.Number, opt.header.Time)
+}
+
+func (opts *options) Init() error {
+	// set fetcher
+	if opts.fetcher == nil && opts.forkClient != nil {
+		var calls []w3types.Caller
+
+		latest := opts.forkBlockNumber == nil
+		if latest {
+			opts.forkBlockNumber = new(big.Int)
+			calls = append(calls, eth.BlockNumber().Returns(opts.forkBlockNumber))
+		}
+		if opts.header == nil && opts.blockCtx == nil {
+			opts.header = new(types.Header)
+			if latest {
+				calls = append(calls, eth.HeaderByNumber(pendingBlockNumber).Returns(opts.header))
+			} else {
+				calls = append(calls, eth.HeaderByNumber(opts.forkBlockNumber).Returns(opts.header))
+			}
+		}
+
+		if err := opts.forkClient.Call(calls...); err != nil {
+			return fmt.Errorf("%w: failed to fetch header: %v", ErrFetch, err)
+		}
+
+		if latest {
+			opts.fetcher = NewRPCFetcher(opts.forkClient, opts.forkBlockNumber)
+		} else if opts.tb == nil {
+			opts.fetcher = NewRPCFetcher(opts.forkClient, new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
+		} else {
+			opts.fetcher = NewTestingRPCFetcher(opts.tb, opts.forkClient, new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
+		}
+	}
+
+	// set chain config
+	if opts.chainConfig == nil {
+		if opts.fetcher != nil {
+			opts.chainConfig = params.MainnetChainConfig
+		} else {
+			opts.chainConfig = allEthashProtocolChanges
+		}
+	}
+
+	if opts.blockCtx == nil {
+		if opts.header != nil {
+			opts.blockCtx = newBlockContext(opts.header, fetcherHashFunc(opts.fetcher))
+		} else {
+			opts.blockCtx = defaultBlockContext()
+		}
+	}
+	return nil
+}
+
+func fetcherHashFunc(fetcher Fetcher) vm.GetHashFunc {
+	return func(n uint64) common.Hash {
+		blockNumber := new(big.Int).SetUint64(n)
+		hash, _ := fetcher.HeaderHash(blockNumber)
+		return hash
+	}
+}
 
 // An Option configures a [VM].
 type Option func(*VM)
