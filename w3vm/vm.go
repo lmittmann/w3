@@ -57,6 +57,13 @@ type vmOptions struct {
 	tb              testing.TB
 }
 
+func (opt *vmOptions) Signer() types.Signer {
+	if opt.fetcher == nil {
+		return types.LatestSigner(opt.chainConfig)
+	}
+	return types.MakeSigner(opt.chainConfig, opt.header.Number, opt.header.Time)
+}
+
 // New creates a new VM, that is configured with the given options.
 func New(opts ...Option) (*VM, error) {
 	vm := &VM{opts: new(vmOptions)}
@@ -135,10 +142,19 @@ func New(opts ...Option) (*VM, error) {
 	return vm, nil
 }
 
-// Apply applies the given message to the VM and returns a receipt. Multiple
-// tracers can be passed to trace the execution of the message.
+// Apply the given message to the VM and return its receipt. Multiple tracers
+// can be given to trace the execution of the message.
 func (vm *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
 	return vm.apply(msg, false, newMultiEVMLogger(tracers))
+}
+
+// ApplyTx is like [VM.Apply], but takes a transaction instead of a message.
+func (vm *VM) ApplyTx(tx *types.Transaction, tracers ...vm.EVMLogger) (*Receipt, error) {
+	msg, err := new(w3types.Message).SetTx(tx, vm.opts.Signer())
+	if err != nil {
+		return nil, err
+	}
+	return vm.Apply(msg, tracers...)
 }
 
 func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Receipt, error) {
