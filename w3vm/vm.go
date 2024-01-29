@@ -271,11 +271,15 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 			GasTipCap:         gasFeeCap,
 			Data:              input,
 			AccessList:        msg.AccessList,
+			BlobGasFeeCap:     msg.BlobGasFeeCap,
+			BlobHashes:        msg.BlobHashes,
 			SkipAccountChecks: skipAccChecks,
 		},
 		&vm.TxContext{
-			Origin:   msg.From,
-			GasPrice: gasPrice,
+			Origin:     msg.From,
+			GasPrice:   gasPrice,
+			BlobHashes: msg.BlobHashes,
+			BlobFeeCap: msg.BlobGasFeeCap,
 		},
 		nil
 }
