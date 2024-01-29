@@ -172,11 +172,12 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 
 	// build receipt
 	receipt := &Receipt{
-		f:        msg.Func,
-		GasUsed:  result.UsedGas,
-		GasLimit: result.UsedGas + v.db.GetRefund(),
-		Output:   result.ReturnData,
-		Logs:     v.db.GetLogs(txHash, 0, hash0),
+		f:         msg.Func,
+		GasUsed:   result.UsedGas,
+		GasRefund: result.RefundedGas,
+		GasLimit:  result.UsedGas + v.db.GetRefund(),
+		Output:    result.ReturnData,
+		Logs:      v.db.GetLogs(txHash, 0, hash0),
 	}
 
 	if err := result.Err; err != nil {
