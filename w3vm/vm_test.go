@@ -16,6 +16,7 @@ import (
 	coreState "github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -157,6 +158,31 @@ func TestVMApply(t *testing.T) {
 				Err:      errors.New("execution reverted"),
 			},
 			WantErr: errors.New("execution reverted"),
+		},
+		{ // deploy contract for account with nonce == 0
+			Message: &w3types.Message{
+				From:  addr1,
+				Input: w3.B("0x00"),
+			},
+			WantReceipt: &w3vm.Receipt{
+				GasUsed:         53_006,
+				GasLimit:        53_006,
+				ContractAddress: ptr(crypto.CreateAddress(addr1, 0)),
+			},
+		},
+		{ // deploy contract for account with nonce > 0
+			PreState: w3types.State{
+				addr1: {Nonce: 1},
+			},
+			Message: &w3types.Message{
+				From:  addr1,
+				Input: w3.B("0x00"),
+			},
+			WantReceipt: &w3vm.Receipt{
+				GasUsed:         53_006,
+				GasLimit:        53_006,
+				ContractAddress: ptr(crypto.CreateAddress(addr1, 1)),
+			},
 		},
 	}
 
@@ -507,3 +533,5 @@ func BenchmarkTransferWETH9(b *testing.B) {
 		}
 	})
 }
+
+func ptr[T any](t T) *T { return &t }
