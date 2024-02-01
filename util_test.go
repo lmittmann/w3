@@ -12,15 +12,15 @@ import (
 )
 
 func ExampleI() {
-	fmt.Printf("%v wei\n", w3.I("0x2b98d99b09e3c000"))
-	fmt.Printf("%v wei\n", w3.I("3141500000000000000"))
-	fmt.Printf("%v wei\n", w3.I("3.1415 ether"))
-	fmt.Printf("%v wei\n", w3.I("31.415 gwei"))
+	fmt.Printf("%v wei\n", w3.I("0x1111d67bb1bb0000"))
+	fmt.Printf("%v wei\n", w3.I("1230000000000000000"))
+	fmt.Printf("%v wei\n", w3.I("1.23 ether"))
+	fmt.Printf("%v wei\n", w3.I("1.23 gwei"))
 	// Output:
-	// 3141500000000000000 wei
-	// 3141500000000000000 wei
-	// 3141500000000000000 wei
-	// 31415000000 wei
+	// 1230000000000000000 wei
+	// 1230000000000000000 wei
+	// 1230000000000000000 wei
+	// 1230000000 wei
 }
 
 func ExampleFromWei() {
@@ -31,8 +31,6 @@ func ExampleFromWei() {
 }
 
 func TestA(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		HexAddress  string
 		WantPanic   string
@@ -71,8 +69,6 @@ func TestA(t *testing.T) {
 }
 
 func TestB(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		HexBytes  string
 		WantPanic string
@@ -105,8 +101,6 @@ func TestB(t *testing.T) {
 }
 
 func TestH(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		HexHash   string
 		WantPanic string
@@ -145,8 +139,6 @@ func TestH(t *testing.T) {
 }
 
 func TestI(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		StrInt    string
 		WantPanic string
@@ -257,8 +249,6 @@ func BenchmarkI(b *testing.B) {
 }
 
 func TestFromWei(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Wei      *big.Int
 		Decimals uint8

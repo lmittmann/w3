@@ -13,8 +13,6 @@ import (
 )
 
 func TestLogs(t *testing.T) {
-	t.Parallel()
-
 	srv := rpctest.NewFileServer(t, "testdata/get_logs.golden")
 	defer srv.Close()
 

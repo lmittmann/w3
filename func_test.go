@@ -49,8 +49,6 @@ func ExampleNewFunc() {
 }
 
 func TestNewFunc(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Signature string
 		Returns   string
@@ -91,8 +89,6 @@ func TestNewFunc(t *testing.T) {
 }
 
 func TestFuncEncodeArgs(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Func w3types.Func
 		Args []any
@@ -225,8 +221,6 @@ func TestFuncEncodeArgs(t *testing.T) {
 }
 
 func TestFuncDecodeArgs(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Func     w3types.Func
 		Input    []byte
@@ -425,8 +419,6 @@ func TestFuncDecodeArgs(t *testing.T) {
 }
 
 func TestFuncDecodeReturns(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Func        w3types.Func
 		Output      []byte

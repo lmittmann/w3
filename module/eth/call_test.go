@@ -48,8 +48,6 @@ func TestCall(t *testing.T) {
 }
 
 func TestCallFunc(t *testing.T) {
-	t.Parallel()
-
 	srv := rpctest.NewFileServer(t, "testdata/call_func.golden")
 	defer srv.Close()
 

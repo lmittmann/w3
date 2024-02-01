@@ -41,8 +41,6 @@ func ExampleEvent_DecodeArgs() {
 }
 
 func TestNewEvent(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Signature string
 		WantEvent *w3.Event
@@ -95,8 +93,6 @@ func TestNewEvent(t *testing.T) {
 }
 
 func TestEventDecodeArgs(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		Event    *w3.Event
 		Log      *types.Log
