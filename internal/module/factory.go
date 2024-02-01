@@ -43,7 +43,7 @@ func NewFactory[T any](method string, args []any, opts ...Option[T]) *Factory[T]
 	return f
 }
 
-func (f Factory[T]) Returns(ret *T) w3types.Caller {
+func (f Factory[T]) Returns(ret *T) w3types.RPCCaller {
 	f.ret = ret
 	return f
 }

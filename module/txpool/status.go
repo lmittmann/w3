@@ -9,7 +9,7 @@ import (
 )
 
 // Status requests the number of pending and queued transactions in the transaction pool.
-func Status() w3types.CallerFactory[StatusResponse] {
+func Status() w3types.RPCCallerFactory[StatusResponse] {
 	return module.NewFactory[StatusResponse](
 		"txpool_status",
 		nil,

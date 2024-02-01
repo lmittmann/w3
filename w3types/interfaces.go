@@ -34,7 +34,7 @@ type RPCCallerFactory[T any] interface {
 
 	// Returns given argument points to the variable in which to store the
 	// calls result.
-	Returns(*T) Caller
+	Returns(*T) RPCCaller
 }
 
 // Caller is the interface that groups the basic CreateRequest and

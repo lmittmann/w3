@@ -14,7 +14,7 @@ import (
 )
 
 // TraceCall requests the trace of the given message.
-func TraceCall(msg *w3types.Message, blockNumber *big.Int, config *TraceConfig) w3types.CallerFactory[Trace] {
+func TraceCall(msg *w3types.Message, blockNumber *big.Int, config *TraceConfig) w3types.RPCCallerFactory[Trace] {
 	if config == nil {
 		config = &TraceConfig{}
 	}
@@ -26,7 +26,7 @@ func TraceCall(msg *w3types.Message, blockNumber *big.Int, config *TraceConfig) 
 }
 
 // TraceTx requests the trace of the transaction with the given hash.
-func TraceTx(txHash common.Hash, config *TraceConfig) w3types.CallerFactory[Trace] {
+func TraceTx(txHash common.Hash, config *TraceConfig) w3types.RPCCallerFactory[Trace] {
 	if config == nil {
 		config = &TraceConfig{}
 	}

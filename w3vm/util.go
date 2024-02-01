@@ -79,7 +79,7 @@ func zeroHashFunc(uint64) common.Hash {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ethBalance is like [eth.Balance], but returns the balance as [uint256.Int].
-func ethBalance(addr common.Address, blockNumber *big.Int) w3types.CallerFactory[uint256.Int] {
+func ethBalance(addr common.Address, blockNumber *big.Int) w3types.RPCCallerFactory[uint256.Int] {
 	return module.NewFactory[uint256.Int](
 		"eth_getBalance",
 		[]any{addr, module.BlockNumberArg(blockNumber)},
@@ -88,7 +88,7 @@ func ethBalance(addr common.Address, blockNumber *big.Int) w3types.CallerFactory
 }
 
 // ethStorageAt is like [eth.StorageAt], but returns the storage value as [uint256.Int].
-func ethStorageAt(addr common.Address, slot uint256.Int, blockNumber *big.Int) w3types.CallerFactory[uint256.Int] {
+func ethStorageAt(addr common.Address, slot uint256.Int, blockNumber *big.Int) w3types.RPCCallerFactory[uint256.Int] {
 	return module.NewFactory[uint256.Int](
 		"eth_getStorageAt",
 		[]any{addr, hexutil.U256(slot), module.BlockNumberArg(blockNumber)},

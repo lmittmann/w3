@@ -9,7 +9,7 @@ import (
 
 // GasTipCap requests the currently suggested gas tip cap after EIP-1559 to
 // allow a timely execution of a transaction.
-func GasTipCap() w3types.CallerFactory[big.Int] {
+func GasTipCap() w3types.RPCCallerFactory[big.Int] {
 	return module.NewFactory(
 		"eth_maxPriorityFeePerGas",
 		nil,

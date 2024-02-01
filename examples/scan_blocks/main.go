@@ -47,7 +47,7 @@ func main() {
 	defer client.Close()
 
 	// fetch blocks in bulk
-	calls := make([]w3types.Caller, bulkSize)
+	calls := make([]w3types.RPCCaller, bulkSize)
 	blocks := make([]types.Block, bulkSize)
 
 	for i, txCount := 0, 0; ; i++ {

@@ -340,7 +340,7 @@ func (opt *options) Signer() types.Signer {
 func (opts *options) Init() error {
 	// set fetcher
 	if opts.fetcher == nil && opts.forkClient != nil {
-		var calls []w3types.Caller
+		var calls []w3types.RPCCaller
 
 		latest := opts.forkBlockNumber == nil
 		if latest {

@@ -73,7 +73,7 @@ func (c *Client) Close() error {
 //
 // An error is returned if RPC request creation, networking, or RPC response
 // handling fails.
-func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
+func (c *Client) CallCtx(ctx context.Context, calls ...w3types.RPCCaller) error {
 	// no requests = nothing to do
 	if len(calls) <= 0 {
 		return nil
@@ -133,7 +133,7 @@ func (c *Client) CallCtx(ctx context.Context, calls ...w3types.Caller) error {
 }
 
 // Call is like [Client.CallCtx] with ctx equal to context.Background().
-func (c *Client) Call(calls ...w3types.Caller) error {
+func (c *Client) Call(calls ...w3types.RPCCaller) error {
 	return c.CallCtx(context.Background(), calls...)
 }
 
