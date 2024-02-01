@@ -1,11 +1,38 @@
-# w3
+# `w3`: Enhanced Ethereum Integration for Go
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/lmittmann/w3.svg)](https://pkg.go.dev/github.com/lmittmann/w3)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lmittmann/w3)](https://goreportcard.com/report/github.com/lmittmann/w3)
 [![Coverage Status](https://coveralls.io/repos/github/lmittmann/w3/badge.svg?branch=main)](https://coveralls.io/github/lmittmann/w3?branch=main)
 [![Latest Release](https://img.shields.io/github/v/release/lmittmann/w3)](https://github.com/lmittmann/w3/releases)
+<img src="https://w3.cool/gopher.png" align="right" alt="W3 Gopher" width="158" height="224">
 
-<img src="https://user-images.githubusercontent.com/3458786/153202258-24bf253e-5ab0-4efd-a0ed-43dc1bf093c9.png" align="right" alt="W3 Gopher" width="158" height="224">
+`w3` is your toolbelt for integrating with Ethereum in Go. Closely linked to `go-ethereum`, it provides an ergonomic wrapper for working with **RPC**, **ABI's**, and the **EVM**.
+
+
+```
+go get github.com/lmittmann/w3
+```
+
+
+## At a Glance
+
+* Use `w3.Client` to connect to an RPC endpoint. The client features batch request support for up to **80x faster requests** and easy extendibility. [learn more ↗](#rpc-client)
+* Use `w3vm.VM` to simulate EVM execution with optional tracing and Mainnet state forking, or test Smart Contracts. [learn more ↗](#vm)
+* Use `w3.Func` and `w3.Event` to create ABI bindings from Solidity function and event signatures. [learn more ↗](#abi-bindings)
+* Use `w3.A`, `w3.H`, and many other utility functions to parse addresses, hashes, and other common types from strings. [learn more ↗](#utils)
+
+
+## Getting Started
+
+### RPC Client
+
+### VM
+
+### ABI Bindings
+
+### Utils
+
+<!-- --------------------------------------------------------------------------------------------------------------- -->
 
 Package `w3` implements a blazing fast and modular Ethereum JSON RPC client with
 first-class ABI support.
@@ -34,13 +61,6 @@ Call_BalanceOf100   3.99s ± 3%         0.05s ± 2%  -98.73%  (p=0.000 n=22+23)
 Call_Block100       6.89s ± 7%         1.94s ±11%  -71.77%  (p=0.000 n=24+23)
 </pre>
 </details>
-
-## Install
-
-```
-go get github.com/lmittmann/w3
-```
-
 
 ## Getting Started
 
