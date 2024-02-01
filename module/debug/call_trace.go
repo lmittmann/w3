@@ -11,7 +11,7 @@ import (
 )
 
 // CallTraceCall requests the call trace of the given message.
-func CallTraceCall(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State) w3types.CallerFactory[CallTrace] {
+func CallTraceCall(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State) w3types.RPCCallerFactory[CallTrace] {
 	return module.NewFactory(
 		"debug_traceCall",
 		[]any{msg, module.BlockNumberArg(blockNumber), &traceConfig{Tracer: "callTracer", Overrides: overrides}},
@@ -20,7 +20,7 @@ func CallTraceCall(msg *w3types.Message, blockNumber *big.Int, overrides w3types
 }
 
 // CallTraceTx requests the call trace of the transaction with the given hash.
-func CallTraceTx(txHash common.Hash, overrides w3types.State) w3types.CallerFactory[CallTrace] {
+func CallTraceTx(txHash common.Hash, overrides w3types.State) w3types.RPCCallerFactory[CallTrace] {
 	return module.NewFactory[CallTrace](
 		"debug_traceTransaction",
 		[]any{txHash, &traceConfig{Tracer: "callTracer", Overrides: overrides}},

@@ -8,7 +8,7 @@ import (
 )
 
 // BlockNumber requests the number of the most recent block.
-func BlockNumber() w3types.CallerFactory[big.Int] {
+func BlockNumber() w3types.RPCCallerFactory[big.Int] {
 	return module.NewFactory(
 		"eth_blockNumber",
 		nil,

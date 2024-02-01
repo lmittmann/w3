@@ -215,7 +215,7 @@ func (f *rpcFetcher) fetchHeaderHash(blockNumber *big.Int) (common.Hash, error) 
 	return hashAny.(common.Hash), nil
 }
 
-func (f *rpcFetcher) call(calls ...w3types.Caller) error {
+func (f *rpcFetcher) call(calls ...w3types.RPCCaller) error {
 	return f.client.Call(calls...)
 }
 

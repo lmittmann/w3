@@ -11,7 +11,7 @@ import (
 // Balance requests the balance of the given common.Address addr at the given
 // blockNumber. If blockNumber is nil, the balance at the latest known block is
 // requested.
-func Balance(addr common.Address, blockNumber *big.Int) w3types.CallerFactory[big.Int] {
+func Balance(addr common.Address, blockNumber *big.Int) w3types.RPCCallerFactory[big.Int] {
 	return module.NewFactory(
 		"eth_getBalance",
 		[]any{addr, module.BlockNumberArg(blockNumber)},

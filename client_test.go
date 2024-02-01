@@ -106,26 +106,26 @@ func ExampleClient_Call_nonceAndBalance() {
 func TestClientCall(t *testing.T) {
 	tests := []struct {
 		Buf     *bytes.Buffer
-		Calls   []w3types.Caller
+		Calls   []w3types.RPCCaller
 		WantErr error
 	}{
 		{
 			Buf:   bytes.NewBufferString(jsonCalls1),
-			Calls: []w3types.Caller{&testCaller{}},
+			Calls: []w3types.RPCCaller{&testCaller{}},
 		},
 		{
 			Buf:     bytes.NewBufferString(jsonCalls1),
-			Calls:   []w3types.Caller{&testCaller{RequestErr: errors.New("err")}},
+			Calls:   []w3types.RPCCaller{&testCaller{RequestErr: errors.New("err")}},
 			WantErr: errors.New("err"),
 		},
 		{
 			Buf:     bytes.NewBufferString(jsonCalls1),
-			Calls:   []w3types.Caller{&testCaller{ReturnErr: errors.New("err")}},
+			Calls:   []w3types.RPCCaller{&testCaller{ReturnErr: errors.New("err")}},
 			WantErr: errors.New("w3: call failed: err"),
 		},
 		{
 			Buf: bytes.NewBufferString(jsonCalls2),
-			Calls: []w3types.Caller{
+			Calls: []w3types.RPCCaller{
 				&testCaller{RequestErr: errors.New("err")},
 				&testCaller{},
 			},
@@ -133,7 +133,7 @@ func TestClientCall(t *testing.T) {
 		},
 		{
 			Buf: bytes.NewBufferString(jsonCalls2),
-			Calls: []w3types.Caller{
+			Calls: []w3types.RPCCaller{
 				&testCaller{ReturnErr: errors.New("err")},
 				&testCaller{},
 			},
@@ -141,7 +141,7 @@ func TestClientCall(t *testing.T) {
 		},
 		{
 			Buf: bytes.NewBufferString(jsonCalls2),
-			Calls: []w3types.Caller{
+			Calls: []w3types.RPCCaller{
 				&testCaller{},
 				&testCaller{ReturnErr: errors.New("err")},
 			},
@@ -149,7 +149,7 @@ func TestClientCall(t *testing.T) {
 		},
 		{
 			Buf: bytes.NewBufferString(jsonCalls2),
-			Calls: []w3types.Caller{
+			Calls: []w3types.RPCCaller{
 				&testCaller{ReturnErr: errors.New("err")},
 				&testCaller{ReturnErr: errors.New("err")},
 			},
@@ -266,7 +266,7 @@ func BenchmarkCall_Balance100(b *testing.B) {
 	b.Run("Batch", func(b *testing.B) {
 		var balance big.Int
 		for i := 0; i < b.N; i++ {
-			requests := make([]w3types.Caller, len(addr100))
+			requests := make([]w3types.RPCCaller, len(addr100))
 			for j := 0; j < len(requests); j++ {
 				requests[j] = eth.Balance(addr100[j], nil).Returns(&balance)
 			}
@@ -305,7 +305,7 @@ func BenchmarkCall_BalanceOf100(b *testing.B) {
 	b.Run("Batch", func(b *testing.B) {
 		var balance big.Int
 		for i := 0; i < b.N; i++ {
-			requests := make([]w3types.Caller, len(addr100))
+			requests := make([]w3types.RPCCaller, len(addr100))
 			for j := 0; j < len(requests); j++ {
 				requests[j] = eth.CallFunc(addrWeth9, funcBalanceOf, addr100[j]).Returns(&balance)
 			}
@@ -348,7 +348,7 @@ func BenchmarkCall_Block100(b *testing.B) {
 	b.Run("Batch", func(b *testing.B) {
 		var block types.Block
 		for i := 0; i < b.N; i++ {
-			requests := make([]w3types.Caller, len(block100))
+			requests := make([]w3types.RPCCaller, len(block100))
 			for j := 0; j < len(requests); j++ {
 				requests[j] = eth.BlockByNumber(block100[j]).Returns(&block)
 			}

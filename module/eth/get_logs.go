@@ -11,7 +11,7 @@ import (
 )
 
 // Logs requests the logs of the given ethereum.FilterQuery q.
-func Logs(q ethereum.FilterQuery) w3types.CallerFactory[[]types.Log] {
+func Logs(q ethereum.FilterQuery) w3types.RPCCallerFactory[[]types.Log] {
 	return &logsFactory{filterQuery: q}
 }
 
@@ -23,7 +23,7 @@ type logsFactory struct {
 	returns *[]types.Log
 }
 
-func (f *logsFactory) Returns(logs *[]types.Log) w3types.Caller {
+func (f *logsFactory) Returns(logs *[]types.Log) w3types.RPCCaller {
 	f.returns = logs
 	return f
 }

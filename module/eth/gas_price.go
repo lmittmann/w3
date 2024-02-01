@@ -8,7 +8,7 @@ import (
 )
 
 // GasPrice requests the current gas price in wei.
-func GasPrice() w3types.CallerFactory[big.Int] {
+func GasPrice() w3types.RPCCallerFactory[big.Int] {
 	return module.NewFactory(
 		"eth_gasPrice",
 		nil,

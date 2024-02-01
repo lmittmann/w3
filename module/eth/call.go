@@ -15,7 +15,7 @@ import (
 // Call requests the output data of the given message at the given blockNumber.
 // If blockNumber is nil, the output of the message at the latest known block is
 // requested.
-func Call(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State) w3types.CallerFactory[[]byte] {
+func Call(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State) w3types.RPCCallerFactory[[]byte] {
 	args := []any{msg, module.BlockNumberArg(blockNumber)}
 	if overrides != nil {
 		args = append(args, overrides)
@@ -32,7 +32,7 @@ func Call(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State) w
 // EstimateGas requests the estimated gas cost of the given message at the given
 // blockNumber. If blockNumber is nil, the estimated gas cost of the message at
 // the latest block is requested.
-func EstimateGas(msg *w3types.Message, blockNumber *big.Int) w3types.CallerFactory[uint64] {
+func EstimateGas(msg *w3types.Message, blockNumber *big.Int) w3types.RPCCallerFactory[uint64] {
 	return module.NewFactory(
 		"eth_estimateGas",
 		[]any{msg, module.BlockNumberArg(blockNumber)},
@@ -44,7 +44,7 @@ func EstimateGas(msg *w3types.Message, blockNumber *big.Int) w3types.CallerFacto
 // AccessList requests the access list of the given message at the given
 // blockNumber. If blockNumber is nil, the access list of the message at the
 // latest block is requested.
-func AccessList(msg *w3types.Message, blockNumber *big.Int) w3types.CallerFactory[AccessListResponse] {
+func AccessList(msg *w3types.Message, blockNumber *big.Int) w3types.RPCCallerFactory[AccessListResponse] {
 	return module.NewFactory(
 		"eth_createAccessList",
 		[]any{msg, module.BlockNumberArg(blockNumber)},
@@ -110,7 +110,7 @@ type CallFuncFactory struct {
 	returns []any
 }
 
-func (f *CallFuncFactory) Returns(returns ...any) w3types.Caller {
+func (f *CallFuncFactory) Returns(returns ...any) w3types.RPCCaller {
 	f.returns = returns
 	return f
 }

@@ -19,24 +19,33 @@ type Func interface {
 	DecodeReturns(output []byte, returns ...any) (err error)
 }
 
-// RequestCreator is the interface that wraps the basic CreateRequest method.
-type RequestCreator interface {
+// RPCCaller is the interface that groups the basic CreateRequest and
+// HandleResponse methods.
+type RPCCaller interface {
+	// Create a new rpc.BatchElem for doing the RPC call.
 	CreateRequest() (elem rpc.BatchElem, err error)
+
+	// Handle the response from the rpc.BatchElem to handle its result.
+	HandleResponse(elem rpc.BatchElem) (err error)
 }
 
-// ResponseHandler is the interface that wraps the basic HandleResponse method.
-type ResponseHandler interface {
-	HandleResponse(elem rpc.BatchElem) (err error)
+// RPCCallerFactory is the interface that wraps the basic Returns method.
+type RPCCallerFactory[T any] interface {
+
+	// Returns given argument points to the variable in which to store the
+	// calls result.
+	Returns(*T) RPCCaller
 }
 
 // Caller is the interface that groups the basic CreateRequest and
 // HandleResponse methods.
-type Caller interface {
-	RequestCreator
-	ResponseHandler
-}
+//
+// Deprecated: Use the [RPCCaller] interface instead.
+type Caller = RPCCaller
 
 // CallerFactory is the interface that wraps the basic Returns method.
+//
+// Deprecated: Use the [RPCCallerFactory] interface instead.
 type CallerFactory[T any] interface {
 
 	// Returns given argument points to the variable in which to store the

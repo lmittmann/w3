@@ -11,7 +11,7 @@ import (
 )
 
 // Tx requests the transaction with the given hash.
-func Tx(hash common.Hash) w3types.CallerFactory[types.Transaction] {
+func Tx(hash common.Hash) w3types.RPCCallerFactory[types.Transaction] {
 	return module.NewFactory[types.Transaction](
 		"eth_getTransactionByHash",
 		[]any{hash},
@@ -19,7 +19,7 @@ func Tx(hash common.Hash) w3types.CallerFactory[types.Transaction] {
 }
 
 // TxByBlockHashAndIndex requests the transaction in the given block with the given index.
-func TxByBlockHashAndIndex(blockHash common.Hash, index uint64) w3types.CallerFactory[types.Transaction] {
+func TxByBlockHashAndIndex(blockHash common.Hash, index uint64) w3types.RPCCallerFactory[types.Transaction] {
 	return module.NewFactory[types.Transaction](
 		"eth_getTransactionByBlockHashAndIndex",
 		[]any{blockHash, hexutil.Uint64(index)},
@@ -27,7 +27,7 @@ func TxByBlockHashAndIndex(blockHash common.Hash, index uint64) w3types.CallerFa
 }
 
 // TxByBlockNumberAndIndex requests the transaction in the given block with the given index.
-func TxByBlockNumberAndIndex(blockNumber *big.Int, index uint64) w3types.CallerFactory[types.Transaction] {
+func TxByBlockNumberAndIndex(blockNumber *big.Int, index uint64) w3types.RPCCallerFactory[types.Transaction] {
 	return module.NewFactory[types.Transaction](
 		"eth_getTransactionByBlockNumberAndIndex",
 		[]any{module.BlockNumberArg(blockNumber), hexutil.Uint64(index)},
@@ -35,7 +35,7 @@ func TxByBlockNumberAndIndex(blockNumber *big.Int, index uint64) w3types.CallerF
 }
 
 // SendRawTx sends a raw transaction to the network and returns its hash.
-func SendRawTx(rawTx []byte) w3types.CallerFactory[common.Hash] {
+func SendRawTx(rawTx []byte) w3types.RPCCallerFactory[common.Hash] {
 	return module.NewFactory[common.Hash](
 		"eth_sendRawTransaction",
 		[]any{hexutil.Encode(rawTx)},
@@ -43,7 +43,7 @@ func SendRawTx(rawTx []byte) w3types.CallerFactory[common.Hash] {
 }
 
 // SendTx sends a signed transaction to the network and returns its hash.
-func SendTx(tx *types.Transaction) w3types.CallerFactory[common.Hash] {
+func SendTx(tx *types.Transaction) w3types.RPCCallerFactory[common.Hash] {
 	return module.NewFactory(
 		"eth_sendRawTransaction",
 		[]any{tx},
@@ -60,7 +60,7 @@ func SendTx(tx *types.Transaction) w3types.CallerFactory[common.Hash] {
 }
 
 // TxReceipt requests the receipt of the transaction with the given hash.
-func TxReceipt(txHash common.Hash) w3types.CallerFactory[types.Receipt] {
+func TxReceipt(txHash common.Hash) w3types.RPCCallerFactory[types.Receipt] {
 	return module.NewFactory[types.Receipt](
 		"eth_getTransactionReceipt",
 		[]any{txHash},
@@ -68,7 +68,7 @@ func TxReceipt(txHash common.Hash) w3types.CallerFactory[types.Receipt] {
 }
 
 // BlockReceipts requests all receipts of the transactions in the given block.
-func BlockReceipts(number *big.Int) w3types.CallerFactory[types.Receipts] {
+func BlockReceipts(number *big.Int) w3types.RPCCallerFactory[types.Receipts] {
 	return module.NewFactory[types.Receipts](
 		"eth_getBlockReceipts",
 		[]any{module.BlockNumberArg(number)},
@@ -78,7 +78,7 @@ func BlockReceipts(number *big.Int) w3types.CallerFactory[types.Receipts] {
 // Nonce requests the nonce of the given common.Address addr at the given
 // blockNumber. If blockNumber is nil, the nonce at the latest known block is
 // requested.
-func Nonce(addr common.Address, blockNumber *big.Int) w3types.CallerFactory[uint64] {
+func Nonce(addr common.Address, blockNumber *big.Int) w3types.RPCCallerFactory[uint64] {
 	return module.NewFactory(
 		"eth_getTransactionCount",
 		[]any{addr, module.BlockNumberArg(blockNumber)},
