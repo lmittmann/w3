@@ -18,16 +18,18 @@ var addr0 = common.Address{}
 // automatically encoded from the given Func and Args arguments by many
 // functions that accept a Message struct as an argument.
 type Message struct {
-	From       common.Address  // Sender
-	To         *common.Address // Recipient
-	Nonce      uint64
-	GasPrice   *big.Int
-	GasFeeCap  *big.Int
-	GasTipCap  *big.Int
-	Gas        uint64
-	Value      *big.Int
-	Input      []byte // Input data
-	AccessList types.AccessList
+	From          common.Address  // Sender
+	To            *common.Address // Recipient
+	Nonce         uint64
+	GasPrice      *big.Int
+	GasFeeCap     *big.Int
+	GasTipCap     *big.Int
+	Gas           uint64
+	Value         *big.Int
+	Input         []byte // Input data
+	AccessList    types.AccessList
+	BlobGasFeeCap *big.Int
+	BlobHashes    []common.Hash
 
 	Func Func  // Func to encode
 	Args []any // Arguments for Func
@@ -45,6 +47,8 @@ func (msg *Message) Set(msg2 *Message) *Message {
 	msg.Value = msg2.Value
 	msg.Input = msg2.Input
 	msg.AccessList = msg2.AccessList
+	msg.BlobGasFeeCap = msg2.BlobGasFeeCap
+	msg.BlobHashes = msg2.BlobHashes
 	msg.Func = msg2.Func
 	msg.Args = msg2.Args
 	return msg
@@ -67,6 +71,8 @@ func (msg *Message) SetTx(tx *types.Transaction, signer types.Signer) (*Message,
 	msg.Value = tx.Value()
 	msg.Input = tx.Data()
 	msg.AccessList = tx.AccessList()
+	msg.BlobGasFeeCap = tx.BlobGasFeeCap()
+	msg.BlobHashes = tx.BlobHashes()
 	return msg, nil
 }
 
@@ -94,16 +100,18 @@ func (msg *Message) SetCallMsg(callMsg ethereum.CallMsg) *Message {
 }
 
 type message struct {
-	From       *common.Address  `json:"from,omitempty"`
-	To         *common.Address  `json:"to,omitempty"`
-	Nonce      hexutil.Uint64   `json:"nonce,omitempty"`
-	GasPrice   *hexutil.Big     `json:"gasPrice,omitempty"`
-	GasFeeCap  *hexutil.Big     `json:"gasFeeCap,omitempty"`
-	GasTipCap  *hexutil.Big     `json:"gasTipCap,omitempty"`
-	Gas        hexutil.Uint64   `json:"gas,omitempty"`
-	Value      *hexutil.Big     `json:"value,omitempty"`
-	Input      hexutil.Bytes    `json:"data,omitempty"`
-	AccessList types.AccessList `json:"accessList,omitempty"`
+	From          *common.Address  `json:"from,omitempty"`
+	To            *common.Address  `json:"to,omitempty"`
+	Nonce         hexutil.Uint64   `json:"nonce,omitempty"`
+	GasPrice      *hexutil.Big     `json:"gasPrice,omitempty"`
+	GasFeeCap     *hexutil.Big     `json:"gasFeeCap,omitempty"`
+	GasTipCap     *hexutil.Big     `json:"gasTipCap,omitempty"`
+	Gas           hexutil.Uint64   `json:"gas,omitempty"`
+	Value         *hexutil.Big     `json:"value,omitempty"`
+	Input         hexutil.Bytes    `json:"data,omitempty"`
+	AccessList    types.AccessList `json:"accessList,omitempty"`
+	BlobGasFeeCap *hexutil.Big     `json:"blobGasFeeCap,omitempty"`
+	BlobHashes    []common.Hash    `json:"blobHashes,omitempty"`
 }
 
 // MarshalJSON implements the [json.Marshaler].
@@ -134,6 +142,12 @@ func (msg *Message) MarshalJSON() ([]byte, error) {
 	}
 	if len(msg.AccessList) > 0 {
 		enc.AccessList = msg.AccessList
+	}
+	if msg.BlobGasFeeCap != nil {
+		enc.BlobGasFeeCap = (*hexutil.Big)(msg.BlobGasFeeCap)
+	}
+	if len(msg.BlobHashes) > 0 {
+		enc.BlobHashes = msg.BlobHashes
 	}
 	return json.Marshal(&enc)
 }
@@ -168,6 +182,12 @@ func (msg *Message) UnmarshalJSON(data []byte) error {
 	}
 	if len(dec.AccessList) > 0 {
 		msg.AccessList = dec.AccessList
+	}
+	if dec.BlobGasFeeCap != nil {
+		msg.BlobGasFeeCap = (*big.Int)(dec.BlobGasFeeCap)
+	}
+	if len(dec.BlobHashes) > 0 {
+		msg.BlobHashes = dec.BlobHashes
 	}
 	return nil
 }
