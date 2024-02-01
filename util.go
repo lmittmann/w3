@@ -11,11 +11,12 @@ import (
 
 // Common [big.Int]'s.
 var (
-	Big0     = big.NewInt(0)
-	Big1     = big.NewInt(1)
-	Big2     = big.NewInt(2)
-	BigGwei  = big.NewInt(1_000000000)
-	BigEther = big.NewInt(1_000000000_000000000)
+	Big0          = new(big.Int)
+	Big1          = big.NewInt(1)
+	Big2          = big.NewInt(2)
+	BigGwei       = big.NewInt(1_000000000)
+	BigEther      = big.NewInt(1_000000000_000000000)
+	BigMaxUint256 = new(big.Int).Sub(new(big.Int).Lsh(Big1, 256), Big1)
 )
 
 // A returns an address from a hexstring or panics if the hexstring does not
