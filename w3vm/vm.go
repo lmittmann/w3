@@ -133,7 +133,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 		}
 	}
 	if msg.To == nil {
-		contractAddr := crypto.CreateAddress(msg.From, msg.Nonce)
+		contractAddr := crypto.CreateAddress(msg.From, coreMsg.Nonce)
 		receipt.ContractAddress = &contractAddr
 	}
 
