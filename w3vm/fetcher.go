@@ -264,7 +264,7 @@ func (f *rpcFetcher) getForkState() *forkState {
 
 // NewTestingRPCFetcher returns a new [Fetcher] like [NewRPCFetcher], but caches
 // the fetched state on disk in the testdata directory of the tests package.
-func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, blockNumber *big.Int) Fetcher {
+func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, chainID uint64, blockNumber *big.Int) Fetcher {
 	fp := getTbFilepath(tb)
 	if ok := isTbInMod(fp); !ok {
 		panic("must be called from a test in a module")
@@ -272,13 +272,6 @@ func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, blockNumber *big.Int
 
 	if blockNumber == nil {
 		tb.Fatal("w3vm: block number must not be <nil>")
-	}
-
-	var chainID uint64
-	if err := client.Call(
-		eth.ChainID().Returns(&chainID),
-	); err != nil {
-		tb.Fatalf("w3vm: failed to fetch chain ID: %v", err)
 	}
 
 	fp = filepath.Join(fp, "testdata", "w3vm", fmt.Sprintf("%d_%v.json", chainID, blockNumber))
