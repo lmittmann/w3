@@ -434,6 +434,7 @@ func TestVMApply_Integration(t *testing.T) {
 						t.Fatalf("Failed to apply tx: %v", err)
 					}
 					if diff := cmp.Diff(wantReceipt, gotReceipt,
+						cmpopts.EquateComparable(common.Address{}, common.Hash{}),
 						cmpopts.EquateEmpty(),
 						cmpopts.EquateErrors(),
 						cmpopts.IgnoreUnexported(w3vm.Receipt{}),
