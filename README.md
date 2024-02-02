@@ -6,7 +6,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/lmittmann/w3)](https://github.com/lmittmann/w3/releases)
 <img src="https://w3.cool/gopher.png" align="right" alt="W3 Gopher" width="158" height="224">
 
-`w3` is your toolbelt for integrating with Ethereum in Go. Closely linked to `go-ethereum`, it provides an ergonomic wrapper for working with **RPC**, **ABI's**, and the **EVM**.
+`w3` is your toolbelt for integrating with Ethereum in Go. Closely linked to `go‑ethereum`, it provides an ergonomic wrapper for working with **RPC**, **ABI's**, and the **EVM**.
 
 
 ```
