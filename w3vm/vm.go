@@ -330,6 +330,15 @@ func (opt *options) Signer() types.Signer {
 }
 
 func (opts *options) Init() error {
+	// set chain config
+	if opts.chainConfig == nil {
+		if opts.fetcher != nil || opts.forkClient != nil {
+			opts.chainConfig = params.MainnetChainConfig
+		} else {
+			opts.chainConfig = allEthashProtocolChanges
+		}
+	}
+
 	// set fetcher
 	if opts.fetcher == nil && opts.forkClient != nil {
 		var calls []w3types.RPCCaller
@@ -358,15 +367,6 @@ func (opts *options) Init() error {
 			opts.fetcher = NewRPCFetcher(opts.forkClient, new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
 		} else {
 			opts.fetcher = NewTestingRPCFetcher(opts.tb, opts.forkClient, opts.chainConfig.ChainID.Uint64(), new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
-		}
-	}
-
-	// set chain config
-	if opts.chainConfig == nil {
-		if opts.fetcher != nil {
-			opts.chainConfig = params.MainnetChainConfig
-		} else {
-			opts.chainConfig = allEthashProtocolChanges
 		}
 	}
 
