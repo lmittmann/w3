@@ -56,7 +56,7 @@ func (msg *Message) Set(msg2 *Message) *Message {
 
 // SetTx sets msg to the [types.Transaction] tx and returns msg.
 func (msg *Message) SetTx(tx *types.Transaction, signer types.Signer) (*Message, error) {
-	from, err := signer.Sender(tx)
+	from, err := types.Sender(signer, tx)
 	if err != nil {
 		return nil, err
 	}
