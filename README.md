@@ -26,6 +26,34 @@ go get github.com/lmittmann/w3
 
 ### RPC Client
 
+`w3.Client` is a batch request focused RPC client that can be used to connect to an Ethereum node via HTTP, WebSocket, or IPC. Its modular API allows to create custom RPC method integrations that can be used alongside the common methods implemented by this package.
+
+
+```go
+// 1. Connect to an RPC endpoint
+client, err := w3.Dial("https://rpc.ankr.com/eth")
+if err != nil {
+	// handle error
+}
+defer client.Close()
+
+// 2. Make a batch request
+var (
+	balance big.Int
+	nonce   uint64
+)
+if err := client.Call(
+	eth.Balance(addr, nil).Returns(&balance),
+	eth.Nonce(addr, nil).Returns(&nonce),
+); err != nil {
+	// handle error
+}
+```
+
+> [!NOTE]
+> #### why send batch requests?
+> Most of the time you need to call multiple RPC methods to get the data you need. When you make separate requests per RPC call you need a single round trip to the server for each call. This can be slow, especially for remote endpoints. Batching multiple RPC calls into a single request only requires a single round trip, and speeds up RPC calls significantly.
+
 ### VM
 
 ### ABI Bindings
