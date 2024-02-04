@@ -56,6 +56,18 @@ if err := client.Call(
 
 ### VM
 
+`w3vm.VM` is a high-level EVM environment with a simple but powerful API to simulate EVM execution, test Smart Contracts, or trace transactions. It supports Mainnet state forking via RPC and state caching for faster testing.
+
+```go
+// 1. Create a VM that forks the Mainnet state from the latest block
+vm, err := w3vm.New(
+    w3vm.WithFork(client, nil),
+)
+if err != nil {
+    // handle error
+}
+```
+
 ### ABI Bindings
 
 ### Utils
