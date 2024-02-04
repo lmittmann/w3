@@ -33,20 +33,20 @@ go get github.com/lmittmann/w3
 // 1. Connect to an RPC endpoint
 client, err := w3.Dial("https://rpc.ankr.com/eth")
 if err != nil {
-	// handle error
+    // handle error
 }
 defer client.Close()
 
 // 2. Make a batch request
 var (
-	balance big.Int
-	nonce   uint64
+    balance big.Int
+    nonce   uint64
 )
 if err := client.Call(
-	eth.Balance(addr, nil).Returns(&balance),
-	eth.Nonce(addr, nil).Returns(&nonce),
+    eth.Balance(addr, nil).Returns(&balance),
+    eth.Nonce(addr, nil).Returns(&nonce),
 ); err != nil {
-	// handle error
+    // handle error
 }
 ```
 
