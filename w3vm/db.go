@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/trie"
 	"github.com/ethereum/go-ethereum/trie/trienode"
+	"github.com/ethereum/go-ethereum/triedb"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3/internal/crypto"
 )
@@ -60,7 +61,7 @@ func (db *db) ContractCodeSize(addr common.Address, codeHash common.Hash) (int, 
 
 func (*db) DiskDB() ethdb.KeyValueStore { panic("not implemented") }
 
-func (*db) TrieDB() *trie.Database { panic("not implemented") }
+func (*db) TrieDB() *triedb.Database { panic("not implemented") }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // state.Trie methods //////////////////////////////////////////////////////////////////////////////
