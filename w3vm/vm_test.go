@@ -200,6 +200,7 @@ func TestVMApply(t *testing.T) {
 			if diff := cmp.Diff(test.WantReceipt, gotReceipt,
 				internal.EquateErrors(),
 				cmpopts.IgnoreUnexported(w3vm.Receipt{}),
+				cmpopts.EquateComparable(common.Address{}, common.Hash{}),
 			); diff != "" {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
@@ -250,6 +251,7 @@ func TestVMCall(t *testing.T) {
 			if diff := cmp.Diff(test.WantReceipt, gotReceipt,
 				internal.EquateErrors(),
 				cmpopts.IgnoreUnexported(w3vm.Receipt{}),
+				cmpopts.EquateComparable(common.Address{}, common.Hash{}),
 			); diff != "" {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
@@ -439,6 +441,7 @@ func TestVMApply_Integration(t *testing.T) {
 						cmpopts.IgnoreUnexported(w3vm.Receipt{}),
 						cmpopts.IgnoreFields(w3vm.Receipt{}, "GasRefund", "GasLimit", "Output"),
 						cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "TxHash", "TxIndex", "Index"),
+						cmpopts.EquateComparable(common.Address{}, common.Hash{}),
 					); diff != "" {
 						t.Fatalf("(-want +got)\n%s", diff)
 					}
