@@ -605,8 +605,7 @@ func ExampleVM() {
 			Deadline:         big.NewInt(time.Now().Unix()),
 			AmountIn:         w3.I("1 ether"),
 			AmountOutMinimum: w3.Big0,
-		},
-		},
+		}},
 	})
 	if err != nil {
 		// handle error
