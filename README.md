@@ -49,6 +49,7 @@ if err := client.Call(
     // handle error
 }
 ```
+[Playground ↗](#https://pkg.go.dev/github.com/lmittmann/w3#example-Client)
 
 > [!NOTE]
 > #### why send batch requests?

@@ -34,17 +34,29 @@ var (
 		`< [{"jsonrpc":"2.0","id":1,"result":"0x1"},{"jsonrpc":"2.0","id":2,"result":"0x1"}]`
 )
 
-func ExampleDial() {
+func ExampleClient() {
+	addr := w3.A("0x0000000000000000000000000000000000000000")
+
+	// 1. Connect to an RPC endpoint
 	client, err := w3.Dial("https://rpc.ankr.com/eth")
 	if err != nil {
-		// ...
+		// handle error
 	}
 	defer client.Close()
-}
 
-func ExampleMustDial() {
-	client := w3.MustDial("https://rpc.ankr.com/eth")
-	defer client.Close()
+	// 2. Make a batch request
+	var (
+		balance big.Int
+		nonce   uint64
+	)
+	if err := client.Call(
+		eth.Balance(addr, nil).Returns(&balance),
+		eth.Nonce(addr, nil).Returns(&nonce),
+	); err != nil {
+		// handle error
+	}
+
+	fmt.Printf("balance: %s\nnonce: %d\n", w3.FromWei(&balance, 18), nonce)
 }
 
 func ExampleClient_Call() {
