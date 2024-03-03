@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
@@ -535,6 +537,89 @@ func BenchmarkTransferWETH9(b *testing.B) {
 			stateDB.Finalise(false)
 		}
 	})
+}
+
+func ExampleVM() {
+	var (
+		addrEOA    = w3.A("0x000000000000000000000000000000000000c0Fe")
+		addrWETH   = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+		addrUNI    = w3.A("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
+		addrRouter = w3.A("0xE592427A0AEce92De3Edee1F18E0157C05861564")
+
+		funcExactInput = w3.MustNewFunc(`exactInput(
+			(
+			bytes path,
+			address recipient,
+			uint256 deadline,
+			uint256 amountIn,
+			uint256 amountOutMinimum
+			) params
+		)`, "uint256 amountOut")
+	)
+
+	type ExactInputParams struct {
+		Path             []byte
+		Recipient        common.Address
+		Deadline         *big.Int
+		AmountIn         *big.Int
+		AmountOutMinimum *big.Int
+	}
+
+	encodePath := func(tokenA common.Address, fee uint32, tokenB common.Address) []byte {
+		feeBytes := []byte{byte(fee >> 16), byte(fee >> 8), byte(fee)}
+		return slices.Concat(tokenA[:], feeBytes, tokenB[:])
+	}
+
+	client, err := w3.Dial("https://rpc.ankr.com/eth")
+	if err != nil {
+		// handle error
+	}
+	defer client.Close()
+
+	// 1. Create a VM that forks the Mainnet state from the latest block
+	vm, err := w3vm.New(
+		w3vm.WithFork(client, nil),
+		w3vm.WithNoBaseFee(),
+		w3vm.WithState(w3types.State{
+			// give the EOA a fake WBNB balance and approval of the router
+			addrWETH: {
+				Storage: map[common.Hash]common.Hash{
+					w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
+					w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
+				},
+			},
+		}),
+	)
+	if err != nil {
+		// handle error
+	}
+
+	// 2. Simulate a UniSwap v2 swap
+	receipt, err := vm.Apply(&w3types.Message{
+		From: addrEOA,
+		To:   &addrRouter,
+		Func: funcExactInput,
+		Args: []any{&ExactInputParams{
+			Path:             encodePath(addrWETH, 500, addrUNI),
+			Recipient:        addrEOA,
+			Deadline:         big.NewInt(time.Now().Unix()),
+			AmountIn:         w3.I("1 ether"),
+			AmountOutMinimum: w3.Big0,
+		},
+		},
+	})
+	if err != nil {
+		// handle error
+	}
+
+	// 3. Print the output amount
+	var amountOut *big.Int
+	if err := receipt.DecodeReturns(&amountOut); err != nil {
+		// handle error
+	}
+
+	fmt.Printf("amount out: %s UNI\n", w3.FromWei(amountOut, 18))
+	// Output: amount out: 0.0 UNI
 }
 
 func ptr[T any](t T) *T { return &t }

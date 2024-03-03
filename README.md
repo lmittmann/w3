@@ -62,12 +62,47 @@ if err := client.Call(
 ```go
 // 1. Create a VM that forks the Mainnet state from the latest block
 vm, err := w3vm.New(
-    w3vm.WithFork(client, nil),
+	w3vm.WithFork(client, nil),
+	w3vm.WithNoBaseFee(),
+	w3vm.WithState(w3types.State{
+		// give the EOA a fake WBNB balance and approval of the router
+		addrWETH: {
+			Storage: map[common.Hash]common.Hash{
+				w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
+				w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
+			},
+		},
+	}),
 )
 if err != nil {
-    // handle error
+	// handle error
+}
+
+// 2. Simulate a UniSwap v2 swap
+receipt, err := vm.Apply(&w3types.Message{
+	From: addrEOA,
+	To:   &addrRouter,
+	Func: funcExactInput,
+	Args: []any{&ExactInputParams{
+		Path:             encodePath(addrWETH, 500, addrUNI),
+		Recipient:        addrEOA,
+		Deadline:         big.NewInt(time.Now().Unix()),
+		AmountIn:         w3.I("1 ether"),
+		AmountOutMinimum: w3.Big0,
+	},
+	},
+})
+if err != nil {
+	// handle error
+}
+
+// 3. Print the output amount
+var amountOut *big.Int
+if err := receipt.DecodeReturns(&amountOut); err != nil {
+	// handle error
 }
 ```
+[Playground ↗](#https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM)
 
 ### ABI Bindings
 
