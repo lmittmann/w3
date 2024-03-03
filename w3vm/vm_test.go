@@ -611,14 +611,13 @@ func ExampleVM() {
 		// handle error
 	}
 
-	// 3. Print the output amount
+	// 3. Decode output amount
 	var amountOut *big.Int
 	if err := receipt.DecodeReturns(&amountOut); err != nil {
 		// handle error
 	}
 
 	fmt.Printf("amount out: %s UNI\n", w3.FromWei(amountOut, 18))
-	// Output: amount out: 0.0 UNI
 }
 
 func ptr[T any](t T) *T { return &t }

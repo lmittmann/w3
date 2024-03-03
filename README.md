@@ -95,7 +95,7 @@ if err != nil {
     // handle error
 }
 
-// 3. Print the output amount
+// 3. Decode output amount
 var amountOut *big.Int
 if err := receipt.DecodeReturns(&amountOut); err != nil {
     // handle error
