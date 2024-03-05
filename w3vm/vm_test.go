@@ -576,25 +576,23 @@ func ExampleVM() {
 	}
 	defer client.Close()
 
-	// 1. Create a VM that forks the Mainnet state from the latest block
+	// 1. Create a VM that forks the Mainnet state from the latest block,
+	// disables the base fee, and has a fake WETH balance and approval for the router
 	vm, err := w3vm.New(
 		w3vm.WithFork(client, nil),
 		w3vm.WithNoBaseFee(),
 		w3vm.WithState(w3types.State{
-			// give the EOA a fake WBNB balance and approval of the router
-			addrWETH: {
-				Storage: map[common.Hash]common.Hash{
-					w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
-					w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
-				},
-			},
+			addrWETH: {Storage: map[common.Hash]common.Hash{
+				w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.BigEther),
+				w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.BigEther),
+			}},
 		}),
 	)
 	if err != nil {
 		// handle error
 	}
 
-	// 2. Simulate a UniSwap v2 swap
+	// 2. Simulate a UniSwap v3 swap
 	receipt, err := vm.Apply(&w3types.Message{
 		From: addrEOA,
 		To:   &addrRouter,
