@@ -583,8 +583,8 @@ func ExampleVM() {
 		w3vm.WithNoBaseFee(),
 		w3vm.WithState(w3types.State{
 			addrWETH: {Storage: map[common.Hash]common.Hash{
-				w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.BigEther),
-				w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.BigEther),
+				w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
+				w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
 			}},
 		}),
 	)
