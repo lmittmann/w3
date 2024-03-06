@@ -65,17 +65,17 @@ Example: Simulate an UniSwap v3 swap ([Playground](https://pkg.go.dev/github.com
 // 1. Create a VM that forks the Mainnet state from the latest block,
 // disables the base fee, and has a fake WETH balance and approval for the router
 vm, err := w3vm.New(
-	w3vm.WithFork(client, nil),
-	w3vm.WithNoBaseFee(),
-	w3vm.WithState(w3types.State{
-		addrWETH: {Storage: map[common.Hash]common.Hash{
-			w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
-			w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
-		}},
-	}),
+    w3vm.WithFork(client, nil),
+    w3vm.WithNoBaseFee(),
+    w3vm.WithState(w3types.State{
+        addrWETH: {Storage: map[common.Hash]common.Hash{
+            w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
+            w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
+        }},
+    }),
 )
 if err != nil {
-	// handle error
+    // handle error
 }
 
 // 2. Simulate a UniSwap v2 swap
