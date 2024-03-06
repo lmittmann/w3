@@ -28,6 +28,7 @@ go get github.com/lmittmann/w3
 
 [`w3.Client`](https://pkg.go.dev/github.com/lmittmann/w3#Client) is a batch request focused RPC client that can be used to connect to an Ethereum node via HTTP, WebSocket, or IPC. Its modular API allows to create custom RPC method integrations that can be used alongside the common methods implemented by this package.
 
+Example: Batch Request ([Playground ↗](https://pkg.go.dev/github.com/lmittmann/w3#example-Client))
 
 ```go
 // 1. Connect to an RPC endpoint
@@ -49,7 +50,6 @@ if err := client.Call(
     // handle error
 }
 ```
-[Playground ↗](https://pkg.go.dev/github.com/lmittmann/w3#example-Client)
 
 > [!NOTE]
 > #### why send batch requests?
@@ -58,6 +58,8 @@ if err := client.Call(
 ### VM
 
 [`w3vm.VM`](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#VM) is a high-level EVM environment with a simple but powerful API to simulate EVM execution, test Smart Contracts, or trace transactions. It supports Mainnet state forking via RPC and state caching for faster testing.
+
+Example: Simulate a UniSwap v3 swap ([Playground ↗](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
 
 ```go
 // 1. Create a VM that forks the Mainnet state from the latest block,
@@ -99,13 +101,26 @@ if err := receipt.DecodeReturns(&amountOut); err != nil {
     // handle error
 }
 ```
-[Playground ↗](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM)
 
 ### ABI Bindings
 
+ABI bindings in `w3` are specified for individual functions using Solidity syntax and are usable for any contract that supports that function.
+
+Example: ABI binding for the ERC20-function `balanceOf`
+
+```go
+funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
+```
+
+A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
+
+* encode arguments to the contracts input data ([`Func.EncodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.EncodeArgs)),
+* decode arguments from the contracts input data ([`Func.DecodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeArgs)), and
+* decode returns form the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
+
 ### Utils
 
-<!-- --------------------------------------------------------------------------------------------------------------- -->
+<!-- -------------------------------------------------------------------------------------------------------------------
 
 Package `w3` implements a blazing fast and modular Ethereum JSON RPC client with
 first-class ABI support.
@@ -335,3 +350,5 @@ List of supported RPC methods.
 | Package                                                                  | Description
 | :----------------------------------------------------------------------- | :-----------
 | [github.com/lmittmann/flashbots](https://github.com/lmittmann/flashbots) | Package `flashbots` implements RPC API bindings for the Flashbots relay and mev-geth.
+
+-------------------------------------------------------------------------------------------------------------------- -->
