@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -566,8 +565,11 @@ func ExampleVM() {
 	}
 
 	encodePath := func(tokenA common.Address, fee uint32, tokenB common.Address) []byte {
-		feeBytes := []byte{byte(fee >> 16), byte(fee >> 8), byte(fee)}
-		return slices.Concat(tokenA[:], feeBytes, tokenB[:])
+		path := make([]byte, 43)
+		copy(path, tokenA[:])
+		path[20], path[21], path[22] = byte(fee>>16), byte(fee>>8), byte(fee)
+		copy(path[23:], tokenB[:])
+		return path
 	}
 
 	client, err := w3.Dial("https://rpc.ankr.com/eth")
