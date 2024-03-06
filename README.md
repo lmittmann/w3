@@ -28,7 +28,7 @@ go get github.com/lmittmann/w3
 
 [`w3.Client`](https://pkg.go.dev/github.com/lmittmann/w3#Client) is a batch request focused RPC client that can be used to connect to an Ethereum node via HTTP, WebSocket, or IPC. Its modular API allows to create custom RPC method integrations that can be used alongside the common methods implemented by this package.
 
-Example: Batch Request ([Playground ↗](https://pkg.go.dev/github.com/lmittmann/w3#example-Client))
+Example: Batch Request ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client))
 
 ```go
 // 1. Connect to an RPC endpoint
@@ -59,7 +59,7 @@ if err := client.Call(
 
 [`w3vm.VM`](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#VM) is a high-level EVM environment with a simple but powerful API to simulate EVM execution, test Smart Contracts, or trace transactions. It supports Mainnet state forking via RPC and state caching for faster testing.
 
-Example: Simulate a UniSwap v3 swap ([Playground ↗](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
+Example: Simulate an UniSwap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
 
 ```go
 // 1. Create a VM that forks the Mainnet state from the latest block,
