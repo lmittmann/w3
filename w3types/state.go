@@ -3,19 +3,19 @@ package w3types
 import (
 	"encoding/json"
 	"math/big"
+	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/lmittmann/w3/internal/crypto"
 )
 
 type State map[common.Address]*Account
 
-// SetGenesisAlloc copies the given [core.GenesisAlloc] to the state and
+// SetGenesisAlloc copies the given [types.GenesisAlloc] to the state and
 // returns it.
-func (s State) SetGenesisAlloc(alloc core.GenesisAlloc) State {
+func (s State) SetGenesisAlloc(alloc types.GenesisAlloc) State {
 	s = make(State, len(alloc))
 	for addr, acc := range alloc {
 		s[addr] = &Account{
@@ -32,32 +32,34 @@ type Account struct {
 	Nonce   uint64
 	Balance *big.Int
 	Code    []byte
-	Storage map[common.Hash]common.Hash
+	Storage Storage
 
-	codeHash *common.Hash // caches the code hash
+	codeHash atomic.Pointer[common.Hash] // caches the code hash
 }
 
 // CodeHash returns the hash of the account's code.
 func (acc *Account) CodeHash() common.Hash {
-	if acc.codeHash != nil {
-		return *acc.codeHash
+	if codeHash := acc.codeHash.Load(); codeHash != nil {
+		return *codeHash
 	}
+
 	if len(acc.Code) == 0 {
+		acc.codeHash.Store(&types.EmptyCodeHash)
 		return types.EmptyCodeHash
 	}
 
-	h := crypto.Keccak256Hash(acc.Code)
-	acc.codeHash = &h
-	return h
+	codeHash := crypto.Keccak256Hash(acc.Code)
+	acc.codeHash.Store(&codeHash)
+	return codeHash
 }
 
 // MarshalJSON implements the [json.Marshaler].
 func (acc *Account) MarshalJSON() ([]byte, error) {
 	type account struct {
-		Nonce   hexutil.Uint64              `json:"nonce,omitempty"`
-		Balance *hexutil.Big                `json:"balance,omitempty"`
-		Code    hexutil.Bytes               `json:"code,omitempty"`
-		Storage map[common.Hash]common.Hash `json:"stateDiff,omitempty"`
+		Nonce   hexutil.Uint64 `json:"nonce,omitempty"`
+		Balance *hexutil.Big   `json:"balance,omitempty"`
+		Code    hexutil.Bytes  `json:"code,omitempty"`
+		Storage Storage        `json:"stateDiff,omitempty"`
 	}
 
 	var enc account
@@ -75,3 +77,5 @@ func (acc *Account) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(&enc)
 }
+
+type Storage map[common.Hash]common.Hash
