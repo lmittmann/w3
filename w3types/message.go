@@ -96,6 +96,8 @@ func (msg *Message) SetCallMsg(callMsg ethereum.CallMsg) *Message {
 	msg.Value = callMsg.Value
 	msg.Input = callMsg.Data
 	msg.AccessList = callMsg.AccessList
+	msg.BlobGasFeeCap = callMsg.BlobGasFeeCap
+	msg.BlobHashes = callMsg.BlobHashes
 	return msg
 }
 
