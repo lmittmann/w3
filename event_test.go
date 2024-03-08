@@ -60,6 +60,13 @@ func TestNewEvent(t *testing.T) {
 			},
 		},
 		{
+			Signature: "Transfer(address indexed _from, address indexed _to, uint256 _value);",
+			WantEvent: &w3.Event{
+				Signature: "Transfer(address,address,uint256)",
+				Topic0:    w3.H("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
+			},
+		},
+		{
 			Signature: "Approval(address,address,uint256)",
 			WantEvent: &w3.Event{
 				Signature: "Approval(address,address,uint256)",

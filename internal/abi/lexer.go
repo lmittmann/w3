@@ -78,7 +78,7 @@ Start:
 		l.accept(id0)
 		l.acceptRun(id)
 		return &item{itemTypeID, l.token()}, nil
-	case eof:
+	case eof, ';':
 		return &item{itemTypeEOF, ""}, nil
 	default:
 		return nil, fmt.Errorf("unexpected character: %c", l.next())
