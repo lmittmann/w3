@@ -149,6 +149,10 @@ func (c *Client) rateLimit(ctx context.Context, batchElems []rpc.BatchElem) erro
 
 	// limit requests based on Compute Units (CUs)
 	var cost int
+	if len(batchElems) > 1 {
+		// include the cost of the batch request itself
+		cost += c.rlCostFunc("")
+	}
 	for _, batchElem := range batchElems {
 		cost += c.rlCostFunc(batchElem.Method)
 	}
