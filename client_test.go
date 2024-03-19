@@ -380,17 +380,22 @@ func ExampleWithRateLimiter_costFunc() {
 	// batch itself to also be considered.
 	client := w3.MustDial("https://rpc.ankr.com/eth",
 		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second/30), 100),
-			func(method string) int {
-				switch method {
-				case "eth_getBalance":
-					return 1
-				case "eth_getTransactionCount":
-					return 1
-				case "": // for batch requests, this is the cost of the batch itself
-					return 1
-				default:
-					return 10
+			func(methods []string) int {
+				cost := 0
+				if len(methods) > 1 {
+					cost += 1 // for the batch itself
 				}
+				for _, method := range methods {
+					switch method {
+					case "eth_getBalance":
+						cost += 1
+					case "eth_getTransactionCount":
+						cost += 1
+					default:
+						cost += 10
+					}
+				}
+				return cost
 			},
 		))
 	defer client.Close()
