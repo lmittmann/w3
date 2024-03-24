@@ -21,7 +21,7 @@ type Client struct {
 
 	// rate limiter
 	rl         *rate.Limiter
-	rlCostFunc func(method string) (cost int)
+	rlCostFunc func(methods []string) (cost int)
 }
 
 // NewClient returns a new Client given an rpc.Client client.
@@ -148,10 +148,11 @@ func (c *Client) rateLimit(ctx context.Context, batchElems []rpc.BatchElem) erro
 	}
 
 	// limit requests based on Compute Units (CUs)
-	var cost int
-	for _, batchElem := range batchElems {
-		cost += c.rlCostFunc(batchElem.Method)
+	methods := make([]string, len(batchElems))
+	for i, batchElem := range batchElems {
+		methods[i] = batchElem.Method
 	}
+	cost := c.rlCostFunc(methods)
 	return c.rl.WaitN(ctx, cost)
 }
 
@@ -192,8 +193,9 @@ type Option func(*Client)
 // WithRateLimiter sets the rate limiter for the client. Set the optional argument
 // costFunc to nil to limit the number of requests. Supply a costFunc to limit
 // the the number of requests based on individual RPC calls for advanced rate
-// limiting by Compute Units (CUs).
-func WithRateLimiter(rl *rate.Limiter, costFunc func(method string) (cost int)) Option {
+// limiting by e.g. Compute Units (CUs). Note that only if len(methods) > 1, the
+// calls are sent in a batch request.
+func WithRateLimiter(rl *rate.Limiter, costFunc func(methods []string) (cost int)) Option {
 	return func(c *Client) {
 		c.rl = rl
 		c.rlCostFunc = costFunc
