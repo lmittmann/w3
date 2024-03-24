@@ -375,25 +375,14 @@ func ExampleWithRateLimiter() {
 }
 
 func ExampleWithRateLimiter_costFunc() {
-	// Limit the client to 30 requests per second and allow bursts of up to
-	// 100 requests using a cost function. This permits the cost of the
-	// batch itself to also be considered.
+	// Limit the client to 30 calls per second and allow bursts of up to
+	// 100 calls using a cost function. Batch requests have an additional charge.
 	client := w3.MustDial("https://rpc.ankr.com/eth",
 		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second/30), 100),
-			func(methods []string) int {
-				cost := 0
+			func(methods []string) (cost int) {
+				cost = len(methods) // charge 1 CU per call
 				if len(methods) > 1 {
-					cost += 1 // for the batch itself
-				}
-				for _, method := range methods {
-					switch method {
-					case "eth_getBalance":
-						cost += 1
-					case "eth_getTransactionCount":
-						cost += 1
-					default:
-						cost += 10
-					}
+					cost += 1 // charge 1 CU extra for the batch itself
 				}
 				return cost
 			},
