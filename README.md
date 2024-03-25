@@ -112,7 +112,7 @@ ABI bindings in `w3` are specified for individual functions using Solidity synta
 funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
 ```
 
-**Example:** ABI bindings for the Uniswap v4 function `swap` ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-UniswapV4Swap))
+**Example:** ABI binding for the Uniswap v4 function `swap` ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-UniswapV4Swap))
 
 ```go
 funcSwap := w3.MustNewFunc(`swap(
