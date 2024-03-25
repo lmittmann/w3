@@ -48,6 +48,50 @@ func ExampleNewFunc_balanceOf() {
 	// balanceOf returns: 49406
 }
 
+func ExampleNewFunc_uniswapV4Swap() {
+	// ABI bindings for the Uniswap v4 swap function.
+	funcSwap, _ := w3.NewFunc(`swap(
+		(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key,
+		(bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params,
+		bytes hookData
+	)`, "int256 delta")
+
+	// ABI bindings for the PoolKey struct.
+	type PoolKey struct {
+		Currency0   common.Address
+		Currency1   common.Address
+		Fee         *big.Int
+		TickSpacing *big.Int
+		Hooks       common.Address
+	}
+
+	// ABI bindings for the SwapParams struct.
+	type SwapParams struct {
+		ZeroForOne        bool
+		AmountSpecified   *big.Int
+		SqrtPriceLimitX96 *big.Int
+	}
+
+	// ABI-encode the functions args.
+	input, _ := funcSwap.EncodeArgs(
+		&PoolKey{
+			Currency0:   w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+			Currency1:   w3.A("0x6B175474E89094C44Da98b954EedeAC495271d0F"),
+			Fee:         big.NewInt(0),
+			TickSpacing: big.NewInt(0),
+		},
+		&SwapParams{
+			ZeroForOne:        false,
+			AmountSpecified:   big.NewInt(0),
+			SqrtPriceLimitX96: big.NewInt(0),
+		},
+		[]byte{},
+	)
+	fmt.Printf("swap input: 0x%x\n", input)
+	// Output:
+	// swap input: 0xf3cd914c000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20000000000000000000000006b175474e89094c44da98b954eedeac495271d0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000000
+}
+
 func TestNewFunc(t *testing.T) {
 	tests := []struct {
 		Signature string

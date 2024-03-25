@@ -59,7 +59,7 @@ if err := client.Call(
 
 [`w3vm.VM`](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#VM) is a high-level EVM environment with a simple but powerful API to simulate EVM execution, test Smart Contracts, or trace transactions. It supports Mainnet state forking via RPC and state caching for faster testing.
 
-**Example:** Simulate an UniSwap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
+**Example:** Simulate an Uniswap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
 
 ```go
 // 1. Create a VM that forks the Mainnet state from the latest block,
@@ -106,10 +106,20 @@ if err := receipt.DecodeReturns(&amountOut); err != nil {
 
 ABI bindings in `w3` are specified for individual functions using Solidity syntax and are usable for any contract that supports that function.
 
-**Example:** ABI binding for the ERC20-function `balanceOf` ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf))
+**Example:** ABI binding for the ERC20 function `balanceOf` ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf))
 
 ```go
 funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
+```
+
+**Example:** ABI bindings for the Uniswap v4 function `swap` ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-UniswapV4Swap))
+
+```go
+funcSwap := w3.MustNewFunc(`swap(
+    (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key,
+    (bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params,
+    bytes hookData
+)`, "int256 delta")
 ```
 
 A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
