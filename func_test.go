@@ -16,7 +16,7 @@ import (
 	"github.com/lmittmann/w3/w3types"
 )
 
-func ExampleNewFunc() {
+func ExampleNewFunc_balanceOf() {
 	// ABI binding to the balanceOf function of an ERC20 Token.
 	funcBalanceOf, _ := w3.NewFunc("balanceOf(address)", "uint256")
 

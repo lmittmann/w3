@@ -106,7 +106,7 @@ if err := receipt.DecodeReturns(&amountOut); err != nil {
 
 ABI bindings in `w3` are specified for individual functions using Solidity syntax and are usable for any contract that supports that function.
 
-Example: ABI binding for the ERC20-function `balanceOf`
+Example: ABI binding for the ERC20-function `balanceOf` ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf))
 
 ```go
 funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
