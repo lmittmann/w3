@@ -497,6 +497,7 @@ type tupleWithBytes struct {
 }
 
 type tupleWithUnexportedProperty struct {
+	//lint:ignore U1000 ignore unused field
 	arg0 common.Address
 	Arg1 *big.Int
 }
