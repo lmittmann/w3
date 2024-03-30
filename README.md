@@ -82,7 +82,7 @@ if err != nil {
     // handle error
 }
 
-// 2. Simulate a UniSwap v2 swap
+// 2. Simulate a Uniswap v3 swap
 receipt, err := vm.Apply(&w3types.Message{
     From: addrEOA,
     To:   &addrRouter,
