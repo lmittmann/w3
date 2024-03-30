@@ -106,14 +106,14 @@ type message struct {
 	To            *common.Address  `json:"to,omitempty"`
 	Nonce         hexutil.Uint64   `json:"nonce,omitempty"`
 	GasPrice      *hexutil.Big     `json:"gasPrice,omitempty"`
-	GasFeeCap     *hexutil.Big     `json:"gasFeeCap,omitempty"`
-	GasTipCap     *hexutil.Big     `json:"gasTipCap,omitempty"`
+	GasFeeCap     *hexutil.Big     `json:"maxFeePerGas,omitempty"`
+	GasTipCap     *hexutil.Big     `json:"maxPriorityFeePerGas,omitempty"`
 	Gas           hexutil.Uint64   `json:"gas,omitempty"`
 	Value         *hexutil.Big     `json:"value,omitempty"`
 	Input         hexutil.Bytes    `json:"data,omitempty"`
 	AccessList    types.AccessList `json:"accessList,omitempty"`
-	BlobGasFeeCap *hexutil.Big     `json:"blobGasFeeCap,omitempty"`
-	BlobHashes    []common.Hash    `json:"blobHashes,omitempty"`
+	BlobGasFeeCap *hexutil.Big     `json:"maxFeePerBlobGas,omitempty"`
+	BlobHashes    []common.Hash    `json:"blobVersionedHashes,omitempty"`
 }
 
 // MarshalJSON implements the [json.Marshaler].
