@@ -148,7 +148,7 @@ Use [go-ethereum/common](https://pkg.go.dev/github.com/ethereum/go-ethereum/comm
 
 ## RPC Methods
 
-List of supported RPC methods.
+List of supported RPC methods for [`w3.Client`](https://pkg.go.dev/github.com/lmittmann/w3#Client).
 
 ### [`eth`](https://pkg.go.dev/github.com/lmittmann/w3/module/eth)
 
@@ -208,7 +208,12 @@ List of supported RPC methods.
 | :----------------------------------------------------------------------- | :-----------
 | [github.com/lmittmann/flashbots](https://github.com/lmittmann/flashbots) | Package `flashbots` implements RPC API bindings for the Flashbots relay and mev-geth.
 
+
 ## Custom RPC Method Bindings
+
+Custom RPC method bindings can be created by implementing the [`w3types.RPCCaller`](https://pkg.go.dev/github.com/lmittmann/w3/w3types#RPCCaller) interface.
+
+**Example:** RPC binding for the Otterscan `ots_getTransactionBySenderAndNonce` method ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3types#example-RPCCaller-GetTransactionBySenderAndNonce))
 
 <!-- -------------------------------------------------------------------------------------------------------------------
 
