@@ -72,7 +72,7 @@ vm, err := w3vm.New(
     w3vm.WithFork(client, nil),
     w3vm.WithNoBaseFee(),
     w3vm.WithState(w3types.State{
-        addrWETH: {Storage: map[common.Hash]common.Hash{
+        addrWETH: {Storage: w3types.Storage{
             w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
             w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
         }},
