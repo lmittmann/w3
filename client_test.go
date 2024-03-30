@@ -14,7 +14,9 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/lmittmann/w3"
@@ -113,6 +115,42 @@ func ExampleClient_Call_nonceAndBalance() {
 	}
 
 	fmt.Printf("%s: Nonce: %d, Balance: ♦%s\n", addr, nonce, w3.FromWei(&balance, 18))
+}
+
+func ExampleClient_Call_sendERC20transferTx() {
+	client := w3.MustDial("https://rpc.ankr.com/eth")
+	defer client.Close()
+
+	var (
+		weth9     = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+		receiver  = w3.A("0x000000000000000000000000000000000000c0Fe")
+		eoaPrv, _ = crypto.GenerateKey()
+	)
+
+	funcTransfer := w3.MustNewFunc("transfer(address receiver, uint256 amount)", "bool")
+	input, err := funcTransfer.EncodeArgs(receiver, w3.I("1 ether"))
+	if err != nil {
+		fmt.Printf("Failed to encode args: %v\n", err)
+		return
+	}
+
+	signer := types.LatestSigner(params.MainnetChainConfig)
+	var txHash common.Hash
+	if err := client.Call(
+		eth.SendTx(types.MustSignNewTx(eoaPrv, signer, &types.DynamicFeeTx{
+			Nonce:     0,
+			To:        &weth9,
+			Data:      input,
+			GasTipCap: w3.I("1 gwei"),
+			GasFeeCap: w3.I("100 gwei"),
+			Gas:       100_000,
+		})).Returns(&txHash),
+	); err != nil {
+		fmt.Printf("Failed to send tx: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Sent tx: %s\n", txHash)
 }
 
 func TestClientCall(t *testing.T) {
