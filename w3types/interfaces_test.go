@@ -9,6 +9,7 @@ import (
 	"github.com/lmittmann/w3/w3types"
 )
 
+// TxBySenderAndNonceFactory requests the senders transaction hash by the nonce.
 func TxBySenderAndNonceFactory(sender common.Address, nonce uint64) w3types.RPCCallerFactory[common.Hash] {
 	return &getTransactionBySenderAndNonceFactory{
 		sender: sender,
@@ -16,6 +17,9 @@ func TxBySenderAndNonceFactory(sender common.Address, nonce uint64) w3types.RPCC
 	}
 }
 
+// getTransactionBySenderAndNonceFactory implements the w3types.RPCCaller and
+// w3types.RPCCallerFactory interfaces. It stores the method parameters and
+// the the reference to the return value.
 type getTransactionBySenderAndNonceFactory struct {
 	// params
 	sender common.Address
@@ -25,11 +29,17 @@ type getTransactionBySenderAndNonceFactory struct {
 	returns *common.Hash
 }
 
+// Returns sets the reference to the return value.
+//
+// Return implements the [w3types.RPCCallerFactory] interface.
 func (f *getTransactionBySenderAndNonceFactory) Returns(txHash *common.Hash) w3types.RPCCaller {
 	f.returns = txHash
 	return f
 }
 
+// CreateRequest creates a batch request element for the Otterscan getTransactionBySenderAndNonce method.
+//
+// CreateRequest implements the [w3types.RPCCaller] interface.
 func (f *getTransactionBySenderAndNonceFactory) CreateRequest() (rpc.BatchElem, error) {
 	return rpc.BatchElem{
 		Method: "ots_getTransactionBySenderAndNonce",
@@ -38,6 +48,9 @@ func (f *getTransactionBySenderAndNonceFactory) CreateRequest() (rpc.BatchElem, 
 	}, nil
 }
 
+// HandleResponse handles the response of the Otterscan getTransactionBySenderAndNonce method.
+//
+// HandleResponse implements the [w3types.RPCCaller] interface.
 func (f *getTransactionBySenderAndNonceFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
 		return err
