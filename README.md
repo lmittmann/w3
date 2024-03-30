@@ -130,6 +130,17 @@ A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
 
 ### Utils
 
+Static addresses, hashes, bytes or integers can be parsed from (hex-)strings with the following utility functions that panic if the string is not valid.
+
+```go
+addr := w3.A("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")
+hash := w3.H("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
+bytes := w3.B("0x27c5342c")
+amount := w3.I("12.34 ether")
+```
+
+Use [go-ethereum/common](https://pkg.go.dev/github.com/ethereum/go-ethereum/common) to parse strings that may not be valid instead.
+
 <!-- -------------------------------------------------------------------------------------------------------------------
 
 Package `w3` implements a blazing fast and modular Ethereum JSON RPC client with
