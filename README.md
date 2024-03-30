@@ -16,10 +16,10 @@ go get github.com/lmittmann/w3
 
 ## At a Glance
 
-* Use `w3.Client` to connect to an RPC endpoint. The client features batch request support for up to **80x faster requests** and easy extendibility. [learn more ↗](#rpc-client)
-* Use `w3vm.VM` to simulate EVM execution with optional tracing and Mainnet state forking, or test Smart Contracts. [learn more ↗](#vm)
-* Use `w3.Func` and `w3.Event` to create ABI bindings from Solidity function and event signatures. [learn more ↗](#abi-bindings)
-* Use `w3.A`, `w3.H`, and many other utility functions to parse addresses, hashes, and other common types from strings. [learn more ↗](#utils)
+* Use `w3.Client` to connect to an RPC endpoint. The client features batch request support for up to **80x faster requests** and easy extendibility. [learn&nbsp;more&nbsp;↗](#rpc-client)
+* Use `w3vm.VM` to simulate EVM execution with optional tracing and Mainnet state forking, or test Smart Contracts. [learn&nbsp;more&nbsp;↗](#vm)
+* Use `w3.Func` and `w3.Event` to create ABI bindings from Solidity function and event signatures. [learn&nbsp;more&nbsp;↗](#abi-bindings)
+* Use `w3.A`, `w3.H`, and many other utility functions to parse addresses, hashes, and other common types from strings. [learn&nbsp;more&nbsp;↗](#utils)
 
 
 ## Getting Started
