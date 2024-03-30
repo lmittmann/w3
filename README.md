@@ -55,6 +55,10 @@ if err := client.Call(
 > #### why send batch requests?
 > Most of the time you need to call multiple RPC methods to get the data you need. When you make separate requests per RPC call you need a single round trip to the server for each call. This can be slow, especially for remote endpoints. Batching multiple RPC calls into a single request only requires a single round trip, and speeds up RPC calls significantly.
 
+#### Learn More
+* List of supported [**RPC methods**](#rpc-methods)
+* Learn how to create [**custom RPC method bindings**](#custom-rpc-method-bindings)
+
 ### VM
 
 [`w3vm.VM`](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#VM) is a high-level EVM environment with a simple but powerful API to simulate EVM execution, test Smart Contracts, or trace transactions. It supports Mainnet state forking via RPC and state caching for faster testing.
@@ -140,6 +144,71 @@ amount := w3.I("12.34 ether")
 ```
 
 Use [go-ethereum/common](https://pkg.go.dev/github.com/ethereum/go-ethereum/common) to parse strings that may not be valid instead.
+
+
+## RPC Methods
+
+List of supported RPC methods.
+
+### [`eth`](https://pkg.go.dev/github.com/lmittmann/w3/module/eth)
+
+| Method                                    | Go Code
+| :---------------------------------------- | :-------
+| `eth_blockNumber`                         | `eth.BlockNumber().Returns(blockNumber *big.Int)`
+| `eth_call`                                | `eth.Call(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(output *[]byte)`<br>`eth.CallFunc(contract common.Address, f w3types.Func, args ...any).Returns(returns ...any)`
+| `eth_chainId`                             | `eth.ChainID().Returns(chainID *uint64)`
+| `eth_createAccessList`                    | `eth.AccessList(msg *w3types.Message, blockNumber *big.Int).Returns(resp *eth.AccessListResponse)`
+| `eth_estimateGas`                         | `eth.EstimateGas(msg *w3types.Message, blockNumber *big.Int).Returns(gas *uint64)`
+| `eth_gasPrice`                            | `eth.GasPrice().Returns(gasPrice *big.Int)`
+| `eth_maxPriorityFeePerGas`                | `eth.GasTipCap().Returns(gasTipCap *big.Int)`
+| `eth_getBalance`                          | `eth.Balance(addr common.Address, blockNumber *big.Int).Returns(balance *big.Int)`
+| `eth_getBlockByHash`                      | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`
+| `eth_getBlockByNumber`                    | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`
+| `eth_getBlockReceipts`                    | `eth.BlockReceipts(blockNumber *big.Int).Returns(receipts *types.Receipts)`
+| `eth_getBlockTransactionCountByHash`      | `eth.BlockTxCountByHash(hash common.Hash).Returns(count *uint)`
+| `eth_getBlockTransactionCountByNumber`    | `eth.BlockTxCountByNumber(number *big.Int).Returns(count *uint)`
+| `eth_getCode`                             | `eth.Code(addr common.Address, blockNumber *big.Int).Returns(code *[]byte)`
+| `eth_getLogs`                             | `eth.Logs(q ethereum.FilterQuery).Returns(logs *[]types.Log)`
+| `eth_getStorageAt`                        | `eth.StorageAt(addr common.Address, slot common.Hash, blockNumber *big.Int).Returns(storage *common.Hash)`
+| `eth_getTransactionByHash`                | `eth.Tx(hash common.Hash).Returns(tx *types.Transaction)`
+| `eth_getTransactionByBlockHashAndIndex`   | `eth.TxByBlockHashAndIndex(blockHash common.Hash, index uint).Returns(tx *types.Transaction)`
+| `eth_getTransactionByBlockNumberAndIndex` | `eth.TxByBlockNumberAndIndex(blockNumber *big.Int, index uint).Returns(tx *types.Transaction)`
+| `eth_getTransactionCount`                 | `eth.Nonce(addr common.Address, blockNumber *big.Int).Returns(nonce *uint)`
+| `eth_getTransactionReceipt`               | `eth.TxReceipt(txHash common.Hash).Returns(receipt *types.Receipt)`
+| `eth_sendRawTransaction`                  | `eth.SendRawTx(rawTx []byte).Returns(hash *common.Hash)`<br>`eth.SendTx(tx *types.Transaction).Returns(hash *common.Hash)`
+| `eth_getUncleByBlockHashAndIndex`         | `eth.UncleByBlockHashAndIndex(hash common.Hash, index uint).Returns(uncle *types.Header)`
+| `eth_getUncleByBlockNumberAndIndex`       | `eth.UncleByBlockNumberAndIndex(number *big.Int, index uint).Returns(uncle *types.Header)`
+| `eth_getUncleCountByBlockHash`            | `eth.UncleCountByBlockHash(hash common.Hash).Returns(count *uint)`
+| `eth_getUncleCountByBlockNumber`          | `eth.UncleCountByBlockNumber(number *big.Int).Returns(count *uint)`
+
+### [`debug`](https://pkg.go.dev/github.com/lmittmann/w3/module/debug)
+
+| Method                   | Go Code
+| :----------------------- | :-------
+| `debug_traceCall`        | `debug.TraceCall(msg *w3types.Message, blockNumber *big.Int, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br>`debug.CallTraceCall(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(trace *debug.CallTrace)`
+| `debug_traceTransaction` | `debug.TraceTx(txHash common.Hash, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br>`debug.CallTraceTx(txHash common.Hash, overrides w3types.State).Returns(trace *debug.CallTrace)`
+
+### [`txpool`](https://pkg.go.dev/github.com/lmittmann/w3/module/txpool)
+
+| Method               | Go Code
+| :--------------------| :-------
+| `txpool_content`     | `txpool.Content().Returns(resp *txpool.ContentResponse)`
+| `txpool_contentFrom` | `txpool.ContentFrom(addr common.Address).Returns(resp *txpool.ContentFromResponse)`
+| `txpool_status`      | `txpool.Status().Returns(resp *txpool.StatusResponse)`
+
+### [`web3`](https://pkg.go.dev/github.com/lmittmann/w3/module/web3)
+
+| Method               | Go Code
+| :------------------- | :-------
+| `web3_clientVersion` | `web3.ClientVersion().Returns(clientVersion *string)`
+
+### Third Party RPC Method Packages
+
+| Package                                                                  | Description
+| :----------------------------------------------------------------------- | :-----------
+| [github.com/lmittmann/flashbots](https://github.com/lmittmann/flashbots) | Package `flashbots` implements RPC API bindings for the Flashbots relay and mev-geth.
+
+## Custom RPC Method Bindings
 
 <!-- -------------------------------------------------------------------------------------------------------------------
 
