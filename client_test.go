@@ -59,7 +59,7 @@ func ExampleClient() {
 	fmt.Printf("balance: %s\nnonce: %d\n", w3.FromWei(&balance, 18), nonce)
 }
 
-func ExampleClient_Call() {
+func ExampleClient_Call_balanceOf() {
 	// Connect to RPC endpoint (or panic on error) and
 	// close the connection when you are done.
 	client := w3.MustDial("https://rpc.ankr.com/eth")
