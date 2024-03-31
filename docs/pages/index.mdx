@@ -1,12 +1,11 @@
 ---
-title: Introduction
-theme:
-	breadcrumb: false
+description: 'w3: Enhanced Ethereum Integration for Go'
 ---
 
 import Image from 'next/image'
+import { Callout } from 'nextra/components'
 
-# w3
+# `w3`: Enhanced Ethereum Integration for Go
 
 <div className="flex flex-wrap gap-2 my-2">
   <a href="https://pkg.go.dev/github.com/lmittmann/w3">
@@ -23,90 +22,128 @@ import Image from 'next/image'
   </a>
 </div>
 
-<Image src="/gopher.png" alt="Hello" width={158} height={224} alt="W3 Gopher" align="right" className="mt-6 ml-2 mb-2"/>
+<Image src="/gopher.png" alt="Hello" width={158} height={224} alt="W3 Gopher" align="right" className="mt-6 ml-2 md:ml-6 mb-2"/>
 
-Package `w3` implements a blazing fast and modular Ethereum JSON RPC client with
-first-class ABI support.
+`w3` is your toolbelt for integrating with Ethereum in Go. Closely linked to `go‑ethereum`, it provides an ergonomic wrapper for working with **RPC**, **ABI's**, and the **EVM**.
 
-* **Batch request** support significantly reduces the duration of requests to
-  both remote and local endpoints.
-* **ABI** bindings are specified for individual functions using Solidity syntax.
-  No need for `abigen` and ABI JSON files.
-* **Modular** API allows to create custom RPC method integrations that can be
-  used alongside the methods implemented by the package.
-
-`w3` is closely linked to [go-ethereum](https://github.com/ethereum/go-ethereum)
-and uses a variety of its types, such as [`common.Address`](https://pkg.go.dev/github.com/ethereum/go-ethereum/common#Address)
-or [`types.Transaction`](https://pkg.go.dev/github.com/ethereum/go-ethereum/core/types#Transaction).
-
-Batch requests with `w3` are up to **85x faster** than sequential requests with
-`go-ethereum/ethclient`.
-
-<details>
-<summary>Benchmarks</summary>
-<pre>
-name               ethclient time/op  w3 time/op  delta
-Call_BalanceNonce  78.3ms ± 2%        39.0ms ± 1%  -50.15%  (p=0.000 n=23+22)
-Call_Balance100     3.90s ± 5%         0.05s ± 2%  -98.84%  (p=0.000 n=20+24)
-Call_BalanceOf100   3.99s ± 3%         0.05s ± 2%  -98.73%  (p=0.000 n=22+23)
-Call_Block100       6.89s ± 7%         1.94s ±11%  -71.77%  (p=0.000 n=24+23)
-</pre>
-</details>
-
-## Install
 
 ```
 go get github.com/lmittmann/w3
 ```
 
 
+## At a Glance
+
+* Use `w3.Client` to connect to an RPC endpoint. The client features batch request support for up to **80x faster requests** and easy extendibility. [learn&nbsp;more&nbsp;↗](#rpc-client)
+* Use `w3vm.VM` to simulate EVM execution with optional tracing and Mainnet state forking, or test Smart Contracts. [learn&nbsp;more&nbsp;↗](#vm)
+* Use `w3.Func` and `w3.Event` to create ABI bindings from Solidity function and event signatures. [learn&nbsp;more&nbsp;↗](#abi-bindings)
+* Use `w3.A`, `w3.H`, and many other utility functions to parse addresses, hashes, and other common types from strings. [learn&nbsp;more&nbsp;↗](#utils)
+
+
 ## Getting Started
 
-> **Note**
-> Check out the [examples](examples/)!
+### RPC Client
 
-Connect to an RPC endpoint via HTTP, WebSocket, or IPC using [`Dial`](https://pkg.go.dev/github.com/lmittmann/w3#Dial)
-or [`MustDial`](https://pkg.go.dev/github.com/lmittmann/w3#MustDial).
+[`w3.Client`](https://pkg.go.dev/github.com/lmittmann/w3#Client) is a batch request focused RPC client that can be used to connect to an Ethereum node via HTTP, WebSocket, or IPC. Its modular API allows to create custom RPC method integrations that can be used alongside the common methods implemented by this package.
+
+**Example:** Batch Request ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client))
 
 ```go
-// Connect (or panic on error)
-client := w3.MustDial("https://rpc.ankr.com/eth")
+// 1. Connect to an RPC endpoint
+client, err := w3.Dial("https://rpc.ankr.com/eth")
+if err != nil {
+    // handle error
+}
 defer client.Close()
+
+// 2. Make a batch request
+var (
+    balance big.Int
+    nonce   uint64
+)
+if err := client.Call(
+    eth.Balance(addr, nil).Returns(&balance),
+    eth.Nonce(addr, nil).Returns(&nonce),
+); err != nil {
+    // handle error
+}
 ```
 
 
-## Batch Requests
+<Callout type="info">
+	#### why send batch requests?
+	Most of the time you need to call multiple RPC methods to get the data you need. When you make separate requests per RPC call you need a single round trip to the server for each call. This can be slow, especially for remote endpoints. Batching multiple RPC calls into a single request only requires a single round trip, and speeds up RPC calls significantly.
+</Callout>
 
-Batch request support in the [`Client`](https://pkg.go.dev/github.com/lmittmann/w3#Client)
-allows to send multiple RPC requests in a single HTTP request. The speed gains
-to remote endpoints are huge. Fetching 100 blocks in a single batch request
-with `w3` is ~80x faster compared to sequential requests with `ethclient`.
+#### Learn More
+* List of supported [**RPC methods**](#rpc-methods)
+* Learn how to create [**custom RPC method bindings**](#custom-rpc-method-bindings)
 
-Example: Request the nonce and balance of an address in a single request
+### VM
+
+[`w3vm.VM`](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#VM) is a high-level EVM environment with a simple but powerful API to simulate EVM execution, test Smart Contracts, or trace transactions. It supports Mainnet state forking via RPC and state caching for faster testing.
+
+**Example:** Simulate an Uniswap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
 
 ```go
-var (
-	addr = w3.A("0x000000000000000000000000000000000000c0Fe")
+// 1. Create a VM that forks the Mainnet state from the latest block,
+// disables the base fee, and has a fake WETH balance and approval for the router
+vm, err := w3vm.New(
+    w3vm.WithFork(client, nil),
+    w3vm.WithNoBaseFee(),
+    w3vm.WithState(w3types.State{
+        addrWETH: {Storage: w3types.Storage{
+            w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
+            w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
+        }},
+    }),
+)
+if err != nil {
+    // handle error
+}
 
-	nonce   uint64
-	balance big.Int
-)
-err := client.Call(
-	eth.Nonce(addr, nil).Returns(&nonce),
-	eth.Balance(addr, nil).Returns(&balance),
-)
+// 2. Simulate a Uniswap v3 swap
+receipt, err := vm.Apply(&w3types.Message{
+    From: addrEOA,
+    To:   &addrRouter,
+    Func: funcExactInput,
+    Args: []any{&ExactInputParams{
+        Path:             encodePath(addrWETH, 500, addrUNI),
+        Recipient:        addrEOA,
+        Deadline:         big.NewInt(time.Now().Unix()),
+        AmountIn:         w3.I("1 ether"),
+        AmountOutMinimum: w3.Big0,
+    }},
+})
+if err != nil {
+    // handle error
+}
+
+// 3. Decode output amount
+var amountOut *big.Int
+if err := receipt.DecodeReturns(&amountOut); err != nil {
+    // handle error
+}
 ```
 
+### ABI Bindings
 
-## ABI Bindings
+ABI bindings in `w3` are specified for individual functions using Solidity syntax and are usable for any contract that supports that function.
 
-ABI bindings in `w3` are specified for individual functions using Solidity
-syntax and are usable for any contract that supports that function.
-
-Example: ABI binding for the ERC20-function `balanceOf`
+**Example:** ABI binding for the ERC20 `balanceOf` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf))
 
 ```go
 funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
+```
+
+**Example:** ABI binding for the Uniswap v4 `swap` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-UniswapV4Swap))
+
+```go
+funcSwap := w3.MustNewFunc(`swap(
+    (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key,
+    (bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params,
+    bytes hookData
+)`, "int256 delta")
 ```
 
 A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
@@ -115,107 +152,39 @@ A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
 * decode arguments from the contracts input data ([`Func.DecodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeArgs)), and
 * decode returns form the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
 
-### Reading Contracts
+### Utils
 
-[`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func)'s can be used with
-[`eth.CallFunc`](https://pkg.go.dev/github.com/lmittmann/w3/module/eth#CallFunc)
-in the client to read contract data.
+Static addresses, hashes, bytes or integers can be parsed from (hex-)strings with the following utility functions that panic if the string is not valid.
 
 ```go
-var (
-	weth9 = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
-	dai   = w3.A("0x6B175474E89094C44Da98b954EedeAC495271d0F")
-
-	weth9Balance big.Int
-	daiBalance   big.Int
-)
-
-err := client.Call(
-	eth.CallFunc(funcBalanceOf, weth9, addr).Returns(&weth9Balance),
-	eth.CallFunc(funcBalanceOf, dai, addr).Returns(&daiBalance),
-)
+addr := w3.A("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")
+hash := w3.H("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
+bytes := w3.B("0x27c5342c")
+amount := w3.I("12.34 ether")
 ```
 
-### Writing Contracts
-
-Sending a transaction to a contract requires three steps.
-
-1. Encode the transaction input data using [`Func.EncodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.EncodeArgs).
-
-```go
-var funcTransfer = w3.MustNewFunc("transfer(address,uint256)", "bool")
-
-input, err := funcTransfer.EncodeArgs(w3.A("0x…"), w3.I("1 ether"))
-```
-
-2. Create a signed transaction to the contract using [go-ethereum/core/types](https://pkg.go.dev/github.com/ethereum/go-ethereum/core/types).
-
-```go
-signer := types.LatestSigner(params.MainnetChainConfig)
-tx := types.MustSignNewTx(privKey, signer, &types.DynamicFeeTx{
-	To:        w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
-	Nonce:     0,
-	Data:      input,
-	Gas:       75000,
-	GasFeeCap: w3.I("100 gwei"),
-	GasTipCap: w3.I("1 gwei"),
-})
-```
-
-3. Send the signed transaction.
-
-```go
-var txHash common.Hash
-err := client.Call(
-	eth.SendTx(tx).Returns(&txHash),
-)
-```
-
-
-## Custom RPC Methods
-
-Custom RPC methods can be called with the `w3` client by creating a
-[`core.Caller`](https://pkg.go.dev/github.com/lmittmann/w3/core#Caller)
-implementation.
-The `w3/module/eth` package can be used as implementation reference.
-
-
-## Utils
-
-Static addresses, hashes, hex byte slices or `big.Int`'s can be parsed from
-strings with the following utility functions.
-
-```go
-var (
-	addr  = w3.A("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")
-	hash  = w3.H("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
-	bytes = w3.B("0x27c5342c")
-	big   = w3.I("12.34 ether")
-)
-```
-
-Note that these functions panic if the string cannot be parsed. Use
-[go-ethereum/common](https://pkg.go.dev/github.com/ethereum/go-ethereum/common)
-to parse strings that may not be valid instead.
+Use [go-ethereum/common](https://pkg.go.dev/github.com/ethereum/go-ethereum/common) to parse strings that may not be valid instead.
 
 
 ## RPC Methods
 
-List of supported RPC methods.
+List of supported RPC methods for [`w3.Client`](https://pkg.go.dev/github.com/lmittmann/w3#Client).
 
 ### [`eth`](https://pkg.go.dev/github.com/lmittmann/w3/module/eth)
 
 | Method                                    | Go Code
 | :---------------------------------------- | :-------
 | `eth_blockNumber`                         | `eth.BlockNumber().Returns(blockNumber *big.Int)`
-| `eth_call`                                | `eth.Call(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(output *[]byte)`<br />`eth.CallFunc(fn core.Func, contract common.Address, args ...any).Returns(returns ...any)`
+| `eth_call`                                | `eth.Call(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(output *[]byte)`<br/>`eth.CallFunc(contract common.Address, f w3types.Func, args ...any).Returns(returns ...any)`
 | `eth_chainId`                             | `eth.ChainID().Returns(chainID *uint64)`
 | `eth_createAccessList`                    | `eth.AccessList(msg *w3types.Message, blockNumber *big.Int).Returns(resp *eth.AccessListResponse)`
 | `eth_estimateGas`                         | `eth.EstimateGas(msg *w3types.Message, blockNumber *big.Int).Returns(gas *uint64)`
 | `eth_gasPrice`                            | `eth.GasPrice().Returns(gasPrice *big.Int)`
+| `eth_maxPriorityFeePerGas`                | `eth.GasTipCap().Returns(gasTipCap *big.Int)`
 | `eth_getBalance`                          | `eth.Balance(addr common.Address, blockNumber *big.Int).Returns(balance *big.Int)`
-| `eth_getBlockByHash`                      | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br />`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`
-| `eth_getBlockByNumber`                    | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br />`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`
+| `eth_getBlockByHash`                      | `eth.BlockByHash(hash common.Hash).Returns(block *types.Block)`<br/>`eth.HeaderByHash(hash common.Hash).Returns(header *types.Header)`
+| `eth_getBlockByNumber`                    | `eth.BlockByNumber(number *big.Int).Returns(block *types.Block)`<br/>`eth.HeaderByNumber(number *big.Int).Returns(header *types.Header)`
+| `eth_getBlockReceipts`                    | `eth.BlockReceipts(blockNumber *big.Int).Returns(receipts *types.Receipts)`
 | `eth_getBlockTransactionCountByHash`      | `eth.BlockTxCountByHash(hash common.Hash).Returns(count *uint)`
 | `eth_getBlockTransactionCountByNumber`    | `eth.BlockTxCountByNumber(number *big.Int).Returns(count *uint)`
 | `eth_getCode`                             | `eth.Code(addr common.Address, blockNumber *big.Int).Returns(code *[]byte)`
@@ -226,7 +195,7 @@ List of supported RPC methods.
 | `eth_getTransactionByBlockNumberAndIndex` | `eth.TxByBlockNumberAndIndex(blockNumber *big.Int, index uint).Returns(tx *types.Transaction)`
 | `eth_getTransactionCount`                 | `eth.Nonce(addr common.Address, blockNumber *big.Int).Returns(nonce *uint)`
 | `eth_getTransactionReceipt`               | `eth.TxReceipt(txHash common.Hash).Returns(receipt *types.Receipt)`
-| `eth_sendRawTransaction`                  | `eth.SendRawTx(rawTx []byte).Returns(hash *common.Hash)`<br />`eth.SendTx(tx *types.Transaction).Returns(hash *common.Hash)`
+| `eth_sendRawTransaction`                  | `eth.SendRawTx(rawTx []byte).Returns(hash *common.Hash)`<br/>`eth.SendTx(tx *types.Transaction).Returns(hash *common.Hash)`
 | `eth_getUncleByBlockHashAndIndex`         | `eth.UncleByBlockHashAndIndex(hash common.Hash, index uint).Returns(uncle *types.Header)`
 | `eth_getUncleByBlockNumberAndIndex`       | `eth.UncleByBlockNumberAndIndex(number *big.Int, index uint).Returns(uncle *types.Header)`
 | `eth_getUncleCountByBlockHash`            | `eth.UncleCountByBlockHash(hash common.Hash).Returns(count *uint)`
@@ -236,8 +205,8 @@ List of supported RPC methods.
 
 | Method                   | Go Code
 | :----------------------- | :-------
-| `debug_traceCall`        | `debug.TraceCall(msg *w3types.Message, blockNumber *big.Int, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br />`debug.CallTraceCall(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(trace *debug.CallTrace)`
-| `debug_traceTransaction` | `debug.TraceTx(txHash common.Hash, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br />`debug.CallTraceTx(txHash common.Hash, overrides w3types.State).Returns(trace *debug.CallTrace)`
+| `debug_traceCall`        | `debug.TraceCall(msg *w3types.Message, blockNumber *big.Int, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br/>`debug.CallTraceCall(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(trace *debug.CallTrace)`
+| `debug_traceTransaction` | `debug.TraceTx(txHash common.Hash, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br/>`debug.CallTraceTx(txHash common.Hash, overrides w3types.State).Returns(trace *debug.CallTrace)`
 
 ### [`txpool`](https://pkg.go.dev/github.com/lmittmann/w3/module/txpool)
 
@@ -258,3 +227,55 @@ List of supported RPC methods.
 | Package                                                                  | Description
 | :----------------------------------------------------------------------- | :-----------
 | [github.com/lmittmann/flashbots](https://github.com/lmittmann/flashbots) | Package `flashbots` implements RPC API bindings for the Flashbots relay and mev-geth.
+
+
+## Custom RPC Method Bindings
+
+Custom RPC method bindings can be created by implementing the [`w3types.RPCCaller`](https://pkg.go.dev/github.com/lmittmann/w3/w3types#RPCCaller) interface.
+
+**Example:** RPC binding for the Otterscan `ots_getTransactionBySenderAndNonce` method ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3types#example-RPCCaller-GetTransactionBySenderAndNonce))
+
+```go
+// TxBySenderAndNonceFactory requests the senders transaction hash by the nonce.
+func TxBySenderAndNonceFactory(sender common.Address, nonce uint64) w3types.RPCCallerFactory[common.Hash] {
+    return &getTransactionBySenderAndNonceFactory{
+        sender: sender,
+        nonce:  nonce,
+    }
+}
+
+// getTransactionBySenderAndNonceFactory implements the w3types.RPCCaller and
+// w3types.RPCCallerFactory interfaces. It stores the method parameters and
+// the the reference to the return value.
+type getTransactionBySenderAndNonceFactory struct {
+    // params
+    sender common.Address
+    nonce  uint64
+
+    // returns
+    returns *common.Hash
+}
+
+// Returns sets the reference to the return value.
+func (f *getTransactionBySenderAndNonceFactory) Returns(txHash *common.Hash) w3types.RPCCaller {
+    f.returns = txHash
+    return f
+}
+
+// CreateRequest creates a batch request element for the Otterscan getTransactionBySenderAndNonce method.
+func (f *getTransactionBySenderAndNonceFactory) CreateRequest() (rpc.BatchElem, error) {
+    return rpc.BatchElem{
+        Method: "ots_getTransactionBySenderAndNonce",
+        Args:   []any{f.sender, f.nonce},
+        Result: f.returns,
+    }, nil
+}
+
+// HandleResponse handles the response of the Otterscan getTransactionBySenderAndNonce method.
+func (f *getTransactionBySenderAndNonceFactory) HandleResponse(elem rpc.BatchElem) error {
+    if err := elem.Error; err != nil {
+        return err
+    }
+    return nil
+}
+```

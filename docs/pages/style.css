@@ -4,7 +4,7 @@
 
 @layer base {
     main {
-        @apply dark:text-neutral-400;
+        @apply dark:text-neutral-300;
     }
 
     main strong,

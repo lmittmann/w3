@@ -14,7 +14,9 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/lmittmann/w3"
@@ -34,20 +36,32 @@ var (
 		`< [{"jsonrpc":"2.0","id":1,"result":"0x1"},{"jsonrpc":"2.0","id":2,"result":"0x1"}]`
 )
 
-func ExampleDial() {
+func ExampleClient() {
+	addr := w3.A("0x0000000000000000000000000000000000000000")
+
+	// 1. Connect to an RPC endpoint
 	client, err := w3.Dial("https://rpc.ankr.com/eth")
 	if err != nil {
-		// ...
+		// handle error
 	}
 	defer client.Close()
+
+	// 2. Make a batch request
+	var (
+		balance big.Int
+		nonce   uint64
+	)
+	if err := client.Call(
+		eth.Balance(addr, nil).Returns(&balance),
+		eth.Nonce(addr, nil).Returns(&nonce),
+	); err != nil {
+		// handle error
+	}
+
+	fmt.Printf("balance: %s\nnonce: %d\n", w3.FromWei(&balance, 18), nonce)
 }
 
-func ExampleMustDial() {
-	client := w3.MustDial("https://rpc.ankr.com/eth")
-	defer client.Close()
-}
-
-func ExampleClient_Call() {
+func ExampleClient_Call_balanceOf() {
 	// Connect to RPC endpoint (or panic on error) and
 	// close the connection when you are done.
 	client := w3.MustDial("https://rpc.ankr.com/eth")
@@ -101,6 +115,42 @@ func ExampleClient_Call_nonceAndBalance() {
 	}
 
 	fmt.Printf("%s: Nonce: %d, Balance: ♦%s\n", addr, nonce, w3.FromWei(&balance, 18))
+}
+
+func ExampleClient_Call_sendERC20transferTx() {
+	client := w3.MustDial("https://rpc.ankr.com/eth")
+	defer client.Close()
+
+	var (
+		weth9     = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+		receiver  = w3.A("0x000000000000000000000000000000000000c0Fe")
+		eoaPrv, _ = crypto.GenerateKey()
+	)
+
+	funcTransfer := w3.MustNewFunc("transfer(address receiver, uint256 amount)", "bool")
+	input, err := funcTransfer.EncodeArgs(receiver, w3.I("1 ether"))
+	if err != nil {
+		fmt.Printf("Failed to encode args: %v\n", err)
+		return
+	}
+
+	signer := types.LatestSigner(params.MainnetChainConfig)
+	var txHash common.Hash
+	if err := client.Call(
+		eth.SendTx(types.MustSignNewTx(eoaPrv, signer, &types.DynamicFeeTx{
+			Nonce:     0,
+			To:        &weth9,
+			Data:      input,
+			GasTipCap: w3.I("1 gwei"),
+			GasFeeCap: w3.I("100 gwei"),
+			Gas:       100_000,
+		})).Returns(&txHash),
+	); err != nil {
+		fmt.Printf("Failed to send tx: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Sent tx: %s\n", txHash)
 }
 
 func TestClientCall(t *testing.T) {
