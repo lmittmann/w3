@@ -1,5 +1,5 @@
-import { useRouter } from 'next/router'
 import Image from 'next/image'
+import { useConfig } from 'nextra-theme-docs'
 
 export default {
     logo: <>
@@ -8,12 +8,19 @@ export default {
         </div>
         <span className="text-2xl font-bold">w3</span>
     </>,
-    banner: {
-        text: '🚧 This site is currently under construction 🚧'
-    },
-    useNextSeoProps() {
-        const { pathname } = useRouter()
-        return { titleTemplate: pathname === '/' ? 'w3' : '%s – w3' }
+    head: () => {
+        const { frontMatter } = useConfig()
+        const title = frontMatter.title ? `${frontMatter.title} – w3` : 'w3'
+        return (
+            <>
+                <title>{title}</title>
+                <meta property="og:title" content={title} />
+                <meta
+                    property="og:description"
+                    content={frontMatter.description || 'w3'}
+                />
+            </>
+        )
     },
     footer: {
         component: null,
@@ -21,15 +28,12 @@ export default {
     project: {
         link: 'https://github.com/lmittmann/w3',
     },
-    editLink: {
-        text: 'Edit this page on GitHub'
-    },
     feedback: {
         content: null,
     },
     docsRepositoryBase: 'https://github.com/lmittmann/w3/blob/main/docs/pages',
-    primaryHue: {
-        dark: 189,
-        light: 191
-    }
+    color: {
+        hue: 189,
+        saturation: 100,
+    },
 }
