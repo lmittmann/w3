@@ -108,6 +108,9 @@ type CallFuncFactory struct {
 	// returns
 	result  []byte
 	returns []any
+
+	onSuccess func(v ...any)
+	onFailed  func(e error)
 }
 
 func (f *CallFuncFactory) Returns(returns ...any) w3types.RPCCaller {
@@ -115,6 +118,14 @@ func (f *CallFuncFactory) Returns(returns ...any) w3types.RPCCaller {
 	return f
 }
 
+func (f *CallFuncFactory) Success(cb func(v ...any)) *CallFuncFactory {
+	f.onSuccess = cb
+	return f
+}
+func (f *CallFuncFactory) Failed(cb func(e error)) *CallFuncFactory {
+	f.onFailed = cb
+	return f
+}
 func (f *CallFuncFactory) AtBlock(blockNumber *big.Int) *CallFuncFactory {
 	f.atBlock = blockNumber
 	return f
@@ -149,11 +160,20 @@ func (f *CallFuncFactory) CreateRequest() (rpc.BatchElem, error) {
 
 func (f *CallFuncFactory) HandleResponse(elem rpc.BatchElem) error {
 	if err := elem.Error; err != nil {
+		if f.onFailed != nil {
+			f.onFailed(err)
+		}
 		return err
 	}
 
 	if err := f.msg.Func.DecodeReturns(f.result, f.returns...); err != nil {
+		if f.onFailed != nil {
+			f.onFailed(err)
+		}
 		return err
+	}
+	if f.onSuccess != nil {
+		f.onSuccess(f.returns...)
 	}
 	return nil
 }
