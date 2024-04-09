@@ -31,7 +31,7 @@ export default {
     feedback: {
         content: null,
     },
-    docsRepositoryBase: 'https://github.com/lmittmann/w3/blob/main/docs/pages',
+    docsRepositoryBase: 'https://github.com/lmittmann/w3/blob/main/docs',
     color: {
         hue: 189,
         saturation: 100,
