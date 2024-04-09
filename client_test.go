@@ -153,6 +153,47 @@ func ExampleClient_Call_sendERC20transferTx() {
 	fmt.Printf("Sent tx: %s\n", txHash)
 }
 
+func ExampleCallErrors() {
+	client := w3.MustDial("https://rpc.ankr.com/eth")
+	defer client.Close()
+
+	funcSymbol := w3.MustNewFunc("symbol()", "string")
+
+	// list of addresses that might be an ERC20 token
+	potentialTokens := []common.Address{
+		w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+		w3.A("0x00000000219ab540356cBB839Cbe05303d7705Fa"),
+	}
+
+	// build symbol()-call for each potential ERC20 token
+	tokenSymbols := make([]string, len(potentialTokens))
+	rpcCalls := make([]w3types.RPCCaller, len(potentialTokens))
+	for i, addr := range potentialTokens {
+		rpcCalls[i] = eth.CallFunc(addr, funcSymbol).Returns(&tokenSymbols[i])
+	}
+
+	// execute batch request
+	var errs w3.CallErrors
+	if err := client.Call(rpcCalls...); errors.As(err, &errs) {
+	} else if err != nil {
+		fmt.Printf("Request failed: %v\n", err)
+		return
+	}
+	for i, addr := range potentialTokens {
+		var symbol string
+		if errs == nil || errs[i] == nil {
+			symbol = tokenSymbols[i]
+		} else {
+			symbol = fmt.Sprintf("unknown symbol: %v", errs[i].Error())
+		}
+		fmt.Printf("%s: %s\n", addr, symbol)
+	}
+
+	// Output:
+	// 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2: WETH
+	// 0x00000000219ab540356cBB839Cbe05303d7705Fa: unknown symbol: execution reverted
+}
+
 func TestClientCall(t *testing.T) {
 	tests := []struct {
 		Buf     *bytes.Buffer
