@@ -175,10 +175,13 @@ func ExampleCallErrors() {
 	// execute batch request
 	var errs w3.CallErrors
 	if err := client.Call(rpcCalls...); errors.As(err, &errs) {
+		// handle call errors
 	} else if err != nil {
+		// handle other errors
 		fmt.Printf("Request failed: %v\n", err)
 		return
 	}
+
 	for i, addr := range potentialTokens {
 		var symbol string
 		if errs == nil || errs[i] == nil {

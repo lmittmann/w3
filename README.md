@@ -52,8 +52,22 @@ if err := client.Call(
 ```
 
 > [!NOTE]
-> #### why send batch requests?
+> #### Why send batch requests?
 > Most of the time you need to call multiple RPC methods to get the data you need. When you make separate requests per RPC call you need a single round trip to the server for each call. This can be slow, especially for remote endpoints. Batching multiple RPC calls into a single request only requires a single round trip, and speeds up RPC calls significantly.
+
+#### Error Handling
+
+If one ore more calls in a batch request fail, `Client.Call` returns an error of type [`w3.CallErrors`](https://pkg.go.dev/github.com/lmittmann/w3#CallErrors).
+
+**Example:** Check which RPC calls failed in a batch request ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-CallErrors))
+```go
+var errs w3.CallErrors
+if err := client.Call(rpcCalls...); errors.As(err, &errs) {
+    // handle call errors
+} else if err != nil {
+    // handle other errors
+}
+```
 
 #### Learn More
 * List of supported [**RPC methods**](#rpc-methods)
