@@ -140,3 +140,6 @@ func (*db) Commit(collectLeaf bool) (common.Hash, *trienode.NodeSet, error) {
 func (*db) NodeIterator(startKey []byte) (trie.NodeIterator, error) { panic("not implemented") }
 
 func (*db) Prove(key []byte, proofDb ethdb.KeyValueWriter) error { panic("not implemented") }
+
+// NoTries returns whether the database has tries storage.
+func (*db) NoTries() bool { panic("not implemented") }

@@ -89,3 +89,7 @@ func (m multiEVMLogger) CaptureFault(pc uint64, op vm.OpCode, gas, cost uint64, 
 		tracer.CaptureFault(pc, op, gas, cost, scope, depth, err)
 	}
 }
+
+func (m multiEVMLogger) CaptureSystemTxEnd(intrinsicGas uint64) {
+
+}
