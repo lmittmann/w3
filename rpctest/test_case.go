@@ -54,6 +54,7 @@ func comp[T any](t *testing.T, wantVal, gotVal T, wantErr, gotErr error, opts ..
 	opts = append(opts,
 		cmp.AllowUnexported(big.Int{}, types.Transaction{}),
 		cmpopts.IgnoreFields(types.Transaction{}, "time", "hash", "size", "from"),
+		cmpopts.IgnoreFields(types.Block{}, "hash", "size"),
 		cmpopts.EquateEmpty(),
 	)
 	if diff := cmp.Diff(wantVal, gotVal, opts...); diff != "" {
