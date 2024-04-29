@@ -286,8 +286,7 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 }
 
 func (vm *VM) fetcherHashFunc(fetcher Fetcher) vm.GetHashFunc {
-	return func(n uint64) common.Hash {
-		blockNumber := new(big.Int).SetUint64(n)
+	return func(blockNumber uint64) common.Hash {
 		hash, _ := fetcher.HeaderHash(blockNumber)
 		return hash
 	}
@@ -390,8 +389,7 @@ func (opts *options) Init() error {
 }
 
 func fetcherHashFunc(fetcher Fetcher) vm.GetHashFunc {
-	return func(n uint64) common.Hash {
-		blockNumber := new(big.Int).SetUint64(n)
+	return func(blockNumber uint64) common.Hash {
 		hash, _ := fetcher.HeaderHash(blockNumber)
 		return hash
 	}
