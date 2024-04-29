@@ -16,14 +16,14 @@ func TestTraceTx(t *testing.T) {
 		{
 			Golden: "traceTx__1150000_0",
 			Call:   debug.TraceTx(w3.H("0x38f299591902bfada359527fa6b9b597a959c41c6f72a3b484807fbf52dc8abe"), nil),
-			WantRet: debug.Trace{
+			WantRet: &debug.Trace{
 				Gas: 22224,
 			},
 		},
 		{
 			Golden: "traceTx__12244000_0",
 			Call:   debug.TraceTx(w3.H("0xac503dd98281d4d52c2043e297a6e684d175339a7ebf831605fe593f01ce82c3"), &debug.TraceConfig{EnableStack: true, EnableMemory: true, EnableStorage: true, Limit: 3}),
-			WantRet: debug.Trace{
+			WantRet: &debug.Trace{
 				Gas: 46121,
 				StructLogs: []*debug.StructLog{
 					{Pc: 0, Op: vm.PUSH1, Gas: 228380, GasCost: 3, Depth: 1},
@@ -53,7 +53,7 @@ func TestTraceCall(t *testing.T) {
 			}, nil, &debug.TraceConfig{Overrides: w3types.State{
 				w3.A("0x000000000000000000000000000000000000c0Fe"): {Balance: w3.I("1 ether")},
 			}}),
-			WantRet: debug.Trace{
+			WantRet: &debug.Trace{
 				Gas: 21000,
 			},
 		},

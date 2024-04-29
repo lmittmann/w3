@@ -15,7 +15,7 @@ func TestContent(t *testing.T) {
 		{
 			Golden: "content",
 			Call:   txpool.Content(),
-			WantRet: txpool.ContentResponse{
+			WantRet: &txpool.ContentResponse{
 				Pending: map[common.Address][]*types.Transaction{
 					common.HexToAddress("0x000454307bB96E303044046a6eB2736D2aD560B6"): {
 						types.NewTx(&types.DynamicFeeTx{
@@ -60,7 +60,7 @@ func TestContentFrom(t *testing.T) {
 		{
 			Golden: "contentFrom",
 			Call:   txpool.ContentFrom(common.HexToAddress("0x1BA4Ca9ac6ff4CF192C11E8C1624563f302cAA87")),
-			WantRet: txpool.ContentFromResponse{
+			WantRet: &txpool.ContentFromResponse{
 				Queued: []*types.Transaction{
 					types.NewTx(&types.DynamicFeeTx{
 						ChainID:   big.NewInt(1),
@@ -82,4 +82,4 @@ func TestContentFrom(t *testing.T) {
 	rpctest.RunTestCases(t, tests)
 }
 
-func ptr[T any](x T) *T { return &x }
+func ptr[T any](v T) *T { return &v }

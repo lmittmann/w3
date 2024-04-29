@@ -66,9 +66,9 @@ func HeaderByNumber(number *big.Int) w3types.RPCCallerFactory[types.Header] {
 	)
 }
 
-var blockRetWrapper = func(ret *types.Block) any { return (*rpcBlock)(ret) }
+var blockRetWrapper = func(ret *types.Block) any { return &rpcBlock{ret} }
 
-type rpcBlock types.Block
+type rpcBlock struct{ *types.Block }
 
 func (b *rpcBlock) UnmarshalJSON(data []byte) error {
 	var header types.Header
@@ -84,9 +84,8 @@ func (b *rpcBlock) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	block := types.NewBlockWithHeader(&header).
+	*b.Block = *types.NewBlockWithHeader(&header).
 		WithBody(blockExtraData.Transactions, nil).
 		WithWithdrawals(blockExtraData.Withdrawals)
-	*b = (rpcBlock)(*block)
 	return nil
 }

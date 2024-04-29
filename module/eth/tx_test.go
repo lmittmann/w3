@@ -33,7 +33,7 @@ func TestTx(t *testing.T) {
 		{
 			Golden: "get_transaction_by_hash__type0",
 			Call:   eth.Tx(w3.H("0x2ecd08e86079f08cfc27c326aa01b1c8d62f288d5961118056bac7da315f94d9")),
-			WantRet: *types.NewTx(&types.LegacyTx{
+			WantRet: types.NewTx(&types.LegacyTx{
 				Nonce:    3292,
 				GasPrice: w3.I("1559 gwei"),
 				Gas:      21000,
@@ -46,7 +46,7 @@ func TestTx(t *testing.T) {
 		{
 			Golden:  "get_transaction_by_hash__type2",
 			Call:    eth.Tx(w3.H("0xed382cb554ad10e94921d263a56c670669d6c380bbdacdbf96fed625b7132a1d")),
-			WantRet: *type2Tx,
+			WantRet: type2Tx,
 		},
 		{
 			Golden:  "get_transaction_by_hash__0x00",
@@ -66,7 +66,7 @@ func TestTxByBlockHashAndIndex(t *testing.T) {
 		{
 			Golden:  "get_transaction_by_block_hash_and_index",
 			Call:    eth.TxByBlockHashAndIndex(w3.H("0xa32d159805750cbe428b799a49b85dcb2300f61d806786f317260e721727d162"), 98),
-			WantRet: *type2Tx,
+			WantRet: type2Tx,
 		},
 		{
 			Golden:  "get_transaction_by_block_hash_and_index__300",
@@ -86,7 +86,7 @@ func TestTxByBlockNumberAndIndex(t *testing.T) {
 		{
 			Golden:  "get_transaction_by_block_number_and_index",
 			Call:    eth.TxByBlockNumberAndIndex(big.NewInt(12965001), 98),
-			WantRet: *type2Tx,
+			WantRet: type2Tx,
 		},
 	}
 
@@ -101,7 +101,7 @@ func TestSendTx(t *testing.T) {
 		{
 			Golden:  "send_raw_transaction",
 			Call:    eth.SendTx(type2Tx),
-			WantRet: w3.H("0xed382cb554ad10e94921d263a56c670669d6c380bbdacdbf96fed625b7132a1d"),
+			WantRet: ptr(w3.H("0xed382cb554ad10e94921d263a56c670669d6c380bbdacdbf96fed625b7132a1d")),
 		},
 	}
 
@@ -113,7 +113,7 @@ func TestTxReceipt(t *testing.T) {
 		{
 			Golden: "get_transaction_receipt",
 			Call:   eth.TxReceipt(w3.H("0xed382cb554ad10e94921d263a56c670669d6c380bbdacdbf96fed625b7132a1d")),
-			WantRet: types.Receipt{
+			WantRet: &types.Receipt{
 				Type:              2,
 				Status:            types.ReceiptStatusSuccessful,
 				CumulativeGasUsed: 8726063,
@@ -157,7 +157,7 @@ func TestBlockReceipts(t *testing.T) {
 		{
 			Golden: "get_block_receipts",
 			Call:   eth.BlockReceipts(big.NewInt(0xc0fe)),
-			WantRet: types.Receipts{
+			WantRet: &types.Receipts{
 				{
 					Type:              2,
 					Status:            types.ReceiptStatusSuccessful,
@@ -198,7 +198,7 @@ func TestNonce(t *testing.T) {
 		{
 			Golden:  "get_transaction_count",
 			Call:    eth.Nonce(w3.A("0x000000000000000000000000000000000000c0Fe"), nil),
-			WantRet: 1,
+			WantRet: ptr[uint64](1),
 		},
 	}
 

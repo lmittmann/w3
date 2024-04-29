@@ -25,7 +25,7 @@ func TestCall(t *testing.T) {
 				Func: funcBalanceOf,
 				Args: []any{w3.A("0x000000000000000000000000000000000000c0Fe")},
 			}, nil, nil),
-			WantRet: common.BigToHash(big.NewInt(0)).Bytes(),
+			WantRet: ptr(make([]byte, 32)),
 		},
 		{
 			Golden: "call_func__overrides",
@@ -40,7 +40,7 @@ func TestCall(t *testing.T) {
 					},
 				},
 			}),
-			WantRet: common.BigToHash(big.NewInt(42)).Bytes(),
+			WantRet: ptr(common.BigToHash(big.NewInt(42)).Bytes()),
 		},
 	}
 
@@ -77,7 +77,7 @@ func TestEstimateGas(t *testing.T) {
 				Func: funcBalanceOf,
 				Args: []any{w3.A("0x000000000000000000000000000000000000c0Fe")},
 			}, nil),
-			WantRet: 23750,
+			WantRet: ptr[uint64](23750),
 		},
 	}
 
@@ -93,7 +93,7 @@ func TestAccessList(t *testing.T) {
 				Func: funcBalanceOf,
 				Args: []any{w3.A("0x000000000000000000000000000000000000c0Fe")},
 			}, nil),
-			WantRet: eth.AccessListResponse{
+			WantRet: &eth.AccessListResponse{
 				AccessList: types.AccessList{
 					{
 						Address: w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),

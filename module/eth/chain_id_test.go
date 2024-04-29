@@ -12,7 +12,7 @@ func TestChainID(t *testing.T) {
 		{
 			Golden:  "chain_id",
 			Call:    eth.ChainID(),
-			WantRet: 1,
+			WantRet: ptr[uint64](1),
 		},
 	}
 

@@ -14,7 +14,7 @@ func TestGasPrice(t *testing.T) {
 		{
 			Golden:  "gas_price",
 			Call:    eth.GasPrice(),
-			WantRet: *w3.I("0xc0fe"),
+			WantRet: w3.I("0xc0fe"),
 		},
 	}
 

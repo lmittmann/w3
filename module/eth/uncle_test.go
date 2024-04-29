@@ -11,7 +11,7 @@ import (
 	"github.com/lmittmann/w3/rpctest"
 )
 
-var header15050036 = types.Header{
+var header15050036 = &types.Header{
 	BaseFee:     big.NewInt(0xa688e9452),
 	Difficulty:  big.NewInt(0x3252ebd268b855),
 	Extra:       w3.B("0x466c6578706f6f6c2f53302f484b202d20546f726f6e746f"),
@@ -74,7 +74,7 @@ func TestUncleCountByBlockHash(t *testing.T) {
 		{
 			Golden:  "uncle_count_by_hash__15050036",
 			Call:    eth.UncleCountByBlockHash(w3.H("0x7a98a492c1288a8451905bc665cb28d45fbdf8913c34d4ad756acb0609342e67")),
-			WantRet: 1,
+			WantRet: ptr[uint](1),
 		},
 	}
 
@@ -86,7 +86,7 @@ func TestUncleCountByBlockNumber(t *testing.T) {
 		{
 			Golden:  "uncle_count_by_number__15050036",
 			Call:    eth.UncleCountByBlockNumber(big.NewInt(15050036)),
-			WantRet: 1,
+			WantRet: ptr[uint](1),
 		},
 	}
 

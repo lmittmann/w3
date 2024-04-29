@@ -13,7 +13,7 @@ func TestClientVersion(t *testing.T) {
 		{
 			Golden:  "client_version",
 			Call:    web3.ClientVersion(),
-			WantRet: "Geth",
+			WantRet: ptr("Geth"),
 		},
 		{
 			Golden:  "client_version__err",
@@ -24,3 +24,5 @@ func TestClientVersion(t *testing.T) {
 
 	rpctest.RunTestCases(t, tests)
 }
+
+func ptr[T any](v T) *T { return &v }

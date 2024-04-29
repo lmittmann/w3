@@ -16,8 +16,7 @@ import (
 type TestCase[T any] struct {
 	Golden  string                      // File name in local "testdata/" directory without ".golden" extension
 	Call    w3types.RPCCallerFactory[T] // Call to test
-	GotRet  T                           // Actual return value of the call
-	WantRet T                           // Wanted return value of the call
+	WantRet *T                          // Wanted return value of the call
 	WantErr error                       // Wanted error of the call
 }
 
@@ -34,13 +33,14 @@ func RunTestCases[T any](t *testing.T, tests []TestCase[T], opts ...cmp.Option) 
 			client := w3.MustDial(srv.URL())
 			defer client.Close()
 
-			gotErr := client.Call(test.Call.Returns(&test.GotRet))
-			comp(t, test.WantRet, test.GotRet, test.WantErr, gotErr, opts...)
+			gotRet := new(T)
+			gotErr := client.Call(test.Call.Returns(gotRet))
+			comp(t, test.WantRet, gotRet, test.WantErr, gotErr, opts...)
 		})
 	}
 }
 
-func comp[T any](t *testing.T, wantVal, gotVal T, wantErr, gotErr error, opts ...cmp.Option) {
+func comp[T any](t *testing.T, wantVal, gotVal *T, wantErr, gotErr error, opts ...cmp.Option) {
 	t.Helper()
 
 	// compare errors
@@ -49,10 +49,13 @@ func comp[T any](t *testing.T, wantVal, gotVal T, wantErr, gotErr error, opts ..
 	); diff != "" {
 		t.Fatalf("Err: (-want, +got)\n%s", diff)
 	}
+	if wantErr != nil {
+		return
+	}
 
 	// compare values
 	opts = append(opts,
-		cmp.AllowUnexported(big.Int{}, types.Transaction{}),
+		cmp.AllowUnexported(big.Int{}, types.Transaction{}, types.Block{}),
 		cmpopts.IgnoreFields(types.Transaction{}, "time", "hash", "size", "from"),
 		cmpopts.IgnoreFields(types.Block{}, "hash", "size"),
 		cmpopts.EquateEmpty(),

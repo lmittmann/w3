@@ -13,7 +13,7 @@ func TestCode(t *testing.T) {
 		{
 			Golden:  "get_code",
 			Call:    eth.Code(w3.A("0x000000000000000000000000000000000000c0DE"), nil),
-			WantRet: w3.B("0xdeadbeef"),
+			WantRet: ptr(w3.B("0xdeadbeef")),
 		},
 	}
 
