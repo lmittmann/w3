@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3/internal/crypto"
 	"github.com/lmittmann/w3/internal/hexutil"
@@ -94,6 +96,169 @@ func ethStorageAt(addr common.Address, slot uint256.Int, blockNumber *big.Int) w
 		[]any{addr, hexutil.U256(slot), module.BlockNumberArg(blockNumber)},
 		module.WithRetWrapper(func(ret *uint256.Int) any { return (*hexutil.U256)(ret) }),
 	)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// tracing.Hook's //////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// joinHooks joins multiple hooks into one.
+func joinHooks(hooks []*tracing.Hooks) *tracing.Hooks {
+	// hot path
+	switch len(hooks) {
+	case 0:
+		return nil
+	case 1:
+		return hooks[0]
+	}
+
+	// vm hooks
+	var onTxStarts []tracing.TxStartHook
+	var onTxEnds []tracing.TxEndHook
+	var onEnters []tracing.EnterHook
+	var onExits []tracing.ExitHook
+	var onOpcodes []tracing.OpcodeHook
+	var onFaults []tracing.FaultHook
+	var onGasChanges []tracing.GasChangeHook
+	// state hooks
+	var onBalanceChanges []tracing.BalanceChangeHook
+	var onNonceChanges []tracing.NonceChangeHook
+	var onCodeChanges []tracing.CodeChangeHook
+	var onStorageChanges []tracing.StorageChangeHook
+	var onLogs []tracing.LogHook
+
+	for _, h := range hooks {
+		if h == nil {
+			continue
+		}
+		// vm hooks
+		if h.OnTxStart != nil {
+			onTxStarts = append(onTxStarts, h.OnTxStart)
+		}
+		if h.OnTxEnd != nil {
+			onTxEnds = append(onTxEnds, h.OnTxEnd)
+		}
+		if h.OnEnter != nil {
+			onEnters = append(onEnters, h.OnEnter)
+		}
+		if h.OnExit != nil {
+			onExits = append(onExits, h.OnExit)
+		}
+		if h.OnOpcode != nil {
+			onOpcodes = append(onOpcodes, h.OnOpcode)
+		}
+		if h.OnFault != nil {
+			onFaults = append(onFaults, h.OnFault)
+		}
+		if h.OnGasChange != nil {
+			onGasChanges = append(onGasChanges, h.OnGasChange)
+		}
+		// state hooks
+		if h.OnBalanceChange != nil {
+			onBalanceChanges = append(onBalanceChanges, h.OnBalanceChange)
+		}
+		if h.OnNonceChange != nil {
+			onNonceChanges = append(onNonceChanges, h.OnNonceChange)
+		}
+		if h.OnCodeChange != nil {
+			onCodeChanges = append(onCodeChanges, h.OnCodeChange)
+		}
+		if h.OnStorageChange != nil {
+			onStorageChanges = append(onStorageChanges, h.OnStorageChange)
+		}
+		if h.OnLog != nil {
+			onLogs = append(onLogs, h.OnLog)
+		}
+	}
+
+	hook := new(tracing.Hooks)
+	// vm hooks
+	if len(onTxStarts) > 0 {
+		hook.OnTxStart = func(vm *tracing.VMContext, tx *types.Transaction, from common.Address) {
+			for _, h := range onTxStarts {
+				h(vm, tx, from)
+			}
+		}
+	}
+	if len(onTxEnds) > 0 {
+		hook.OnTxEnd = func(receipt *types.Receipt, err error) {
+			for _, h := range onTxEnds {
+				h(receipt, err)
+			}
+		}
+	}
+	if len(onEnters) > 0 {
+		hook.OnEnter = func(depth int, typ byte, from, to common.Address, input []byte, gas uint64, value *big.Int) {
+			for _, h := range onEnters {
+				h(depth, typ, from, to, input, gas, value)
+			}
+		}
+	}
+	if len(onExits) > 0 {
+		hook.OnExit = func(depth int, output []byte, gasUsed uint64, err error, reverted bool) {
+			for _, h := range onExits {
+				h(depth, output, gasUsed, err, reverted)
+			}
+		}
+	}
+	if len(onOpcodes) > 0 {
+		hook.OnOpcode = func(pc uint64, op byte, gas, cost uint64, scope tracing.OpContext, rData []byte, depth int, err error) {
+			for _, h := range onOpcodes {
+				h(pc, op, gas, cost, scope, rData, depth, err)
+			}
+		}
+	}
+	if len(onFaults) > 0 {
+		hook.OnFault = func(pc uint64, op byte, gas, cost uint64, scope tracing.OpContext, depth int, err error) {
+			for _, h := range onFaults {
+				h(pc, op, gas, cost, scope, depth, err)
+			}
+		}
+	}
+	if len(onGasChanges) > 0 {
+		hook.OnGasChange = func(old, new uint64, reason tracing.GasChangeReason) {
+			for _, h := range onGasChanges {
+				h(old, new, reason)
+			}
+		}
+	}
+	// state hooks
+	if len(onBalanceChanges) > 0 {
+		hook.OnBalanceChange = func(addr common.Address, prev, new *big.Int, reason tracing.BalanceChangeReason) {
+			for _, h := range onBalanceChanges {
+				h(addr, prev, new, reason)
+			}
+		}
+	}
+	if len(onNonceChanges) > 0 {
+		hook.OnNonceChange = func(addr common.Address, prev, new uint64) {
+			for _, h := range onNonceChanges {
+				h(addr, prev, new)
+			}
+		}
+	}
+	if len(onCodeChanges) > 0 {
+		hook.OnCodeChange = func(addr common.Address, prevCodeHash common.Hash, prevCode []byte, codeHash common.Hash, code []byte) {
+			for _, h := range onCodeChanges {
+				h(addr, prevCodeHash, prevCode, codeHash, code)
+			}
+		}
+	}
+	if len(onStorageChanges) > 0 {
+		hook.OnStorageChange = func(addr common.Address, slot, prev, new common.Hash) {
+			for _, h := range onStorageChanges {
+				h(addr, slot, prev, new)
+			}
+		}
+	}
+	if len(onLogs) > 0 {
+		hook.OnLog = func(log *types.Log) {
+			for _, h := range onLogs {
+				h(log)
+			}
+		}
+	}
+	return hook
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

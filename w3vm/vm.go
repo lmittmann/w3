@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core"
 	gethState "github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -59,7 +60,7 @@ func New(opts ...Option) (*VM, error) {
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
 		if acc.Balance != nil {
-			vm.db.SetBalance(addr, uint256.MustFromBig(acc.Balance))
+			vm.db.SetBalance(addr, uint256.MustFromBig(acc.Balance), tracing.BalanceIncreaseGenesisBalance)
 		}
 		if acc.Code != nil {
 			vm.db.SetCode(addr, acc.Code)
@@ -71,22 +72,22 @@ func New(opts ...Option) (*VM, error) {
 	return vm, nil
 }
 
-// Apply the given message to the VM and return its receipt. Multiple tracers
+// Apply the given message to the VM and return its receipt. Multiple tracing hooks
 // can be given to trace the execution of the message.
-func (vm *VM) Apply(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
-	return vm.apply(msg, false, newMultiEVMLogger(tracers))
+func (vm *VM) Apply(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, error) {
+	return vm.apply(msg, false, joinHooks(hooks))
 }
 
 // ApplyTx is like [VM.Apply], but takes a transaction instead of a message.
-func (vm *VM) ApplyTx(tx *types.Transaction, tracers ...vm.EVMLogger) (*Receipt, error) {
+func (vm *VM) ApplyTx(tx *types.Transaction, hooks ...*tracing.Hooks) (*Receipt, error) {
 	msg, err := new(w3types.Message).SetTx(tx, vm.opts.Signer())
 	if err != nil {
 		return nil, err
 	}
-	return vm.Apply(msg, tracers...)
+	return vm.Apply(msg, hooks...)
 }
 
-func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Receipt, error) {
+func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Receipt, error) {
 	if v.db.Error() != nil {
 		return nil, ErrFetch
 	}
@@ -103,7 +104,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
 	evm := vm.NewEVM(*v.opts.blockCtx, *txCtx, v.db, v.opts.chainConfig, vm.Config{
-		Tracer:    tracer,
+		Tracer:    hooks,
 		NoBaseFee: v.opts.noBaseFee || isCall,
 	})
 
@@ -146,10 +147,10 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, tracer vm.EVMLogger) (*Rec
 }
 
 // Call calls the given message on the VM and returns a receipt. Any state changes
-// of a call are reverted. Multiple tracers can be passed to trace the execution
+// of a call are reverted. Multiple tracing hooks can be passed to trace the execution
 // of the message.
-func (vm *VM) Call(msg *w3types.Message, tracers ...vm.EVMLogger) (*Receipt, error) {
-	return vm.apply(msg, true, newMultiEVMLogger(tracers))
+func (vm *VM) Call(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, error) {
+	return vm.apply(msg, true, joinHooks(hooks))
 }
 
 // CallFunc is a utility function for [VM.Call] that calls the given function
