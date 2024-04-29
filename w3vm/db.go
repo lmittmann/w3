@@ -11,10 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/trie/trienode"
 	"github.com/ethereum/go-ethereum/triedb"
 	"github.com/holiman/uint256"
-	"github.com/lmittmann/w3/internal/crypto"
 )
-
-var errNotFound = errors.New("not found")
 
 // db implements the [state.Database] and [state.Trie] interfaces.
 type db struct {
@@ -44,9 +41,9 @@ func (db *db) ContractCode(addr common.Address, codeHash common.Hash) ([]byte, e
 		return []byte{}, nil
 	}
 
-	code, err := db.fetcher.Code(addr)
+	code, err := db.fetcher.Code(codeHash)
 	if err != nil {
-		return nil, errNotFound
+		return nil, errors.New("not found")
 	}
 	return code, nil
 }
@@ -90,31 +87,7 @@ func (db *db) GetAccount(addr common.Address) (*types.StateAccount, error) {
 		}, nil
 	}
 
-	nonce, err := db.fetcher.Nonce(addr)
-	if err != nil {
-		return nil, err
-	}
-	balance, err := db.fetcher.Balance(addr)
-	if err != nil {
-		return nil, err
-	}
-	code, err := db.fetcher.Code(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	var codeHash []byte
-	if len(code) == 0 {
-		codeHash = types.EmptyCodeHash[:]
-	} else {
-		codeHash = crypto.Keccak256(code)
-	}
-
-	return &types.StateAccount{
-		Nonce:    nonce,
-		Balance:  uint256.MustFromBig(balance),
-		CodeHash: codeHash,
-	}, nil
+	return db.fetcher.Account(addr)
 }
 
 func (*db) UpdateStorage(addr common.Address, key, value []byte) error { panic("not implemented") }
