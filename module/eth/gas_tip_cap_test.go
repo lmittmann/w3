@@ -14,7 +14,7 @@ func TestGasTipCap(t *testing.T) {
 		{
 			Golden:  "gas_tip_cap",
 			Call:    eth.GasTipCap(),
-			WantRet: *w3.I("0xc0fe"),
+			WantRet: w3.I("0xc0fe"),
 		},
 	}
 

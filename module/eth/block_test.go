@@ -3,13 +3,10 @@ package eth_test
 import (
 	"errors"
 	"math/big"
-	"sync/atomic"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/rpctest"
@@ -20,7 +17,7 @@ func TestBlockByHash(t *testing.T) {
 		{
 			Golden: "get_block_by_hash__1",
 			Call:   eth.BlockByHash(w3.H("0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6")),
-			WantRet: *types.NewBlockWithHeader(&types.Header{
+			WantRet: types.NewBlockWithHeader(&types.Header{
 				ParentHash:  w3.H("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
 				Coinbase:    w3.A("0x05a56E2D52c817161883f50c441c3228CFe54d9f"),
@@ -41,7 +38,7 @@ func TestBlockByHash(t *testing.T) {
 		{
 			Golden: "get_block_by_hash__46147",
 			Call:   eth.BlockByHash(w3.H("0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1bdd")),
-			WantRet: *types.NewBlockWithHeader(&types.Header{
+			WantRet: types.NewBlockWithHeader(&types.Header{
 				ParentHash:  w3.H("0x5a41d0e66b4120775176c09fcf39e7c0520517a13d2b57b18d33d342df038bfc"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
 				Coinbase:    w3.A("0xe6A7a1d47ff21B6321162AEA7C6CB457D5476Bca"),
@@ -80,7 +77,7 @@ func TestBlockByHash(t *testing.T) {
 		{
 			Golden: "get_block_by_hash__18000000",
 			Call:   eth.BlockByHash(w3.H("0x95b198e154acbfc64109dfd22d8224fe927fd8dfdedfae01587674482ba4baf3")),
-			WantRet: *types.NewBlockWithHeader(&types.Header{
+			WantRet: types.NewBlockWithHeader(&types.Header{
 				BaseFee:         w3.I("0x50ead8e39"),
 				Difficulty:      w3.I("0x0"),
 				Extra:           w3.B("0x496c6c756d696e61746520446d6f63726174697a6520447374726962757465"),
@@ -104,10 +101,9 @@ func TestBlockByHash(t *testing.T) {
 		},
 	}
 
-	rpctest.RunTestCases(t, tests,
-		cmp.AllowUnexported(types.Block{}, types.Transaction{}, atomic.Value{}),
-		cmpopts.IgnoreFields(types.Transaction{}, "time"),
-	)
+	rpctest.RunTestCases(t, tests) // cmp.AllowUnexported(types.Block{}, types.Transaction{}, atomic.Value{}),
+	// cmpopts.IgnoreFields(types.Transaction{}, "time"),
+
 }
 
 func TestBlockByNumber(t *testing.T) {
@@ -115,7 +111,7 @@ func TestBlockByNumber(t *testing.T) {
 		{
 			Golden: "get_block_by_number__1",
 			Call:   eth.BlockByNumber(big.NewInt(1)),
-			WantRet: *types.NewBlockWithHeader(&types.Header{
+			WantRet: types.NewBlockWithHeader(&types.Header{
 				ParentHash:  w3.H("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
 				Coinbase:    w3.A("0x05a56E2D52c817161883f50c441c3228CFe54d9f"),
@@ -136,7 +132,7 @@ func TestBlockByNumber(t *testing.T) {
 		{
 			Golden: "get_block_by_number__46147",
 			Call:   eth.BlockByNumber(big.NewInt(46147)),
-			WantRet: *types.NewBlockWithHeader(&types.Header{
+			WantRet: types.NewBlockWithHeader(&types.Header{
 				ParentHash:  w3.H("0x5a41d0e66b4120775176c09fcf39e7c0520517a13d2b57b18d33d342df038bfc"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
 				Coinbase:    w3.A("0xe6A7a1d47ff21B6321162AEA7C6CB457D5476Bca"),
@@ -174,10 +170,9 @@ func TestBlockByNumber(t *testing.T) {
 		},
 	}
 
-	rpctest.RunTestCases(t, tests,
-		cmp.AllowUnexported(types.Block{}, types.Transaction{}, atomic.Value{}),
-		cmpopts.IgnoreFields(types.Transaction{}, "time"),
-	)
+	rpctest.RunTestCases(t, tests) // cmp.AllowUnexported(types.Block{}, types.Transaction{}),
+	// cmpopts.IgnoreFields(types.Transaction{}, "time"),
+
 }
 
 func TestBlockTxCountByHash(t *testing.T) {
@@ -185,7 +180,7 @@ func TestBlockTxCountByHash(t *testing.T) {
 		{
 			Golden:  "block_transaction_count_by_hash__15050000",
 			Call:    eth.BlockTxCountByHash(w3.H("0xc43d35f6a64f8a64f046c8deb4069572d622dfe7f028f62301b186f08f0e96f2")),
-			WantRet: 32,
+			WantRet: ptr[uint](32),
 		},
 		{
 			Golden:  "block_transaction_count_by_hash__0x00",
@@ -202,7 +197,7 @@ func TestBlockTxCountByNumber(t *testing.T) {
 		{
 			Golden:  "block_transaction_count_by_number__15050000",
 			Call:    eth.BlockTxCountByNumber(big.NewInt(15050000)),
-			WantRet: 32,
+			WantRet: ptr[uint](32),
 		},
 	}
 
@@ -214,7 +209,7 @@ func TestHeaderByHash(t *testing.T) {
 		{
 			Golden: "get_block_by_hash__12965000",
 			Call:   eth.HeaderByHash(w3.H("0x9b83c12c69edb74f6c8dd5d052765c1adf940e320bd1291696e6fa07829eee71")),
-			WantRet: types.Header{
+			WantRet: &types.Header{
 				ParentHash:  w3.H("0x3de6bb3849a138e6ab0b83a3a00dc7433f1e83f7fd488e4bba78f2fe2631a633"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
 				Coinbase:    w3.A("0x7777788200B672A42421017F65EDE4Fc759564C8"),
@@ -243,7 +238,7 @@ func TestHeaderByNumber(t *testing.T) {
 		{
 			Golden: "get_block_by_number__12965000",
 			Call:   eth.HeaderByNumber(big.NewInt(12965000)),
-			WantRet: types.Header{
+			WantRet: &types.Header{
 				ParentHash:  w3.H("0x3de6bb3849a138e6ab0b83a3a00dc7433f1e83f7fd488e4bba78f2fe2631a633"),
 				UncleHash:   w3.H("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
 				Coinbase:    w3.A("0x7777788200B672A42421017F65EDE4Fc759564C8"),

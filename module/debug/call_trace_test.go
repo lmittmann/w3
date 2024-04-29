@@ -20,7 +20,7 @@ func TestCallTraceTx(t *testing.T) {
 			}, nil, w3types.State{
 				w3.A("0x000000000000000000000000000000000000c0Fe"): {Balance: w3.I("1 ether")},
 			}),
-			WantRet: debug.CallTrace{
+			WantRet: &debug.CallTrace{
 				From:  w3.A("0x000000000000000000000000000000000000c0Fe"),
 				To:    w3.A("0x000000000000000000000000000000000000dEaD"),
 				Type:  "CALL",

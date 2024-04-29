@@ -12,7 +12,7 @@ func TestStatus(t *testing.T) {
 		{
 			Golden:  "status",
 			Call:    txpool.Status(),
-			WantRet: txpool.StatusResponse{Pending: 10, Queued: 7},
+			WantRet: &txpool.StatusResponse{Pending: 10, Queued: 7},
 		},
 	}
 

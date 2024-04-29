@@ -14,7 +14,7 @@ func TestBlockNumber(t *testing.T) {
 		{
 			Golden:  "block_number",
 			Call:    eth.BlockNumber(),
-			WantRet: *w3.I("0xc0fe"),
+			WantRet: w3.I("0xc0fe"),
 		},
 	}
 
