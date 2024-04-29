@@ -31,7 +31,7 @@ var allEthashProtocolChanges = &params.ChainConfig{
 	GrayGlacierBlock:              new(big.Int),
 	MergeNetsplitBlock:            nil,
 	ShanghaiTime:                  &uint0,
-	CancunTime:                    nil,
+	CancunTime:                    &uint0,
 	PragueTime:                    nil,
 	VerkleTime:                    nil,
 	TerminalTotalDifficulty:       nil,
