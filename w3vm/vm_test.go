@@ -393,7 +393,6 @@ func TestVMApply_Integration(t *testing.T) {
 	}
 
 	for _, number := range blocks {
-		number := number
 		t.Run(number.String(), func(t *testing.T) {
 			t.Parallel()
 
@@ -487,7 +486,7 @@ func BenchmarkTransferWETH9(b *testing.B) {
 		)
 
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for i := range b.N {
 			_, err := vm.Apply(&w3types.Message{
 				From:  addr0,
 				To:    &addrWETH,
@@ -507,7 +506,7 @@ func BenchmarkTransferWETH9(b *testing.B) {
 		stateDB.SetState(addrWETH, w3vm.WETHBalanceSlot(addr0), common.BigToHash(w3.I("1 ether")))
 
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for i := range b.N {
 			msg := &core.Message{
 				To:                &addrWETH,
 				From:              addr0,

@@ -254,8 +254,6 @@ func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 	defer f.mux3.Unlock()
 
 	for addr, acc := range s.Accounts {
-		addr, acc := addr, acc // NOTE: can be dropped when Go 1.22 is used
-
 		var codeHash common.Hash
 		if len(acc.Code) > 0 {
 			codeHash = crypto.Keccak256Hash(acc.Code)
@@ -276,13 +274,11 @@ func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 			}
 		}
 		for slot, val := range acc.Storage {
-			slot, val := slot, val // NOTE: can be dropped when Go 1.22 is used
 			f.storage[storageKey{addr, (common.Hash)(slot)}] = func() (common.Hash, error) {
 				return (common.Hash)(val), nil
 			}
 		}
 		for blockNumber, hash := range s.HeaderHashes {
-			blockNumber, hash := blockNumber, hash // NOTE: can be dropped when Go 1.22 is used
 			f.headerHashes[uint64(blockNumber)] = func() (common.Hash, error) {
 				return hash, nil
 			}

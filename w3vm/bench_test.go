@@ -75,7 +75,7 @@ func BenchmarkVM(b *testing.B) {
 		b.Fatalf("Failed to build VM for block %s: %v", block.Number(), err)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		if txI >= block.Transactions().Len() {
 			blockI = (blockI + 1) % len(blocks)
 			txI = 0

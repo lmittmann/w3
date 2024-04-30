@@ -286,7 +286,7 @@ func getTbFilepath(tb testing.TB) string {
 	tn := strings.SplitN(tb.Name(), "/", 2)[0]
 
 	// Find the test function in the call stack. Don't go deeper than 32 frames.
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		pc, file, _, ok := runtime.Caller(i)
 		if !ok {
 			break
