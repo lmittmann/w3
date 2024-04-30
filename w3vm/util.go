@@ -86,16 +86,16 @@ func ethBalance(addr common.Address, blockNumber *big.Int) w3types.RPCCallerFact
 	return module.NewFactory(
 		"eth_getBalance",
 		[]any{addr, module.BlockNumberArg(blockNumber)},
-		module.WithRetWrapper(func(ret *uint256.Int) any { return (*w3hexutil.U256)(ret) }),
+		module.WithRetWrapper(func(ret *uint256.Int) any { return (*hexutil.U256)(ret) }),
 	)
 }
 
 // ethStorageAt is like [eth.StorageAt], but returns the storage value as [uint256.Int].
-func ethStorageAt(addr common.Address, slot uint256.Int, blockNumber *big.Int) w3types.RPCCallerFactory[uint256.Int] {
+func ethStorageAt(addr common.Address, slot common.Hash, blockNumber *big.Int) w3types.RPCCallerFactory[common.Hash] {
 	return module.NewFactory(
 		"eth_getStorageAt",
-		[]any{addr, w3hexutil.U256(slot), module.BlockNumberArg(blockNumber)},
-		module.WithRetWrapper(func(ret *uint256.Int) any { return (*w3hexutil.U256)(ret) }),
+		[]any{addr, slot, module.BlockNumberArg(blockNumber)},
+		module.WithRetWrapper(func(ret *common.Hash) any { return (*w3hexutil.Hash)(ret) }),
 	)
 }
 
