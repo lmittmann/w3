@@ -331,6 +331,12 @@ func (opt *options) Signer() types.Signer {
 }
 
 func (opts *options) Init() error {
+	// set initial chain config
+	isChainConfigSet := opts.chainConfig != nil
+	if !isChainConfigSet {
+		opts.chainConfig = allEthashProtocolChanges
+	}
+
 	// set fetcher
 	if opts.fetcher == nil && opts.forkClient != nil {
 		var calls []w3types.RPCCaller
@@ -362,13 +368,9 @@ func (opts *options) Init() error {
 		}
 	}
 
-	// set chain config
-	if opts.chainConfig == nil {
-		if opts.fetcher != nil {
-			opts.chainConfig = params.MainnetChainConfig
-		} else {
-			opts.chainConfig = allEthashProtocolChanges
-		}
+	// potentially update chain config
+	if !isChainConfigSet && opts.fetcher != nil {
+		opts.chainConfig = params.MainnetChainConfig
 	}
 
 	if opts.blockCtx == nil {
