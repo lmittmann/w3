@@ -285,13 +285,6 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		nil
 }
 
-func (vm *VM) fetcherHashFunc(fetcher Fetcher) vm.GetHashFunc {
-	return func(blockNumber uint64) common.Hash {
-		hash, _ := fetcher.HeaderHash(blockNumber)
-		return hash
-	}
-}
-
 func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
 	var random *common.Hash
 	if h.Difficulty == nil || h.Difficulty.Sign() == 0 {
