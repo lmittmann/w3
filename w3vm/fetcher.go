@@ -211,6 +211,11 @@ func NewTestingRPCFetcher(tb testing.TB, chainID uint64, client *w3.Client, bloc
 	return fetcher
 }
 
+var (
+	globalStateStoreMux sync.RWMutex
+	globalStateStore    = make(map[string]*state)
+)
+
 func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 	dir := getTbFilepath(tb)
 	fn := filepath.Join(dir,
@@ -219,17 +224,26 @@ func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 		fmt.Sprintf("%d_%v.json", chainID, f.blockNumber),
 	)
 
-	file, err := os.Open(fn)
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	} else if err != nil {
-		return err
-	}
-	defer file.Close()
+	var s *state
 
-	var s state
-	if err := json.NewDecoder(file).Decode(&s); err != nil {
-		return err
+	// check if the state has already been loaded
+	globalStateStoreMux.RLock()
+	s, ok := globalStateStore[fn]
+	globalStateStoreMux.RUnlock()
+
+	if !ok {
+		// load state from file
+		file, err := os.Open(fn)
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		if err := json.NewDecoder(file).Decode(&s); err != nil {
+			return err
+		}
 	}
 
 	f.mux.Lock()
@@ -289,14 +303,7 @@ func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
 		fmt.Sprintf("%d_%v.json", chainID, f.blockNumber),
 	)
 
-	// create directory, if it does not exist
-	dirPath := filepath.Dir(fn)
-	if _, err := os.Stat(dirPath); errors.Is(err, os.ErrNotExist) {
-		if err := os.MkdirAll(dirPath, 0775); err != nil {
-			return err
-		}
-	}
-
+	// build state
 	f.mux.RLock()
 	f.mux2.RLock()
 	f.mux3.RLock()
@@ -320,20 +327,54 @@ func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
 			Balance: (*hexutil.U256)(acc.Balance),
 		}
 		if !bytes.Equal(acc.CodeHash, types.EmptyCodeHash[:]) {
-			code, err := f.contracts[common.BytesToHash(acc.CodeHash)]()
-			if err != nil {
-				panic("")
-			}
-			s.Accounts[addr].Code = code
+			s.Accounts[addr].Code, _ = f.contracts[common.BytesToHash(acc.CodeHash)]()
 		}
 	}
 
-	file, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY, 0664)
+	for storageKey, storageVal := range f.storage {
+		storageVal, err := storageVal()
+		if err != nil {
+			continue
+		}
+
+		if s.Accounts[storageKey.addr].Storage == nil {
+			s.Accounts[storageKey.addr].Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
+		}
+		s.Accounts[storageKey.addr].Storage[w3hexutil.Hash(storageKey.slot)] = w3hexutil.Hash(storageVal)
+	}
+
+	globalStateStoreMux.Lock()
+	defer globalStateStoreMux.Unlock()
+	// merge state
+	dstState, ok := globalStateStore[fn]
+	if ok {
+		if modified := mergeStates(dstState, s); !modified {
+			return nil
+		}
+	} else {
+		dstState = s
+		globalStateStore[fn] = s
+	}
+
+	// create directory, if it does not exist
+	dirPath := filepath.Dir(fn)
+	if _, err := os.Stat(dirPath); errors.Is(err, os.ErrNotExist) {
+		if err := os.MkdirAll(dirPath, 0775); err != nil {
+			return err
+		}
+	}
+
+	file, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0664)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
+	dec := json.NewEncoder(file)
+	dec.SetIndent("", "\t")
+	if err := dec.Encode(dstState); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -347,6 +388,40 @@ type account struct {
 	Balance *hexutil.U256                     `json:"balance"`
 	Code    hexutil.Bytes                     `json:"code"`
 	Storage map[w3hexutil.Hash]w3hexutil.Hash `json:"storage,omitempty"`
+}
+
+// mergeStates merges the source state into the destination state and returns
+// whether the destination state has been modified.
+func mergeStates(dst, src *state) (modified bool) {
+	// merge accounts
+	for addr, acc := range src.Accounts {
+		if dstAcc, ok := dst.Accounts[addr]; !ok {
+			dst.Accounts[addr] = acc
+			modified = true
+		} else {
+			if dstAcc.Storage == nil {
+				dstAcc.Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
+			}
+
+			for slot, storageVal := range acc.Storage {
+				if _, ok := dstAcc.Storage[slot]; !ok {
+					dstAcc.Storage[slot] = storageVal
+					modified = true
+				}
+			}
+			dst.Accounts[addr] = dstAcc
+		}
+	}
+
+	// merge header hashes
+	for blockNumber, hash := range src.HeaderHashes {
+		if _, ok := dst.HeaderHashes[blockNumber]; !ok {
+			dst.HeaderHashes[blockNumber] = hash
+			modified = true
+		}
+	}
+
+	return modified
 }
 
 type storageKey struct {
