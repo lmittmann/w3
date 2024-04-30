@@ -149,12 +149,12 @@ func setStruct(dst, src reflect.Value) error {
 
 	// field tag mapping (tags take precedence over names)
 	srcFields := make(map[string]reflect.StructField)
-	for i := 0; i < src.NumField(); i++ {
+	for i := range src.NumField() {
 		field := st.Field(i)
 		srcFields[field.Name] = field
 	}
 
-	for i := 0; i < dst.NumField(); i++ {
+	for i := range dst.NumField() {
 		dstField := dt.Field(i)
 		srcField, ok := srcFields[dstField.Name]
 		if !ok {
@@ -186,7 +186,7 @@ func setSlice(dst, src reflect.Value) error {
 		dst.Set(reflect.MakeSlice(dst.Type(), src.Len(), src.Len()))
 	}
 
-	for i := 0; i < src.Len(); i++ {
+	for i := range src.Len() {
 		if dst.Kind() == reflect.Pointer {
 			rCopy(dst.Elem().Index(i), src.Index(i))
 		} else {
@@ -201,7 +201,7 @@ func setArray(dst, src reflect.Value) error {
 		dst = reflect.New(dst.Type().Elem())
 	}
 
-	for i := 0; i < src.Len(); i++ {
+	for i := range src.Len() {
 		if dst.Kind() == reflect.Pointer {
 			rCopy(dst.Elem().Index(i), src.Index(i))
 		} else {

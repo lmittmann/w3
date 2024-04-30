@@ -241,7 +241,7 @@ func BenchmarkI(b *testing.B) {
 		b.Run(bench, func(b *testing.B) {
 			b.ReportAllocs()
 
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				w3.I(bench)
 			}
 		})

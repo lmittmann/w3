@@ -325,7 +325,7 @@ func BenchmarkCall_BalanceNonce(b *testing.B) {
 			nonce   uint64
 			balance big.Int
 		)
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			w3Client.Call(
 				eth.Nonce(addr, nil).Returns(&nonce),
 				eth.Balance(addr, nil).Returns(&balance),
@@ -334,7 +334,7 @@ func BenchmarkCall_BalanceNonce(b *testing.B) {
 	})
 
 	b.Run("Sequential", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			ethClient.NonceAt(context.Background(), addr, nil)
 			ethClient.BalanceAt(context.Background(), addr, nil)
 		}
@@ -353,15 +353,15 @@ func BenchmarkCall_Balance100(b *testing.B) {
 	defer ethClient.Close()
 
 	addr100 := make([]common.Address, 100)
-	for i := 0; i < len(addr100); i++ {
+	for i := range len(addr100) {
 		addr100[i] = common.BigToAddress(big.NewInt(int64(i)))
 	}
 
 	b.Run("Batch", func(b *testing.B) {
 		var balance big.Int
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			requests := make([]w3types.RPCCaller, len(addr100))
-			for j := 0; j < len(requests); j++ {
+			for j := range len(requests) {
 				requests[j] = eth.Balance(addr100[j], nil).Returns(&balance)
 			}
 			w3Client.Call(requests...)
@@ -369,7 +369,7 @@ func BenchmarkCall_Balance100(b *testing.B) {
 	})
 
 	b.Run("Sequential", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			for _, addr := range addr100 {
 				ethClient.BalanceAt(context.Background(), addr, nil)
 			}
@@ -389,7 +389,7 @@ func BenchmarkCall_BalanceOf100(b *testing.B) {
 	defer ethClient.Close()
 
 	addr100 := make([]common.Address, 100)
-	for i := 0; i < len(addr100); i++ {
+	for i := range len(addr100) {
 		addr100[i] = common.BigToAddress(big.NewInt(int64(i)))
 	}
 
@@ -398,9 +398,9 @@ func BenchmarkCall_BalanceOf100(b *testing.B) {
 
 	b.Run("Batch", func(b *testing.B) {
 		var balance big.Int
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			requests := make([]w3types.RPCCaller, len(addr100))
-			for j := 0; j < len(requests); j++ {
+			for j := range len(requests) {
 				requests[j] = eth.CallFunc(addrWeth9, funcBalanceOf, addr100[j]).Returns(&balance)
 			}
 			w3Client.Call(requests...)
@@ -408,7 +408,7 @@ func BenchmarkCall_BalanceOf100(b *testing.B) {
 	})
 
 	b.Run("Sequential", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			for _, addr := range addr100 {
 				input, err := funcBalanceOf.EncodeArgs(addr)
 				if err != nil {
@@ -435,15 +435,15 @@ func BenchmarkCall_Block100(b *testing.B) {
 	defer ethClient.Close()
 
 	block100 := make([]*big.Int, 100)
-	for i := 0; i < len(block100); i++ {
+	for i := range len(block100) {
 		block100[i] = big.NewInt(int64(14_000_000 + i))
 	}
 
 	b.Run("Batch", func(b *testing.B) {
 		var block types.Block
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			requests := make([]w3types.RPCCaller, len(block100))
-			for j := 0; j < len(requests); j++ {
+			for j := range len(requests) {
 				requests[j] = eth.BlockByNumber(block100[j]).Returns(&block)
 			}
 			w3Client.Call(requests...)
@@ -451,7 +451,7 @@ func BenchmarkCall_Block100(b *testing.B) {
 	})
 
 	b.Run("Sequential", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			for _, number := range block100 {
 				ethClient.BlockByNumber(context.Background(), number)
 			}
