@@ -42,7 +42,7 @@ func BenchmarkVM(b *testing.B) {
 	// execute blocks once to fetch the required state
 	fetchers := make([]w3vm.Fetcher, 0, len(blocks))
 	for _, block := range blocks {
-		fetcher := w3vm.NewTestingRPCFetcher(b, client, new(big.Int).Sub(block.Number(), w3.Big1))
+		fetcher := w3vm.NewTestingRPCFetcher(b, 1, client, new(big.Int).Sub(block.Number(), w3.Big1))
 		fetchers = append(fetchers, fetcher)
 		vm, err := w3vm.New(
 			w3vm.WithFetcher(fetcher),

@@ -365,7 +365,7 @@ func (opts *options) Init() error {
 		} else if opts.tb == nil {
 			opts.fetcher = NewRPCFetcher(opts.forkClient, new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
 		} else {
-			opts.fetcher = NewTestingRPCFetcher(opts.tb, opts.forkClient, new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
+			opts.fetcher = NewTestingRPCFetcher(opts.tb, opts.chainConfig.ChainID.Uint64(), opts.forkClient, new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
 		}
 	}
 

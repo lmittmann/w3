@@ -1,16 +1,23 @@
 package w3vm
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/internal/crypto"
+	w3hexutil "github.com/lmittmann/w3/internal/hexutil"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 )
@@ -41,6 +48,8 @@ type rpcFetcher struct {
 	storage      map[storageKey]func() (common.Hash, error)
 	mux3         sync.RWMutex
 	headerHashes map[uint64]func() (common.Hash, error)
+
+	dirty bool // indicates whether new state has been fetched
 }
 
 // NewRPCFetcher returns a new [Fetcher] that fetches account state from the given
@@ -63,13 +72,14 @@ func newRPCFetcher(client *w3.Client, blockNumber *big.Int) *rpcFetcher {
 	}
 }
 
-func (f *rpcFetcher) Account(addr common.Address) (*types.StateAccount, error) {
+func (f *rpcFetcher) Account(addr common.Address) (a *types.StateAccount, e error) {
 	f.mux.RLock()
 	acc, ok := f.accounts[addr]
 	f.mux.RUnlock()
 	if ok {
 		return acc()
 	}
+	f.dirty = true
 
 	var (
 		accNew      = &types.StateAccount{Balance: new(uint256.Int)}
@@ -112,7 +122,6 @@ func (f *rpcFetcher) Account(addr common.Address) (*types.StateAccount, error) {
 }
 
 func (f *rpcFetcher) Code(codeHash common.Hash) ([]byte, error) {
-	fmt.Println("code")
 	f.mux.RLock()
 	contract, ok := f.contracts[codeHash]
 	f.mux.RUnlock()
@@ -123,7 +132,6 @@ func (f *rpcFetcher) Code(codeHash common.Hash) ([]byte, error) {
 }
 
 func (f *rpcFetcher) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
-	fmt.Println("storage", addr, slot)
 	key := storageKey{addr, slot}
 
 	f.mux2.RLock()
@@ -132,13 +140,14 @@ func (f *rpcFetcher) StorageAt(addr common.Address, slot common.Hash) (common.Ha
 	if ok {
 		return storage()
 	}
+	f.dirty = true
 
 	var (
 		storageVal   common.Hash
 		storageValCh = make(chan func() (common.Hash, error), 1)
 	)
 	go func() {
-		err := f.call(eth.StorageAt(addr, slot, f.blockNumber).Returns(&storageVal))
+		err := f.call(ethStorageAt(addr, slot, f.blockNumber).Returns(&storageVal))
 		storageValCh <- func() (common.Hash, error) { return storageVal, err }
 	}()
 
@@ -156,6 +165,7 @@ func (f *rpcFetcher) HeaderHash(blockNumber uint64) (common.Hash, error) {
 	if ok {
 		return hash()
 	}
+	f.dirty = true
 
 	var (
 		header       header
@@ -177,89 +187,166 @@ func (f *rpcFetcher) call(calls ...w3types.RPCCaller) error {
 	return f.client.Call(calls...)
 }
 
-// func (f *rpcFetcher) setForkState(s *forkState) {
-// 	f.mux.Lock()
-// 	f.mux2.Lock()
-// 	f.mux3.Lock()
-// 	defer f.mux.Unlock()
-// 	defer f.mux2.Unlock()
-// 	defer f.mux3.Unlock()
-
-// 	for addr, acc := range s.Accounts {
-// 		f.accounts[addr] = acc
-// 	}
-
-// 	for blockNumber, hash := range s.HeaderHashes {
-// 		f.headerHashes[uint64(blockNumber)] = hash
-// 	}
-// }
-
-// func (f *rpcFetcher) getForkState() *forkState {
-// 	f.mux.Lock()
-// 	f.mux2.Lock()
-// 	f.mux3.Lock()
-// 	defer f.mux.Unlock()
-// 	defer f.mux2.Unlock()
-// 	defer f.mux3.Unlock()
-
-// 	s := new(forkState)
-// 	if len(f.accounts) > 0 {
-// 		s.Accounts = make(map[common.Address]*account, len(f.accounts))
-// 		for addr, acc := range f.accounts {
-// 			accCop := *acc
-// 			s.Accounts[addr] = &accCop
-// 		}
-// 	}
-
-// 	if len(f.headerHashes) > 0 {
-// 		s.HeaderHashes = make(map[hexutil.Uint64]common.Hash, len(f.headerHashes))
-// 		for blockNumber, hash := range f.headerHashes {
-// 			s.HeaderHashes[hexutil.Uint64(blockNumber)] = hash
-// 		}
-// 	}
-// 	return s
-// }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TestingRPCFetcher ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // NewTestingRPCFetcher returns a new [Fetcher] like [NewRPCFetcher], but caches
 // the fetched state on disk in the testdata directory of the tests package.
-func NewTestingRPCFetcher(tb testing.TB, client *w3.Client, blockNumber *big.Int) Fetcher {
-	// fp := getTbFilepath(tb)
-	// if ok := isTbInMod(fp); !ok {
-	// 	panic("must be called from a test in a module")
-	// }
-
-	// if blockNumber == nil {
-	// 	tb.Fatal("w3vm: block number must not be <nil>")
-	// }
-
-	// var chainID uint64
-	// if err := client.Call(
-	// 	eth.ChainID().Returns(&chainID),
-	// ); err != nil {
-	// 	tb.Fatalf("w3vm: failed to fetch chain ID: %v", err)
-	// }
-
-	// fp = filepath.Join(fp, "testdata", "w3vm", fmt.Sprintf("%d_%v.json", chainID, blockNumber))
-	// testdataState, err := readTestdataState(fp)
-	// if err != nil {
-	// 	tb.Fatalf("w3vm: failed to read state from testdata: %v", err)
-	// }
+func NewTestingRPCFetcher(tb testing.TB, chainID uint64, client *w3.Client, blockNumber *big.Int) Fetcher {
+	if ok := isTbInMod(getTbFilepath(tb)); !ok {
+		panic("must be called from a test in a module")
+	}
 
 	fetcher := newRPCFetcher(client, blockNumber)
-	// fetcher.setForkState(testdataState)
+	if err := fetcher.loadTestdataState(tb, chainID); err != nil {
+		tb.Fatalf("w3vm: failed to load state from testdata: %v", err)
+	}
 
-	// tb.Cleanup(func() {
-	// 	postTestdataState := fetcher.getForkState()
-	// 	if err := writeTestdataState(fp, postTestdataState); err != nil {
-	// 		tb.Errorf("w3test: failed to write state to testdata: %v", err)
-	// 	}
-	// })
-
+	tb.Cleanup(func() {
+		if err := fetcher.storeTestdataState(tb, chainID); err != nil {
+			tb.Fatalf("w3vm: failed to write state to testdata: %v", err)
+		}
+	})
 	return fetcher
+}
+
+func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
+	dir := getTbFilepath(tb)
+	fn := filepath.Join(dir,
+		"testdata",
+		"w3vm",
+		fmt.Sprintf("%d_%v.json", chainID, f.blockNumber),
+	)
+
+	file, err := os.Open(fn)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	var s state
+	if err := json.NewDecoder(file).Decode(&s); err != nil {
+		return err
+	}
+
+	f.mux.Lock()
+	f.mux2.Lock()
+	f.mux3.Lock()
+	defer f.mux.Unlock()
+	defer f.mux2.Unlock()
+	defer f.mux3.Unlock()
+
+	for addr, acc := range s.Accounts {
+		addr, acc := addr, acc // NOTE: can be dropped when Go 1.22 is used
+
+		var codeHash common.Hash
+		if len(acc.Code) > 0 {
+			codeHash = crypto.Keccak256Hash(acc.Code)
+		} else {
+			codeHash = types.EmptyCodeHash
+		}
+
+		f.accounts[addr] = func() (*types.StateAccount, error) {
+			return &types.StateAccount{
+				Nonce:    uint64(acc.Nonce),
+				Balance:  (*uint256.Int)(acc.Balance),
+				CodeHash: codeHash[:],
+			}, nil
+		}
+		if _, ok := f.contracts[codeHash]; codeHash != types.EmptyCodeHash && !ok {
+			f.contracts[codeHash] = func() ([]byte, error) {
+				return acc.Code, nil
+			}
+		}
+		for slot, val := range acc.Storage {
+			slot, val := slot, val // NOTE: can be dropped when Go 1.22 is used
+			f.storage[storageKey{addr, (common.Hash)(slot)}] = func() (common.Hash, error) {
+				return (common.Hash)(val), nil
+			}
+		}
+		for blockNumber, hash := range s.HeaderHashes {
+			blockNumber, hash := blockNumber, hash // NOTE: can be dropped when Go 1.22 is used
+			f.headerHashes[uint64(blockNumber)] = func() (common.Hash, error) {
+				return hash, nil
+			}
+		}
+	}
+	return nil
+}
+
+func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
+	if !f.dirty {
+		return nil // the state has not been modified
+	}
+
+	dir := getTbFilepath(tb)
+	fn := filepath.Join(dir,
+		"testdata",
+		"w3vm",
+		fmt.Sprintf("%d_%v.json", chainID, f.blockNumber),
+	)
+
+	// create directory, if it does not exist
+	dirPath := filepath.Dir(fn)
+	if _, err := os.Stat(dirPath); errors.Is(err, os.ErrNotExist) {
+		if err := os.MkdirAll(dirPath, 0775); err != nil {
+			return err
+		}
+	}
+
+	f.mux.RLock()
+	f.mux2.RLock()
+	f.mux3.RLock()
+	defer f.mux.RUnlock()
+	defer f.mux2.RUnlock()
+	defer f.mux3.RUnlock()
+
+	s := &state{
+		Accounts:     make(map[common.Address]*account, len(f.accounts)),
+		HeaderHashes: make(map[hexutil.Uint64]common.Hash, len(f.headerHashes)),
+	}
+
+	for addr, acc := range f.accounts {
+		acc, err := acc()
+		if err != nil {
+			continue
+		}
+
+		s.Accounts[addr] = &account{
+			Nonce:   hexutil.Uint64(acc.Nonce),
+			Balance: (*hexutil.U256)(acc.Balance),
+		}
+		if !bytes.Equal(acc.CodeHash, types.EmptyCodeHash[:]) {
+			code, err := f.contracts[common.BytesToHash(acc.CodeHash)]()
+			if err != nil {
+				panic("")
+			}
+			s.Accounts[addr].Code = code
+		}
+	}
+
+	file, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY, 0664)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	return nil
+}
+
+type state struct {
+	Accounts     map[common.Address]*account    `json:"accounts"`
+	HeaderHashes map[hexutil.Uint64]common.Hash `json:"headerHashes,omitempty"`
+}
+
+type account struct {
+	Nonce   hexutil.Uint64                    `json:"nonce"`
+	Balance *hexutil.U256                     `json:"balance"`
+	Code    hexutil.Bytes                     `json:"code"`
+	Storage map[w3hexutil.Hash]w3hexutil.Hash `json:"storage,omitempty"`
 }
 
 type storageKey struct {

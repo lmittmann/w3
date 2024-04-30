@@ -408,7 +408,7 @@ func TestVMApply_Integration(t *testing.T) {
 				t.Fatalf("Failed to fetch block and receipts: %v", err)
 			}
 
-			f := w3vm.NewTestingRPCFetcher(t, client, new(big.Int).Sub(number, w3.Big1))
+			f := w3vm.NewTestingRPCFetcher(t, 1, client, new(big.Int).Sub(number, w3.Big1))
 			vm, _ := w3vm.New(
 				w3vm.WithFetcher(f),
 				w3vm.WithHeader(block.Header()),
