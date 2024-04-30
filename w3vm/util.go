@@ -9,11 +9,12 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3/internal/crypto"
-	"github.com/lmittmann/w3/internal/hexutil"
+	w3hexutil "github.com/lmittmann/w3/internal/hexutil"
 	"github.com/lmittmann/w3/internal/mod"
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
@@ -77,12 +78,12 @@ func zeroHashFunc(uint64) common.Hash {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// w3types.Caller's ////////////////////////////////////////////////////////////////////////////////
+// w3types.RPCCaller's /////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ethBalance is like [eth.Balance], but returns the balance as [uint256.Int].
 func ethBalance(addr common.Address, blockNumber *big.Int) w3types.RPCCallerFactory[uint256.Int] {
-	return module.NewFactory[uint256.Int](
+	return module.NewFactory(
 		"eth_getBalance",
 		[]any{addr, module.BlockNumberArg(blockNumber)},
 		module.WithRetWrapper(func(ret *uint256.Int) any { return (*hexutil.U256)(ret) }),
@@ -90,12 +91,24 @@ func ethBalance(addr common.Address, blockNumber *big.Int) w3types.RPCCallerFact
 }
 
 // ethStorageAt is like [eth.StorageAt], but returns the storage value as [uint256.Int].
-func ethStorageAt(addr common.Address, slot uint256.Int, blockNumber *big.Int) w3types.RPCCallerFactory[uint256.Int] {
-	return module.NewFactory[uint256.Int](
+func ethStorageAt(addr common.Address, slot common.Hash, blockNumber *big.Int) w3types.RPCCallerFactory[common.Hash] {
+	return module.NewFactory(
 		"eth_getStorageAt",
-		[]any{addr, hexutil.U256(slot), module.BlockNumberArg(blockNumber)},
-		module.WithRetWrapper(func(ret *uint256.Int) any { return (*hexutil.U256)(ret) }),
+		[]any{addr, slot, module.BlockNumberArg(blockNumber)},
+		module.WithRetWrapper(func(ret *common.Hash) any { return (*w3hexutil.Hash)(ret) }),
 	)
+}
+
+// ethHeaderHash is like [eth.Header], but only parses the header hash.
+func ethHeaderHash(blockNumber uint64) w3types.RPCCallerFactory[header] {
+	return module.NewFactory[header](
+		"eth_getBlockByNumber",
+		[]any{hexutil.Uint64(blockNumber), false},
+	)
+}
+
+type header struct {
+	Hash common.Hash `json:"hash"`
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -319,25 +319,20 @@ func TestVM_Fetcher(t *testing.T) {
 
 type testFetcher struct{}
 
-func (f *testFetcher) Nonce(addr common.Address) (uint64, error) {
-	return 0, fmt.Errorf("%w: failed to fetch nonce", w3vm.ErrFetch)
+func (f *testFetcher) Account(addr common.Address) (*types.StateAccount, error) {
+	return nil, fmt.Errorf("%w: failed to fetch account", w3vm.ErrFetch)
 }
 
-func (f *testFetcher) Balance(addr common.Address) (*big.Int, error) {
-	// return nil, fmt.Errorf("%w: failed to fetch balance", w3vm.ErrFetch)
-	return big.NewInt(1), nil
-}
-
-func (f *testFetcher) Code(addr common.Address) ([]byte, error) {
-	return nil, fmt.Errorf("%w: failed to code", w3vm.ErrFetch)
+func (f *testFetcher) Code(codeHash common.Hash) ([]byte, error) {
+	return nil, fmt.Errorf("%w: failed to fetch code hash", w3vm.ErrFetch)
 }
 
 func (f *testFetcher) StorageAt(addr common.Address, key common.Hash) (common.Hash, error) {
 	return common.Hash{}, fmt.Errorf("%w: failed to fetch storage", w3vm.ErrFetch)
 }
 
-func (f *testFetcher) HeaderHash(blockNumber *big.Int) (common.Hash, error) {
-	return common.Hash{}, fmt.Errorf("%w: failed to fetch code hash", w3vm.ErrFetch)
+func (f *testFetcher) HeaderHash(blockNumber uint64) (common.Hash, error) {
+	return common.Hash{}, fmt.Errorf("%w: failed to fetch header hash", w3vm.ErrFetch)
 }
 
 func TestVMApply_Integration(t *testing.T) {
@@ -413,7 +408,7 @@ func TestVMApply_Integration(t *testing.T) {
 				t.Fatalf("Failed to fetch block and receipts: %v", err)
 			}
 
-			f := w3vm.NewTestingRPCFetcher(t, client, new(big.Int).Sub(number, w3.Big1))
+			f := w3vm.NewTestingRPCFetcher(t, 1, client, new(big.Int).Sub(number, w3.Big1))
 			vm, _ := w3vm.New(
 				w3vm.WithFetcher(f),
 				w3vm.WithHeader(block.Header()),

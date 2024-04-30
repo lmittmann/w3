@@ -285,14 +285,6 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		nil
 }
 
-func (vm *VM) fetcherHashFunc(fetcher Fetcher) vm.GetHashFunc {
-	return func(n uint64) common.Hash {
-		blockNumber := new(big.Int).SetUint64(n)
-		hash, _ := fetcher.HeaderHash(blockNumber)
-		return hash
-	}
-}
-
 func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
 	var random *common.Hash
 	if h.Difficulty == nil || h.Difficulty.Sign() == 0 {
@@ -366,7 +358,7 @@ func (opts *options) Init() error {
 		} else if opts.tb == nil {
 			opts.fetcher = NewRPCFetcher(opts.forkClient, new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
 		} else {
-			opts.fetcher = NewTestingRPCFetcher(opts.tb, opts.forkClient, new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
+			opts.fetcher = NewTestingRPCFetcher(opts.tb, opts.chainConfig.ChainID.Uint64(), opts.forkClient, new(big.Int).Sub(opts.forkBlockNumber, w3.Big1))
 		}
 	}
 
@@ -390,8 +382,7 @@ func (opts *options) Init() error {
 }
 
 func fetcherHashFunc(fetcher Fetcher) vm.GetHashFunc {
-	return func(n uint64) common.Hash {
-		blockNumber := new(big.Int).SetUint64(n)
+	return func(blockNumber uint64) common.Hash {
 		hash, _ := fetcher.HeaderHash(blockNumber)
 		return hash
 	}
