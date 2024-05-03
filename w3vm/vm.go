@@ -91,6 +91,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	if v.db.Error() != nil {
 		return nil, ErrFetch
 	}
+	v.db.SetLogger(hooks)
 
 	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
 	if err != nil {
