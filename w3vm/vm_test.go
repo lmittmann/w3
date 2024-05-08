@@ -26,6 +26,7 @@ import (
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 	"github.com/lmittmann/w3/w3vm"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -40,7 +41,11 @@ var (
 	funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 	funcTransfer  = w3.MustNewFunc("transfer(address,uint256)", "bool")
 
-	client = w3.MustDial("https://rpc.ankr.com/eth")
+	client = w3.MustDial("https://rpc.ankr.com/eth", w3.WithRateLimiter(
+		rate.NewLimiter(rate.Every(time.Minute/300), 100),
+		func(methods []string) (cost int) { return len(methods) },
+	),
+	)
 )
 
 func TestVMApply(t *testing.T) {
