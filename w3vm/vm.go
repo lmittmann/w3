@@ -4,11 +4,13 @@ Package w3vm provides a VM for executing EVM messages.
 package w3vm
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -306,6 +308,27 @@ func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
 	}
 }
 
+func defaultBlockContext() *vm.BlockContext {
+	var coinbase common.Address
+	rand.Read(coinbase[:])
+
+	var random common.Hash
+	rand.Read(random[:])
+
+	return &vm.BlockContext{
+		CanTransfer: core.CanTransfer,
+		Transfer:    core.Transfer,
+		GetHash:     zeroHashFunc,
+		Coinbase:    coinbase,
+		BlockNumber: new(big.Int),
+		Time:        uint64(time.Now().Unix()),
+		Difficulty:  new(big.Int),
+		BaseFee:     new(big.Int),
+		GasLimit:    params.MaxGasLimit,
+		Random:      &random,
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VM Option ///////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,7 +358,7 @@ func (opts *options) Init() error {
 	// set initial chain config
 	isChainConfigSet := opts.chainConfig != nil
 	if !isChainConfigSet {
-		opts.chainConfig = allEthashProtocolChanges
+		opts.chainConfig = params.MergedTestChainConfig
 	}
 
 	// set fetcher
