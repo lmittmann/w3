@@ -54,8 +54,8 @@ func TestBlockByHash(t *testing.T) {
 				Extra:       w3.B("0x657468706f6f6c2e6f7267"),
 				MixDigest:   w3.H("0xb48c515a9dde8d346c3337ea520aa995a4738bb595495506125449c1149d6cf4"),
 				Nonce:       types.EncodeNonce(0xba4f8ecd18aab215),
-			}).WithBody(
-				types.Transactions{
+			}).WithBody(types.Body{
+				Transactions: types.Transactions{
 					types.NewTx(&types.LegacyTx{
 						Nonce:    0x0,
 						GasPrice: w3.I("0x2d79883d2000"),
@@ -66,8 +66,8 @@ func TestBlockByHash(t *testing.T) {
 						R:        w3.I("0x88ff6cf0fefd94db46111149ae4bfc179e9b94721fffd821d38d16464b3f71d0"),
 						S:        w3.I("0x45e0aff800961cfce805daef7016b9b675c137a6a41a548f7b60a3484c06a33a"),
 					}),
-				}, nil,
-			),
+				},
+			}),
 		},
 		{
 			Golden:  "get_block_by_hash__0x00",
@@ -95,8 +95,10 @@ func TestBlockByHash(t *testing.T) {
 				Time:            0x64ea268f,
 				TxHash:          w3.H("0x97dd0200249a35da2c73b366612c2d9c3d112e83ef5e0277cded1352c66628ba"),
 				WithdrawalsHash: ptr(w3.H("0x5362ee94b61e8cef92bf61353e62744b4fe6d1f2482aade614054527e6d5de7d")),
-			}).WithWithdrawals([]*types.Withdrawal{
-				{Index: 0xeb9b8c, Validator: 0xa474b, Address: w3.A("0xd7a0b38496064412a8d6b1f77bc30ada93e7b7a5"), Amount: 0xeb0d50},
+			}).WithBody(types.Body{
+				Withdrawals: []*types.Withdrawal{
+					{Index: 0xeb9b8c, Validator: 0xa474b, Address: w3.A("0xd7a0b38496064412a8d6b1f77bc30ada93e7b7a5"), Amount: 0xeb0d50},
+				},
 			}),
 		},
 	}
@@ -148,8 +150,8 @@ func TestBlockByNumber(t *testing.T) {
 				Extra:       w3.B("0x657468706f6f6c2e6f7267"),
 				MixDigest:   w3.H("0xb48c515a9dde8d346c3337ea520aa995a4738bb595495506125449c1149d6cf4"),
 				Nonce:       types.EncodeNonce(0xba4f8ecd18aab215),
-			}).WithBody(
-				types.Transactions{
+			}).WithBody(types.Body{
+				Transactions: types.Transactions{
 					types.NewTx(&types.LegacyTx{
 						Nonce:    0x0,
 						GasPrice: w3.I("0x2d79883d2000"),
@@ -160,8 +162,8 @@ func TestBlockByNumber(t *testing.T) {
 						R:        w3.I("0x88ff6cf0fefd94db46111149ae4bfc179e9b94721fffd821d38d16464b3f71d0"),
 						S:        w3.I("0x45e0aff800961cfce805daef7016b9b675c137a6a41a548f7b60a3484c06a33a"),
 					}),
-				}, nil,
-			),
+				},
+			}),
 		},
 		{
 			Golden:  "get_block_by_number__999999999",

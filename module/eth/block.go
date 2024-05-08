@@ -85,7 +85,9 @@ func (b *rpcBlock) UnmarshalJSON(data []byte) error {
 	}
 
 	*b.Block = *types.NewBlockWithHeader(&header).
-		WithBody(blockExtraData.Transactions, nil).
-		WithWithdrawals(blockExtraData.Withdrawals)
+		WithBody(types.Body{
+			Transactions: blockExtraData.Transactions,
+			Withdrawals:  blockExtraData.Withdrawals,
+		})
 	return nil
 }
