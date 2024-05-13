@@ -13,17 +13,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
+	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/internal/crypto"
 	w3hexutil "github.com/lmittmann/w3/internal/hexutil"
 	"github.com/lmittmann/w3/internal/mod"
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
-)
-
-// zero values
-var (
-	addr0 common.Address
-	hash0 common.Hash
 )
 
 // RandA returns a random address.
@@ -73,7 +68,7 @@ func nilToZero[T any](ptr *T) *T {
 
 // zeroHashFunc implements a [vm.GetHashFunc] that always returns the zero hash.
 func zeroHashFunc(uint64) common.Hash {
-	return hash0
+	return w3.Hash0
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

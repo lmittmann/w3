@@ -58,7 +58,7 @@ func New(opts ...Option) (*VM, error) {
 
 	// set DB
 	db := newDB(vm.opts.fetcher)
-	vm.db, _ = gethState.New(hash0, db, nil)
+	vm.db, _ = gethState.New(w3.Hash0, db, nil)
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
 		if acc.Balance != nil {
@@ -126,7 +126,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		GasRefund: result.RefundedGas,
 		GasLimit:  result.UsedGas + v.db.GetRefund(),
 		Output:    result.ReturnData,
-		Logs:      v.db.GetLogs(txHash, 0, hash0),
+		Logs:      v.db.GetLogs(txHash, 0, w3.Hash0),
 	}
 
 	if err := result.Err; err != nil {
@@ -224,14 +224,14 @@ func (vm *VM) Code(addr common.Address) ([]byte, error) {
 func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
 	val := vm.db.GetState(addr, slot)
 	if vm.db.Error() != nil {
-		return hash0, fmt.Errorf("%w: failed to fetch storage of %s at %s", ErrFetch, addr, slot)
+		return w3.Hash0, fmt.Errorf("%w: failed to fetch storage of %s at %s", ErrFetch, addr, slot)
 	}
 	return val, nil
 }
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
-	if !skipAccChecks && nonce == 0 && msg.From != addr0 {
+	if !skipAccChecks && nonce == 0 && msg.From != w3.Addr0 {
 		var err error
 		nonce, err = v.Nonce(msg.From)
 		if err != nil {
