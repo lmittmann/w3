@@ -10,8 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-var addr0 = common.Address{}
-
 // Message represents a transaction without the signature.
 //
 // If no input data is given, but Func is not null, the input data is
@@ -119,7 +117,7 @@ type message struct {
 // MarshalJSON implements the [json.Marshaler].
 func (msg *Message) MarshalJSON() ([]byte, error) {
 	var enc message
-	if msg.From != addr0 {
+	if msg.From != (common.Address{}) {
 		enc.From = &msg.From
 	}
 	enc.To = msg.To

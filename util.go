@@ -19,6 +19,12 @@ var (
 	BigMaxUint256 = new(big.Int).Sub(new(big.Int).Lsh(Big1, 256), Big1)
 )
 
+// Zero Values.
+var (
+	Addr0 common.Address
+	Hash0 common.Hash
+)
+
 // A returns an address from a hexstring or panics if the hexstring does not
 // represent a valid address.
 //
