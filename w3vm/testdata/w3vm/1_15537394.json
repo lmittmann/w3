@@ -78,7 +78,21 @@
 		"0x304ea4e64c003b1a9cf30f5cde67ddd733a44271": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0",
+				"0x17ef568e3e12ab5b9c7254a8d58478811de00f9e6eb34345acd53bf8fd09d3ec": "0x0",
+				"0x1ec4e71d2b03d8109d3816b871f6c109481ff6d89b72d34d478815ca34daf47e": "0x0",
+				"0x2": "0x0",
+				"0x3": "0x0",
+				"0x8": "0x0",
+				"0x9": "0x0",
+				"0xa": "0x0",
+				"0xb": "0x0",
+				"0xd": "0x0",
+				"0xd7b6990105719101dabeb77144f2a3385c8033acd3af97e9423a695e81ad1eb5": "0x0",
+				"0xd7b6990105719101dabeb77144f2a3385c8033acd3af97e9423a695e81ad1eb6": "0x0"
+			}
 		},
 		"0x30a933add6fd601d152aa4aaf7620b5e27e88888": {
 			"nonce": "0x40cb",
@@ -88,7 +102,26 @@
 		"0x33333333333371718a3c2bb63e5f3b94c9bc13be": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0",
+				"0x1": "0x0",
+				"0x5": "0x0",
+				"0x7": "0x0",
+				"0x8": "0x0",
+				"0x9": "0x0",
+				"0x9adb202b1492743bc00c81d33cdc6423fa8c79109027eb6a845391e8fc1f0481": "0x0",
+				"0xa1d6913cd9e08c872be3e7525cca82e4fc0fc298a783f19022be725b19be685a": "0x0",
+				"0xa66cc928b5edb82af9bd49922954155ab7b0942694bea4ce44661d9a8736c688": "0x0",
+				"0xa66cc928b5edb82af9bd49922954155ab7b0942694bea4ce44661d9a8736c689": "0x0",
+				"0xa66cc928b5edb82af9bd49922954155ab7b0942694bea4ce44661d9a8736c68a": "0x0",
+				"0xa7c5ba7114a813b50159add3a36832908dc83db71d0b9a24c2ad0f83be958207": "0x0",
+				"0xb": "0x0",
+				"0xe0283e559c29e31ee7f56467acc9dd307779c843a883aeeb3bf5c6128c908144": "0x0",
+				"0xf3f7a9fe364faab93b216da50a3214154f22a0a2b415b23a84c8169e8b636ee3": "0x0",
+				"0xf3f7a9fe364faab93b216da50a3214154f22a0a2b415b23a84c8169e8b636ee4": "0x0",
+				"0xf3f7a9fe364faab93b216da50a3214154f22a0a2b415b23a84c8169e8b636ee5": "0x0"
+			}
 		},
 		"0x3620445d7ac6a330221725aaa1ac90fe6e71d473": {
 			"nonce": "0x444",

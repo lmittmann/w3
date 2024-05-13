@@ -2990,7 +2990,11 @@
 		"0xd1cd23a5520d3c82820658a80f99ab6cc96c0ae6": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0",
+				"0xc5f16f0fcc639fa48a6947836d9850f504798523bf8c9a3a87d5876cf622bcf7": "0x0"
+			}
 		},
 		"0xd1dd5d18103341adde106a7241b94dfc54b353f5": {
 			"nonce": "0x1",

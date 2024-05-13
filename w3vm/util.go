@@ -24,7 +24,6 @@ import (
 var (
 	addr0 common.Address
 	hash0 common.Hash
-	uint0 uint64
 )
 
 // RandA returns a random address.
