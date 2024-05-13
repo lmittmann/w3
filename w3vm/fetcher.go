@@ -172,7 +172,7 @@ func (f *rpcFetcher) HeaderHash(blockNumber uint64) (common.Hash, error) {
 		headerHashCh = make(chan func() (common.Hash, error), 1)
 	)
 	go func() {
-		err := f.call(ethHeaderHash(f.blockNumber.Uint64()).Returns(&header))
+		err := f.call(ethHeaderHash(blockNumber).Returns(&header))
 		headerHashCh <- func() (common.Hash, error) { return header.Hash, err }
 	}()
 
@@ -337,6 +337,14 @@ func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
 			s.Accounts[storageKey.addr].Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
 		}
 		s.Accounts[storageKey.addr].Storage[w3hexutil.Hash(storageKey.slot)] = w3hexutil.Hash(storageVal)
+	}
+
+	for blockNumber, hash := range f.headerHashes {
+		hash, err := hash()
+		if err != nil {
+			continue
+		}
+		s.HeaderHashes[hexutil.Uint64(blockNumber)] = hash
 	}
 
 	globalStateStoreMux.Lock()
