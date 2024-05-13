@@ -2352,7 +2352,13 @@
 		"0xceab0aad1ecfa42c56ad06ea0f66bb1ba6b7782f": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0",
+				"0x1": "0x0",
+				"0x2": "0x0",
+				"0x3": "0x0"
+			}
 		},
 		"0xceca782a962eaf9be6c7c4664ab1ec6f4ab79388": {
 			"nonce": "0x0",
@@ -2372,7 +2378,13 @@
 		"0xd0956bcf8546f4ec7112357f98ec9433f6f1b81f": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0",
+				"0x1": "0x0",
+				"0x2": "0x0",
+				"0x3": "0x0"
+			}
 		},
 		"0xd108fd0e8c8e71552a167e7a44ff1d345d233ba6": {
 			"nonce": "0xa8c3",
@@ -2839,7 +2851,13 @@
 		"0xf9bf70c7e59ff5812b3498a0b53ffc49b35ba441": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0",
+				"0x1": "0x0",
+				"0x2": "0x0",
+				"0x3": "0x0"
+			}
 		},
 		"0xf9e266af4bca5890e2781812cc6a6e89495a79f2": {
 			"nonce": "0x2",

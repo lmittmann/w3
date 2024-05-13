@@ -1037,7 +1037,10 @@
 		"0xb54781ca62398cbe1f1c1064e14814716542c1d4": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0"
+			}
 		},
 		"0xb77feddb7e627a78140a2a32cac65a49ed1dba8e": {
 			"nonce": "0x1",

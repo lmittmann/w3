@@ -1830,7 +1830,10 @@
 		"0x9289243ca7e9a1ec7f80f9682d5b1c78fe761c75": {
 			"nonce": "0x0",
 			"balance": "0x968a04dd115000",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0"
+			}
 		},
 		"0x96fae2f23acea15dbcb489a972747b4bbdb22481": {
 			"nonce": "0x0",

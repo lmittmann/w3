@@ -103,7 +103,12 @@
 		"0x41897f0e796438ef7af50f91f6b145502f4dd163": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x1": "0x0",
+				"0x2": "0x0",
+				"0xe11e6be0b8558b7fb4ceb0f589d475127642c00aa88fe721f13e495aedafbd23": "0x0"
+			}
 		},
 		"0x41951225ff2851251f552a409533183bfc91217f": {
 			"nonce": "0x143",
@@ -350,7 +355,14 @@
 		"0xdc0e130bf7bccd515091a83f3593e6ddbcec275e": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0",
+				"0x1": "0x0",
+				"0x2": "0x0",
+				"0x4": "0x0",
+				"0x5": "0x0"
+			}
 		},
 		"0xe701cd3329057aea9d54300ddd05e41b8d74727a": {
 			"nonce": "0x1",
@@ -569,7 +581,10 @@
 		"0xf87ab07cf49da5ef6c325373dee7aa334e0ea6bd": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0"
+			}
 		}
 	}
 }

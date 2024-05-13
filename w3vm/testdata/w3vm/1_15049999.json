@@ -427,7 +427,13 @@
 		"0x8c4e4d999807cd005c5a19ea7955e413a2cefb92": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0",
+				"0x1": "0x0",
+				"0x2": "0x0",
+				"0x3": "0x0"
+			}
 		},
 		"0x8de9c5a032463c561423387a9648c5c7bcc5bc90": {
 			"nonce": "0x2",
