@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 	"testing"
 	"time"
 
@@ -40,6 +41,7 @@ type VM struct {
 
 	txIndex uint64
 	db      *gethState.StateDB
+	snaps   []int
 }
 
 // New creates a new VM, that is configured with the given options.
@@ -77,7 +79,8 @@ func New(opts ...Option) (*VM, error) {
 // Apply the given message to the VM and return its receipt. Multiple tracing hooks
 // can be given to trace the execution of the message.
 func (vm *VM) Apply(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, error) {
-	return vm.apply(msg, false, joinHooks(hooks))
+	receipt, _, err := vm.apply(msg, false, true, joinHooks(hooks))
+	return receipt, err
 }
 
 // ApplyTx is like [VM.Apply], but takes a transaction instead of a message.
@@ -89,15 +92,22 @@ func (vm *VM) ApplyTx(tx *types.Transaction, hooks ...*tracing.Hooks) (*Receipt,
 	return vm.Apply(msg, hooks...)
 }
 
-func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Receipt, error) {
+// ApplyWithSnapshot is like [VM.Apply], but also returns a state snapshot of the messages pre-state.
+// The VM's state can be rolled back to the snapshot using [VM.Rollback]. A snapshot is invalidated
+// after a call to [VM.Apply] or [VM.ApplyTx].
+func (vm *VM) ApplyWithSnapshot(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, int, error) {
+	return vm.apply(msg, false, false, joinHooks(hooks))
+}
+
+func (v *VM) apply(msg *w3types.Message, isCall, finalize bool, hooks *tracing.Hooks) (*Receipt, int, error) {
 	if v.db.Error() != nil {
-		return nil, ErrFetch
+		return nil, -1, ErrFetch
 	}
 	v.db.SetLogger(hooks)
 
 	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
 
 	var txHash common.Hash
@@ -116,7 +126,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	// apply the message to the evm
 	result, err := core.ApplyMessage(evm, coreMsg, gp)
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
 
 	// build receipt
@@ -144,16 +154,22 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	if isCall && !result.Failed() {
 		v.db.RevertToSnapshot(snap)
 	}
-	v.db.Finalise(false)
+	if finalize {
+		v.db.Finalise(false)
+		v.snaps = v.snaps[:0] // clear snapshots
+	} else if !isCall {
+		v.snaps = append(v.snaps, snap)
+	}
 
-	return receipt, receipt.Err
+	return receipt, snap, receipt.Err
 }
 
 // Call calls the given message on the VM and returns a receipt. Any state changes
 // of a call are reverted. Multiple tracing hooks can be passed to trace the execution
 // of the message.
 func (vm *VM) Call(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, error) {
-	return vm.apply(msg, true, joinHooks(hooks))
+	receipt, _, err := vm.apply(msg, true, false, joinHooks(hooks))
+	return receipt, err
 }
 
 // CallFunc is a utility function for [VM.Call] that calls the given function
@@ -227,6 +243,20 @@ func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, err
 		return w3.Hash0, fmt.Errorf("%w: failed to fetch storage of %s at %s", ErrFetch, addr, slot)
 	}
 	return val, nil
+}
+
+// Rollback the state of the VM to the given snapshot.
+// Snapshots
+func (vm *VM) Rollback(snapshot int) error {
+	// validate snapshot
+	i := slices.Index(vm.snaps, snapshot)
+	if i < 0 {
+		return fmt.Errorf("invalid snapshot %d", snapshot)
+	}
+
+	vm.db.RevertToSnapshot(snapshot)
+	vm.snaps = vm.snaps[:i] // clear snapshot, and all snapshots after it
+	return nil
 }
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
