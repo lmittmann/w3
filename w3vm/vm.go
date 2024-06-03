@@ -229,7 +229,8 @@ func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, err
 	return val, nil
 }
 
-// Snapshot the current state of the VM.
+// Snapshot the current state of the VM. The returned state can only be rolled
+// back to once. Use [state.StateDB.Copy] if you need to rollback multiple times.
 func (vm *VM) Snapshot() *state.StateDB { return vm.db.Copy() }
 
 // Rollback the state of the VM to the given snapshot.
