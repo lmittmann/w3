@@ -37,7 +37,12 @@ func (db *db) OpenStorageTrie(stateRoot common.Hash, addr common.Address, root c
 	return db, nil
 }
 
-func (*db) CopyTrie(gethState.Trie) gethState.Trie { panic("not implemented") }
+func (*db) CopyTrie(trie gethState.Trie) gethState.Trie {
+	if db, ok := trie.(*db); ok {
+		return db
+	}
+	panic("not implemented")
+}
 
 func (db *db) ContractCode(addr common.Address, codeHash common.Hash) ([]byte, error) {
 	if db.fetcher == nil {

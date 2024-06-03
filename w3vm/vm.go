@@ -225,6 +225,13 @@ func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, err
 	return val, nil
 }
 
+// Snapshot the current state of the VM. The returned state can only be rolled
+// back to once. Use [gethState.StateDB.Copy] if you need to rollback multiple times.
+func (vm *VM) Snapshot() *gethState.StateDB { return vm.db.Copy() }
+
+// Rollback the state of the VM to the given snapshot.
+func (vm *VM) Rollback(snapshot *gethState.StateDB) { vm.db = snapshot }
+
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
 	if !skipAccChecks && nonce == 0 && msg.From != addr0 {
