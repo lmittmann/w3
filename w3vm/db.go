@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
-	gethState "github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/trie"
@@ -28,13 +28,18 @@ func newDB(fetcher Fetcher) *db {
 // state.Database methods //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (db *db) OpenTrie(root common.Hash) (gethState.Trie, error) { return db, nil }
+func (db *db) OpenTrie(root common.Hash) (state.Trie, error) { return db, nil }
 
-func (db *db) OpenStorageTrie(stateRoot common.Hash, addr common.Address, root common.Hash, trie gethState.Trie) (gethState.Trie, error) {
+func (db *db) OpenStorageTrie(stateRoot common.Hash, addr common.Address, root common.Hash, trie state.Trie) (state.Trie, error) {
 	return db, nil
 }
 
-func (*db) CopyTrie(gethState.Trie) gethState.Trie { panic("not implemented") }
+func (*db) CopyTrie(trie state.Trie) state.Trie {
+	if db, ok := trie.(*db); ok {
+		return db
+	}
+	panic("not implemented")
+}
 
 func (db *db) ContractCode(addr common.Address, codeHash common.Hash) ([]byte, error) {
 	if db.fetcher == nil {

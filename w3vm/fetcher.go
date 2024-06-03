@@ -213,7 +213,7 @@ func NewTestingRPCFetcher(tb testing.TB, chainID uint64, client *w3.Client, bloc
 
 var (
 	globalStateStoreMux sync.RWMutex
-	globalStateStore    = make(map[string]*state)
+	globalStateStore    = make(map[string]*testdataState)
 )
 
 func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
@@ -224,7 +224,7 @@ func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 		fmt.Sprintf("%d_%v.json", chainID, f.blockNumber),
 	)
 
-	var s *state
+	var s *testdataState
 
 	// check if the state has already been loaded
 	globalStateStoreMux.RLock()
@@ -307,7 +307,7 @@ func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
 	defer f.mux2.RUnlock()
 	defer f.mux3.RUnlock()
 
-	s := &state{
+	s := &testdataState{
 		Accounts:     make(map[common.Address]*account, len(f.accounts)),
 		HeaderHashes: make(map[hexutil.Uint64]common.Hash, len(f.headerHashes)),
 	}
@@ -382,7 +382,7 @@ func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
 	return nil
 }
 
-type state struct {
+type testdataState struct {
 	Accounts     map[common.Address]*account    `json:"accounts"`
 	HeaderHashes map[hexutil.Uint64]common.Hash `json:"headerHashes,omitempty"`
 }
@@ -396,7 +396,7 @@ type account struct {
 
 // mergeStates merges the source state into the destination state and returns
 // whether the destination state has been modified.
-func mergeStates(dst, src *state) (modified bool) {
+func mergeStates(dst, src *testdataState) (modified bool) {
 	// merge accounts
 	for addr, acc := range src.Accounts {
 		if dstAcc, ok := dst.Accounts[addr]; !ok {

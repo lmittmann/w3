@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"slices"
 	"testing"
 	"time"
 
@@ -17,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core"
-	gethState "github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -40,8 +39,7 @@ type VM struct {
 	opts *options
 
 	txIndex uint64
-	db      *gethState.StateDB
-	snaps   []int
+	db      *state.StateDB
 }
 
 // New creates a new VM, that is configured with the given options.
@@ -60,7 +58,7 @@ func New(opts ...Option) (*VM, error) {
 
 	// set DB
 	db := newDB(vm.opts.fetcher)
-	vm.db, _ = gethState.New(w3.Hash0, db, nil)
+	vm.db, _ = state.New(w3.Hash0, db, nil)
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
 		if acc.Balance != nil {
@@ -79,8 +77,7 @@ func New(opts ...Option) (*VM, error) {
 // Apply the given message to the VM and return its receipt. Multiple tracing hooks
 // can be given to trace the execution of the message.
 func (vm *VM) Apply(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, error) {
-	receipt, _, err := vm.apply(msg, false, true, joinHooks(hooks))
-	return receipt, err
+	return vm.apply(msg, false, joinHooks(hooks))
 }
 
 // ApplyTx is like [VM.Apply], but takes a transaction instead of a message.
@@ -92,22 +89,15 @@ func (vm *VM) ApplyTx(tx *types.Transaction, hooks ...*tracing.Hooks) (*Receipt,
 	return vm.Apply(msg, hooks...)
 }
 
-// ApplyWithSnapshot is like [VM.Apply], but also returns a state snapshot of the messages pre-state.
-// The VM's state can be rolled back to the snapshot using [VM.Rollback]. A snapshot is invalidated
-// after a call to [VM.Apply] or [VM.ApplyTx].
-func (vm *VM) ApplyWithSnapshot(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, int, error) {
-	return vm.apply(msg, false, false, joinHooks(hooks))
-}
-
-func (v *VM) apply(msg *w3types.Message, isCall, finalize bool, hooks *tracing.Hooks) (*Receipt, int, error) {
+func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Receipt, error) {
 	if v.db.Error() != nil {
-		return nil, -1, ErrFetch
+		return nil, ErrFetch
 	}
 	v.db.SetLogger(hooks)
 
 	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
 	if err != nil {
-		return nil, -1, err
+		return nil, err
 	}
 
 	var txHash common.Hash
@@ -126,7 +116,7 @@ func (v *VM) apply(msg *w3types.Message, isCall, finalize bool, hooks *tracing.H
 	// apply the message to the evm
 	result, err := core.ApplyMessage(evm, coreMsg, gp)
 	if err != nil {
-		return nil, -1, err
+		return nil, err
 	}
 
 	// build receipt
@@ -154,22 +144,16 @@ func (v *VM) apply(msg *w3types.Message, isCall, finalize bool, hooks *tracing.H
 	if isCall && !result.Failed() {
 		v.db.RevertToSnapshot(snap)
 	}
-	if finalize {
-		v.db.Finalise(false)
-		v.snaps = v.snaps[:0] // clear snapshots
-	} else if !isCall {
-		v.snaps = append(v.snaps, snap)
-	}
+	v.db.Finalise(false)
 
-	return receipt, snap, receipt.Err
+	return receipt, receipt.Err
 }
 
 // Call calls the given message on the VM and returns a receipt. Any state changes
 // of a call are reverted. Multiple tracing hooks can be passed to trace the execution
 // of the message.
 func (vm *VM) Call(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, error) {
-	receipt, _, err := vm.apply(msg, true, false, joinHooks(hooks))
-	return receipt, err
+	return vm.apply(msg, true, joinHooks(hooks))
 }
 
 // CallFunc is a utility function for [VM.Call] that calls the given function
@@ -245,23 +229,15 @@ func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, err
 	return val, nil
 }
 
-// Rollback the state of the VM to the given snapshot.
-// Snapshots
-func (vm *VM) Rollback(snapshot int) error {
-	// validate snapshot
-	i := slices.Index(vm.snaps, snapshot)
-	if i < 0 {
-		return fmt.Errorf("invalid snapshot %d", snapshot)
-	}
+// Snapshot the current state of the VM.
+func (vm *VM) Snapshot() *state.StateDB { return vm.db.Copy() }
 
-	vm.db.RevertToSnapshot(snapshot)
-	vm.snaps = vm.snaps[:i] // clear snapshot, and all snapshots after it
-	return nil
-}
+// Rollback the state of the VM to the given snapshot.
+func (vm *VM) Rollback(snapshot *state.StateDB) { vm.db = snapshot }
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
-	if !skipAccChecks && nonce == 0 && msg.From != w3.Addr0 {
+	if !skipAccChecks && nonce == 0 {
 		var err error
 		nonce, err = v.Nonce(msg.From)
 		if err != nil {
