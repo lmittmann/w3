@@ -363,12 +363,12 @@ func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
 	// create directory, if it does not exist
 	dirPath := filepath.Dir(fn)
 	if _, err := os.Stat(dirPath); errors.Is(err, os.ErrNotExist) {
-		if err := os.MkdirAll(dirPath, 0775); err != nil {
+		if err := os.MkdirAll(dirPath, 0o775); err != nil {
 			return err
 		}
 	}
 
-	file, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0664)
+	file, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o664)
 	if err != nil {
 		return err
 	}

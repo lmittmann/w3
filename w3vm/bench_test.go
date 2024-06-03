@@ -1,6 +1,7 @@
 package w3vm_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -101,4 +102,58 @@ func BenchmarkVM(b *testing.B) {
 	// report simulated gas per second
 	dur := b.Elapsed()
 	b.ReportMetric(float64(gasSimulated)/dur.Seconds(), "gas/s")
+}
+
+func BenchmarkVMSnapshot(b *testing.B) {
+	depositMsg := &w3types.Message{
+		From:  addr0,
+		To:    &addrWETH,
+		Value: w3.I("1 ether"),
+	}
+
+	runs := 2
+	b.Run(fmt.Sprintf("re-run %d", runs), func(b *testing.B) {
+		for range b.N {
+			vm, _ := w3vm.New(
+				w3vm.WithState(w3types.State{
+					addrWETH: {Code: codeWETH},
+					addr0:    {Balance: w3.I("2 ether")},
+				}),
+			)
+
+			for i := 0; i < runs; i++ {
+				_, err := vm.Apply(depositMsg)
+				if err != nil {
+					b.Fatalf("Failed to deposit: %v", err)
+				}
+			}
+		}
+	})
+
+	b.Run(fmt.Sprintf("snapshot %d", runs), func(b *testing.B) {
+		vm, _ := w3vm.New(
+			w3vm.WithState(w3types.State{
+				addrWETH: {Code: codeWETH},
+				addr0:    {Balance: w3.I("2 ether")},
+			}),
+		)
+
+		for i := 0; i < runs-1; i++ {
+			_, err := vm.Apply(depositMsg)
+			if err != nil {
+				b.Fatalf("Failed to deposit: %v", err)
+			}
+		}
+
+		snap := vm.Snapshot()
+
+		for range b.N {
+			_, err := vm.Apply(depositMsg)
+			if err != nil {
+				b.Fatalf("Failed to deposit: %v", err)
+			}
+
+			vm.Rollback(snap.Copy())
+		}
+	})
 }
