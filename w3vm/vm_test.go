@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
-	coreState "github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -211,6 +211,58 @@ func TestVMApply(t *testing.T) {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestVMSnapshot(t *testing.T) {
+	vm, _ := w3vm.New(
+		w3vm.WithState(w3types.State{
+			addrWETH: {Code: codeWETH},
+			addr0:    {Balance: w3.I("100 ether")},
+		}),
+	)
+
+	depositMsg := &w3types.Message{
+		From:  addr0,
+		To:    &addrWETH,
+		Value: w3.I("1 ether"),
+	}
+
+	getBalanceOf := func(t *testing.T, token, acc common.Address) *big.Int {
+		t.Helper()
+
+		var balance *big.Int
+		if err := vm.CallFunc(token, funcBalanceOf, acc).Returns(&balance); err != nil {
+			t.Fatalf("Failed to call balanceOf: %v", err)
+		}
+		return balance
+	}
+
+	if got := getBalanceOf(t, addrWETH, addr0); got.Sign() != 0 {
+		t.Fatalf("Balance: want 0 WETH, got %s WETH", w3.FromWei(got, 18))
+	}
+
+	var snap *state.StateDB
+	for i := range 100 {
+		if i == 42 {
+			snap = vm.Snapshot()
+		}
+
+		if _, err := vm.Apply(depositMsg); err != nil {
+			t.Fatalf("Failed to apply deposit msg: %v", err)
+		}
+
+		want := w3.I(strconv.Itoa(i+1) + " ether")
+		if got := getBalanceOf(t, addrWETH, addr0); want.Cmp(got) != 0 {
+			t.Fatalf("Balance: want %s WETH, got %s WETH", w3.FromWei(want, 18), w3.FromWei(got, 18))
+		}
+	}
+
+	vm.Rollback(snap)
+
+	want := w3.I("42 ether")
+	if got := getBalanceOf(t, addrWETH, addr0); got.Cmp(want) != 0 {
+		t.Fatalf("Balance: want %s WETH, got %s WETH", w3.FromWei(want, 18), w3.FromWei(got, 18))
 	}
 }
 
@@ -506,7 +558,7 @@ func BenchmarkTransferWETH9(b *testing.B) {
 	})
 
 	b.Run("geth", func(b *testing.B) {
-		stateDB, _ := coreState.New(common.Hash{}, coreState.NewDatabase(rawdb.NewMemoryDatabase()), nil)
+		stateDB, _ := state.New(common.Hash{}, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
 		stateDB.SetCode(addrWETH, codeWETH)
 		stateDB.SetState(addrWETH, w3vm.WETHBalanceSlot(addr0), common.BigToHash(w3.I("1 ether")))
 
