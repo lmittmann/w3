@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core"
-	gethState "github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -39,7 +39,7 @@ type VM struct {
 	opts *options
 
 	txIndex uint64
-	db      *gethState.StateDB
+	db      *state.StateDB
 }
 
 // New creates a new VM, that is configured with the given options.
@@ -58,7 +58,7 @@ func New(opts ...Option) (*VM, error) {
 
 	// set DB
 	db := newDB(vm.opts.fetcher)
-	vm.db, _ = gethState.New(w3.Hash0, db, nil)
+	vm.db, _ = state.New(w3.Hash0, db, nil)
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
 		if acc.Balance != nil {
@@ -229,9 +229,16 @@ func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, err
 	return val, nil
 }
 
+// Snapshot the current state of the VM. The returned state can only be rolled
+// back to once. Use [state.StateDB.Copy] if you need to rollback multiple times.
+func (vm *VM) Snapshot() *state.StateDB { return vm.db.Copy() }
+
+// Rollback the state of the VM to the given snapshot.
+func (vm *VM) Rollback(snapshot *state.StateDB) { vm.db = snapshot }
+
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
-	if !skipAccChecks && nonce == 0 && msg.From != w3.Addr0 {
+	if !skipAccChecks && nonce == 0 {
 		var err error
 		nonce, err = v.Nonce(msg.From)
 		if err != nil {
