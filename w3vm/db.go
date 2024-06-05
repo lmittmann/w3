@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/trie"
 	"github.com/ethereum/go-ethereum/trie/trienode"
+	"github.com/ethereum/go-ethereum/trie/utils"
 	"github.com/ethereum/go-ethereum/triedb"
 	"github.com/holiman/uint256"
 )
@@ -65,6 +66,8 @@ func (*db) DiskDB() ethdb.KeyValueStore { panic("not implemented") }
 
 func (*db) TrieDB() *triedb.Database { panic("not implemented") }
 
+func (*db) PointCache() *utils.PointCache { panic("not implemented") }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // state.Trie methods //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,3 +121,5 @@ func (*db) Commit(collectLeaf bool) (common.Hash, *trienode.NodeSet, error) {
 func (*db) NodeIterator(startKey []byte) (trie.NodeIterator, error) { panic("not implemented") }
 
 func (*db) Prove(key []byte, proofDb ethdb.KeyValueWriter) error { panic("not implemented") }
+
+func (*db) IsVerkle() bool { panic("not implemented") }
