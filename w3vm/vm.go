@@ -170,27 +170,24 @@ func (vm *VM) Call(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, err
 //		// ...
 //	}
 func (vm *VM) CallFunc(contract common.Address, f w3types.Func, args ...any) *CallFuncFactory {
-	return &CallFuncFactory{
-		vm: vm,
-		msg: &w3types.Message{
-			To:   &contract,
-			Func: f,
-			Args: args,
-		},
-	}
+	receipt, err := vm.Call(&w3types.Message{
+		To:   &contract,
+		Func: f,
+		Args: args,
+	})
+	return &CallFuncFactory{receipt, err}
 }
 
 type CallFuncFactory struct {
-	vm  *VM
-	msg *w3types.Message
+	receipt *Receipt
+	err     error
 }
 
 func (cff *CallFuncFactory) Returns(returns ...any) error {
-	receipt, err := cff.vm.Call(cff.msg)
-	if err != nil {
+	if err := cff.err; err != nil {
 		return err
 	}
-	return receipt.DecodeReturns(returns...)
+	return cff.receipt.DecodeReturns(returns...)
 }
 
 // Nonce returns the nonce of the given address.
