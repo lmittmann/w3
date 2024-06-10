@@ -1,7 +1,9 @@
 package w3types
 
 import (
+	"bytes"
 	"encoding/json"
+	"maps"
 	"math/big"
 	"sync/atomic"
 
@@ -28,6 +30,27 @@ func (s State) SetGenesisAlloc(alloc types.GenesisAlloc) State {
 	return s
 }
 
+// Merge returns a new state that is the result of merging the called state with the given state.
+// All state in other state will overwrite the state in the called state.
+func (s State) Merge(other State) (merged State) {
+	merged = make(State, len(s))
+
+	// copy all accounts from s
+	for addr, acc := range s {
+		merged[addr] = acc.deepCopy()
+	}
+
+	// merge all accounts from other
+	for addr, acc := range other {
+		if mergedAcc, ok := merged[addr]; ok {
+			mergedAcc.merge(acc)
+		} else {
+			merged[addr] = acc.deepCopy()
+		}
+	}
+	return merged
+}
+
 type Account struct {
 	Nonce   uint64
 	Balance *big.Int
@@ -35,6 +58,47 @@ type Account struct {
 	Storage Storage
 
 	codeHash atomic.Pointer[common.Hash] // caches the code hash
+}
+
+// deepCopy returns a deep copy of the account.
+func (acc *Account) deepCopy() *Account {
+	newAcc := &Account{Nonce: acc.Nonce}
+	if acc.Balance != nil {
+		newAcc.Balance = new(big.Int).Set(acc.Balance)
+	}
+	if len(acc.Code) > 0 {
+		newAcc.Code = bytes.Clone(acc.Code)
+	}
+	if len(acc.Storage) > 0 {
+		newAcc.Storage = maps.Clone(acc.Storage)
+	}
+	return newAcc
+}
+
+// merge merges the given account into the called account.
+func (dst *Account) merge(src *Account) {
+	// merge account fields
+	srcIsZero := src.Nonce == 0 && src.Balance == nil && len(src.Code) == 0
+	if !srcIsZero {
+		dst.Nonce = src.Nonce
+		if src.Balance != nil {
+			dst.Balance = new(big.Int).Set(src.Balance)
+		} else {
+			dst.Balance = nil
+		}
+		if len(src.Code) > 0 {
+			dst.Code = bytes.Clone(src.Code)
+		} else {
+			dst.Code = nil
+		}
+	}
+
+	// merge storage
+	if dst.Storage == nil && len(src.Storage) > 0 {
+		dst.Storage = maps.Clone(src.Storage)
+	} else if len(src.Storage) > 0 {
+		maps.Copy(dst.Storage, src.Storage)
+	}
 }
 
 // CodeHash returns the hash of the account's code.
