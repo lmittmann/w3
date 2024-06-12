@@ -37,6 +37,13 @@ type RPCCallerFactory[T any] interface {
 	Returns(*T) RPCCaller
 }
 
+// RPCSubscriber is the interface that wraps the basic CreateRequest method.
+type RPCSubscriber interface {
+	// CreateRequest returns the namespace, channel, params for starting a new
+	// subscription and an error if the request cannot be created.
+	CreateRequest() (namespace string, ch any, params []any, err error)
+}
+
 // Caller is the interface that groups the basic CreateRequest and
 // HandleResponse methods.
 //
