@@ -137,6 +137,20 @@ func (c *Client) Call(calls ...w3types.RPCCaller) error {
 	return c.CallCtx(context.Background(), calls...)
 }
 
+// SubscribeCtx creates a new subscription and returns a [rpc.ClientSubscription].
+func (c *Client) SubscribeCtx(ctx context.Context, s w3types.RPCSubscriber) (*rpc.ClientSubscription, error) {
+	namespace, ch, params, err := s.CreateRequest()
+	if err != nil {
+		return nil, err
+	}
+	return c.client.Subscribe(ctx, namespace, ch, params...)
+}
+
+// Subscribe is like [Client.SubscribeCtx] with ctx equal to context.Background().
+func (c *Client) Subscribe(s w3types.RPCSubscriber) (*rpc.ClientSubscription, error) {
+	return c.SubscribeCtx(context.Background(), s)
+}
+
 func (c *Client) rateLimit(ctx context.Context, batchElems []rpc.BatchElem) error {
 	if c.rl == nil {
 		return nil
