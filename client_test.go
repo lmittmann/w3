@@ -197,6 +197,28 @@ func ExampleCallErrors() {
 	// 0x00000000219ab540356cBB839Cbe05303d7705Fa: unknown symbol: execution reverted
 }
 
+func ExampleClient_Subscribe() {
+	client := w3.MustDial("wss://mainnet.gateway.tenderly.co")
+	defer client.Close()
+
+	txCh := make(chan *types.Transaction)
+	sub, err := client.Subscribe(eth.PendingTransactions(txCh))
+	if err != nil {
+		fmt.Printf("Failed to subscribe: %v\n", err)
+		return
+	}
+
+	for {
+		select {
+		case tx := <-txCh:
+			fmt.Printf("New pending tx: %s\n", tx.Hash())
+		case err := <-sub.Err():
+			fmt.Printf("Subscription error: %v\n", err)
+			return
+		}
+	}
+}
+
 func TestClientCall(t *testing.T) {
 	tests := []struct {
 		Buf     *bytes.Buffer
