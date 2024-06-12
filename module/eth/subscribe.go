@@ -28,6 +28,6 @@ type ethSubscription[T any] struct {
 	err    error
 }
 
-func (s *ethSubscription[T]) CreateRequest() (namespace string, ch any, params []any, err error) {
-	return "eth", ch, s.params, s.err
+func (s *ethSubscription[T]) CreateRequest() (string, any, []any, error) {
+	return "eth", s.ch, s.params, s.err
 }
