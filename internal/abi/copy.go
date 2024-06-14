@@ -65,8 +65,6 @@ var (
 		reflect.TypeOf(&big.Int{}):       {},
 		reflect.TypeOf(big.Int{}):        {},
 	}
-
-	typeBig = reflect.TypeOf(&big.Int{})
 )
 
 // Copy shallow copies the value src to dst. If src is an anonymous struct or an
@@ -209,15 +207,6 @@ func setArray(dst, src reflect.Value) error {
 		}
 	}
 	return nil
-}
-
-// indirect recursively dereferences the value until it either gets the value
-// or finds a big.Int
-func indirect(v reflect.Value) reflect.Value {
-	if v.Kind() == reflect.Pointer && v.Type() != typeBig {
-		return indirect(v.Elem())
-	}
-	return v
 }
 
 func dereference(v reflect.Value) reflect.Value {
