@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -49,7 +50,7 @@ type rpcFetcher struct {
 	mux3         sync.RWMutex
 	headerHashes map[uint64]func() (common.Hash, error)
 
-	dirty bool // indicates whether new state has been fetched
+	dirty uint32 // indicates whether new state has been fetched (0=false, 1=true)
 }
 
 // NewRPCFetcher returns a new [Fetcher] that fetches account state from the given
@@ -79,7 +80,7 @@ func (f *rpcFetcher) Account(addr common.Address) (a *types.StateAccount, e erro
 	if ok {
 		return acc()
 	}
-	f.dirty = true
+	atomic.StoreUint32(&f.dirty, 1)
 
 	var (
 		accNew      = &types.StateAccount{Balance: new(uint256.Int)}
@@ -140,7 +141,7 @@ func (f *rpcFetcher) StorageAt(addr common.Address, slot common.Hash) (common.Ha
 	if ok {
 		return storage()
 	}
-	f.dirty = true
+	atomic.StoreUint32(&f.dirty, 1)
 
 	var (
 		storageVal   common.Hash
@@ -165,7 +166,7 @@ func (f *rpcFetcher) HeaderHash(blockNumber uint64) (common.Hash, error) {
 	if ok {
 		return hash()
 	}
-	f.dirty = true
+	atomic.StoreUint32(&f.dirty, 1)
 
 	var (
 		header       header
@@ -288,7 +289,7 @@ func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 }
 
 func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
-	if !f.dirty {
+	if atomic.LoadUint32(&f.dirty) == 0 {
 		return nil // the state has not been modified
 	}
 
