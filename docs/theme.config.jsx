@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { useConfig } from 'nextra-theme-docs'
+import { Cards } from 'nextra/components'
 
 export default {
     logo: <>
@@ -24,6 +25,10 @@ export default {
     },
     footer: {
         component: null,
+    },
+    components: {
+        Card: Cards.Card,
+        Cards: Cards,
     },
     project: {
         link: 'https://github.com/lmittmann/w3',

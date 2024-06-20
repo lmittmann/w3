@@ -8,7 +8,19 @@
     }
 
     main strong,
-    main :not(a) > code{
+    main :not(a)>code {
         @apply dark:text-white;
     }
+}
+
+/* Customize header */
+.nextra-nav-container nav a[target="_blank"]:nth-child(2):after,
+.nextra-nav-container nav a[target="_blank"]:nth-child(3):after {
+    content: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.33622 2.84025L1.17647 10L0 8.82354L7.15975 1.66378H0.849212V0H10V9.15081H8.33622V2.84025Z' fill='%239195A6'/%3E%3C/svg%3E%0A");
+    @apply pl-2;
+}
+
+/* Customize sidebar */
+aside.nextra-sidebar-container li.\[word-break\:break-word\] {
+    @apply text-base;
 }
