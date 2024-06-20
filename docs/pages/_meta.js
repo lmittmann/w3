@@ -4,6 +4,16 @@ export default {
         display: 'hidden',
         theme: { breadcrumb: false },
     },
+    '404': {
+        title: '404',
+        display: 'hidden',
+        "theme": {
+            breadcrumb: false,
+            toc: false,
+            layout: 'full',
+            pagination: false,
+        }
+    },
     '--- RPC Client': {
         type: 'separator',
         title: 'RPC Client'
