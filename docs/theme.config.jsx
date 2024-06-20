@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { useConfig } from 'nextra-theme-docs'
-import { Cards } from 'nextra/components'
+import { Cards, Steps } from 'nextra/components'
+import { DocLink } from './components/DocLink'
 
 export default {
     logo: <>
@@ -29,6 +30,8 @@ export default {
     components: {
         Card: Cards.Card,
         Cards: Cards,
+        Steps: Steps,
+        DocLink: DocLink,
     },
     project: {
         link: 'https://github.com/lmittmann/w3',
