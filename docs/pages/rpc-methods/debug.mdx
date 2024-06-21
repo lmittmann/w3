@@ -1,5 +1,7 @@
 # `debug`
 
+List of supported RPC methods for `w3.Client` in the `debug`-namespace.
+
 | Method                   | Go Code
 | :----------------------- | :-------
 | `debug_traceCall`        | `debug.TraceCall(msg *w3types.Message, blockNumber *big.Int, config *debug.TraceConfig).Returns(trace *debug.Trace)`<br/>`debug.CallTraceCall(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State).Returns(trace *debug.CallTrace)`

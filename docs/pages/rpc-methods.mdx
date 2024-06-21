@@ -1,8 +1,20 @@
 # Methods
 
+`w3` supports most common RPC methods for Ethereum and other EVM chains. If you are in need of a method that is not supported by `w3` natively, you can use [third party method packages](#third-party-rpc-method-packages), or easily write a custom method-binding and use it with `w3`.
+
+## RPC Namespaces
+
 <Cards>
   <Card title="eth" href="/rpc-methods/eth"/>
   <Card title="debug" href="/rpc-methods/debug"/>
   <Card title="txpool" href="/rpc-methods/txpool"/>
   <Card title="web3" href="/rpc-methods/web3" />
 </Cards>
+
+### Third Party RPC Method Packages
+
+List of third party method packages that can be used with `w3.Client`.
+
+| Package                                                                  | Description
+| :----------------------------------------------------------------------- | :-----------
+| [github.com/lmittmann/flashbots](https://github.com/lmittmann/flashbots) | Package `flashbots` implements RPC API bindings for the Flashbots relay and mev-geth.
