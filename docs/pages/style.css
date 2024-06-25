@@ -13,6 +13,11 @@
     }
 }
 
+/* Links */
+a._underline {
+    @apply no-underline;
+}
+
 /* Customize header */
 .nextra-nav-container nav a[target="_blank"]:nth-child(2):after,
 .nextra-nav-container nav a[target="_blank"]:nth-child(3):after {
@@ -21,6 +26,6 @@
 }
 
 /* Customize sidebar */
-aside.nextra-sidebar-container li.\[word-break\:break-word\] {
+aside.nextra-sidebar-container li._text-sm.\[word-break\:break-word\] {
     @apply text-base;
 }
