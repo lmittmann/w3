@@ -329,6 +329,21 @@ func (c *testCaller) HandleResponse(elem rpc.BatchElem) (err error) {
 	return c.ReturnErr
 }
 
+func TestClientCall_NilReference(t *testing.T) {
+	client := w3.MustDial("https://rpc.ankr.com/eth")
+	defer client.Close()
+
+	var block *types.Block
+	err := client.Call(
+		eth.BlockByNumber(nil).Returns(block),
+	)
+
+	want := "w3: cannot return Go value of type *types.Block: value must be passed as a non-nil pointer reference"
+	if diff := cmp.Diff(want, err.Error()); diff != "" {
+		t.Fatalf("(-want, +got)\n%s", diff)
+	}
+}
+
 func BenchmarkCall_BalanceNonce(b *testing.B) {
 	if *benchRPC == "" {
 		b.Skipf("Missing -benchRPC")
