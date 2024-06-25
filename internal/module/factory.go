@@ -3,6 +3,7 @@ package module
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -52,6 +53,9 @@ func (f Factory[T]) CreateRequest() (rpc.BatchElem, error) {
 	args, err := f.argsWrapper(f.args)
 	if err != nil {
 		return rpc.BatchElem{}, err
+	}
+	if f.ret == nil {
+		return rpc.BatchElem{}, fmt.Errorf("w3: cannot return Go value of type %T: value must be passed as a non-nil pointer reference", f.ret)
 	}
 
 	return rpc.BatchElem{
