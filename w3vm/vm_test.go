@@ -44,8 +44,7 @@ var (
 	client = w3.MustDial("https://rpc.ankr.com/eth", w3.WithRateLimiter(
 		rate.NewLimiter(rate.Every(time.Minute/300), 100),
 		func(methods []string) (cost int) { return len(methods) },
-	),
-	)
+	))
 )
 
 func TestVMApply(t *testing.T) {
@@ -447,6 +446,11 @@ func TestVMApply_Integration(t *testing.T) {
 		big.NewInt(17_034_869),
 		big.NewInt(17_034_870), // Shanghai
 		big.NewInt(17_034_871),
+
+		big.NewInt(19_426_485),
+		big.NewInt(19_426_486),
+		big.NewInt(19_426_487), // Cancun
+		big.NewInt(19_426_488),
 	}
 
 	for _, number := range blocks {
