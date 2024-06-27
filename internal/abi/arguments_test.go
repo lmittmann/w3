@@ -182,10 +182,10 @@ func TestDecode(t *testing.T) {
 			T:             abi.TupleTy,
 			TupleElems:    []*abi.Type{&typeBool, &typeUint256},
 			TupleRawNames: []string{"A", "_a"},
-			TupleType: reflect.TypeOf(struct {
+			TupleType: reflect.TypeFor[struct {
 				A bool     `abi:"a"`
 				B *big.Int `abi:"b"`
-			}{}),
+			}](),
 		}}}
 
 		dataBytes2 = common.FromHex("0xc0fe000000000000000000000000000000000000000000000000000000000000")
