@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/consensus/misc/eip4844"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/tracing"
@@ -298,6 +299,11 @@ func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
 		random = &h.MixDigest
 	}
 
+	var blobBaseFee *big.Int
+	if h.ExcessBlobGas != nil {
+		blobBaseFee = eip4844.CalcBlobFee(*h.ExcessBlobGas)
+	}
+
 	return &vm.BlockContext{
 		CanTransfer: core.CanTransfer,
 		Transfer:    core.Transfer,
@@ -307,6 +313,7 @@ func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
 		Time:        h.Time,
 		Difficulty:  nilToZero(h.Difficulty),
 		BaseFee:     nilToZero(h.BaseFee),
+		BlobBaseFee: blobBaseFee,
 		GasLimit:    h.GasLimit,
 		Random:      random,
 	}
