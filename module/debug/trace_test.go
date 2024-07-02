@@ -28,7 +28,8 @@ func TestTraceTx(t *testing.T) {
 				StructLogs: []*debug.StructLog{
 					{Pc: 0, Op: vm.PUSH1, Gas: 228380, GasCost: 3, Depth: 1},
 					{Pc: 2, Op: vm.PUSH1, Gas: 228377, GasCost: 3, Depth: 1, Stack: []uint256.Int{*uint256.NewInt(0x60)}},
-					{Pc: 4, Op: vm.MSTORE, Gas: 228374, GasCost: 12, Depth: 1, Stack: []uint256.Int{*uint256.NewInt(0x60), *uint256.NewInt(0x40)},
+					{
+						Pc: 4, Op: vm.MSTORE, Gas: 228374, GasCost: 12, Depth: 1, Stack: []uint256.Int{*uint256.NewInt(0x60), *uint256.NewInt(0x40)},
 						Memory: w3.B("0x" +
 							"0000000000000000000000000000000000000000000000000000000000000000" +
 							"0000000000000000000000000000000000000000000000000000000000000000" +

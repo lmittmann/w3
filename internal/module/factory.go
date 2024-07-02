@@ -11,9 +11,7 @@ import (
 	"github.com/lmittmann/w3/w3types"
 )
 
-var (
-	null = []byte("null")
-)
+var null = []byte("null")
 
 type Option[T any] func(*Factory[T])
 

@@ -23,7 +23,8 @@ func TestLogs(t *testing.T) {
 		filterQuery = ethereum.FilterQuery{
 			FromBlock: w3.I("10000000"),
 			ToBlock:   w3.I("10010000"),
-			Topics:    [][]common.Hash{{w3.H("0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9")}}}
+			Topics:    [][]common.Hash{{w3.H("0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9")}},
+		}
 
 		logs     []types.Log
 		wantLogs = []types.Log{

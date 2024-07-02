@@ -7,7 +7,6 @@ import "github.com/ethereum/go-ethereum/rpc"
 
 // Func is the interface that wraps the methods for ABI encoding and decoding.
 type Func interface {
-
 	// EncodeArgs ABI-encodes the given args and prepends the Func's 4-byte
 	// selector.
 	EncodeArgs(args ...any) (input []byte, err error)
@@ -31,7 +30,6 @@ type RPCCaller interface {
 
 // RPCCallerFactory is the interface that wraps the basic Returns method.
 type RPCCallerFactory[T any] interface {
-
 	// Returns given argument points to the variable in which to store the
 	// calls result.
 	Returns(*T) RPCCaller
@@ -54,7 +52,6 @@ type Caller = RPCCaller
 //
 // Deprecated: Use the [RPCCallerFactory] interface instead.
 type CallerFactory[T any] interface {
-
 	// Returns given argument points to the variable in which to store the
 	// calls result.
 	Returns(*T) Caller
