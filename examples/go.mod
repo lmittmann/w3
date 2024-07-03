@@ -3,7 +3,7 @@ module examples
 go 1.22
 
 require (
-	github.com/ethereum/go-ethereum v1.14.5
+	github.com/ethereum/go-ethereum v1.14.6
 	github.com/lmittmann/w3 v0.0.0
 )
 
