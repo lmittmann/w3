@@ -103,9 +103,7 @@ func TestBlockByHash(t *testing.T) {
 		},
 	}
 
-	rpctest.RunTestCases(t, tests) // cmp.AllowUnexported(types.Block{}, types.Transaction{}, atomic.Value{}),
-	// cmpopts.IgnoreFields(types.Transaction{}, "time"),
-
+	rpctest.RunTestCases(t, tests)
 }
 
 func TestBlockByNumber(t *testing.T) {
@@ -172,9 +170,7 @@ func TestBlockByNumber(t *testing.T) {
 		},
 	}
 
-	rpctest.RunTestCases(t, tests) // cmp.AllowUnexported(types.Block{}, types.Transaction{}),
-	// cmpopts.IgnoreFields(types.Transaction{}, "time"),
-
+	rpctest.RunTestCases(t, tests)
 }
 
 func TestBlockTxCountByHash(t *testing.T) {

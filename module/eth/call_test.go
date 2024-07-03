@@ -12,9 +12,7 @@ import (
 	"github.com/lmittmann/w3/w3types"
 )
 
-var (
-	funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
-)
+var funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 
 func TestCall(t *testing.T) {
 	tests := []rpctest.TestCase[[]byte]{

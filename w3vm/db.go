@@ -114,9 +114,9 @@ func (*db) DeleteAccount(addr common.Address) error { panic("not implemented") }
 
 func (*db) Hash() common.Hash { panic("not implemented") }
 
-func (*db) Commit(collectLeaf bool) (common.Hash, *trienode.NodeSet, error) {
-	panic("not implemented")
-}
+func (*db) Commit(collectLeaf bool) (common.Hash, *trienode.NodeSet) { panic("not implemented") }
+
+func (*db) Witness() map[string]struct{} { panic("not implemented") }
 
 func (*db) NodeIterator(startKey []byte) (trie.NodeIterator, error) { panic("not implemented") }
 
