@@ -1,7 +1,12 @@
-# `web3`
+# `web3`-Namespace
 
 List of supported RPC methods for `w3.Client` in the `web3`-namespace.
 
-| Method               | Go Code
-| :------------------- | :-------
-| `web3_clientVersion` | `web3.ClientVersion().Returns(clientVersion *string)`
+## `web3_clientVersion`
+`ClientVersion` requests the endpoints client version.
+```go {3}
+var clientVersion string
+client.Call(
+    web3.ClientVersion().Returns(&clientVersion),
+)
+```
