@@ -7,7 +7,7 @@ export default {
     '404': {
         title: '404',
         display: 'hidden',
-        "theme": {
+        'theme': {
             breadcrumb: false,
             toc: false,
             layout: 'full',
@@ -30,6 +30,10 @@ export default {
         title: 'Extension',
         theme: { breadcrumb: false },
     },
+    '+++ VM': {
+        'title': '',
+        'type': 'separator'
+    },
     '--- VM': {
         type: 'separator',
         title: 'VM'
@@ -37,6 +41,10 @@ export default {
     'vm-overview': {
         title: 'Overview',
         theme: { breadcrumb: false },
+    },
+    '+++ HELPER': {
+        'title': '',
+        'type': 'separator'
     },
     '--- HELPER': {
         type: 'separator',
