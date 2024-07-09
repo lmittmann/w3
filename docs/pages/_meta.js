@@ -61,7 +61,7 @@ export default {
     examples: {
         title: 'Examples',
         type: 'page',
-        href: '/examples',
+        href: 'https://github.com/lmittmann/w3/tree/main/examples',
         newWindow: true
     },
     godoc: {
