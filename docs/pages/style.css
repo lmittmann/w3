@@ -13,6 +13,11 @@
     }
 }
 
+/* Headings */
+h2 {
+    @apply border-none;
+}
+
 /* Links */
 a._underline {
     @apply no-underline;

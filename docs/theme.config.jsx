@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { useConfig } from 'nextra-theme-docs'
-import { Cards, Steps } from 'nextra/components'
+import { Callout, Cards, Steps } from 'nextra/components'
 import { DocLink } from './components/DocLink'
 
 export default {
@@ -28,8 +28,10 @@ export default {
         component: null,
     },
     components: {
+        Callout: Callout,
         Card: Cards.Card,
         Cards: Cards,
+        Image: Image,
         Steps: Steps,
         DocLink: DocLink,
     },

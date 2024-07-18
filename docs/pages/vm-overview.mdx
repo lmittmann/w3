@@ -1,1 +1,47 @@
 # VM
+
+
+[`w3vm.VM`](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#VM) is a high-level EVM environment with a simple but powerful API to simulate EVM execution, test Smart Contracts, or trace transactions. It supports Mainnet state forking via RPC and state caching for faster testing.
+
+**Example:** Simulate an Uniswap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
+
+```go
+// 1. Create a VM that forks the Mainnet state from the latest block,
+// disables the base fee, and has a fake WETH balance and approval for the router
+vm, err := w3vm.New(
+    w3vm.WithFork(client, nil),
+    w3vm.WithNoBaseFee(),
+    w3vm.WithState(w3types.State{
+        addrWETH: {Storage: w3types.Storage{
+            w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
+            w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
+        }},
+    }),
+)
+if err != nil {
+    // handle error
+}
+
+// 2. Simulate a Uniswap v3 swap
+receipt, err := vm.Apply(&w3types.Message{
+    From: addrEOA,
+    To:   &addrRouter,
+    Func: funcExactInput,
+    Args: []any{&ExactInputParams{
+        Path:             encodePath(addrWETH, 500, addrUNI),
+        Recipient:        addrEOA,
+        Deadline:         big.NewInt(time.Now().Unix()),
+        AmountIn:         w3.I("1 ether"),
+        AmountOutMinimum: w3.Big0,
+    }},
+})
+if err != nil {
+    // handle error
+}
+
+// 3. Decode output amount
+var amountOut *big.Int
+if err := receipt.DecodeReturns(&amountOut); err != nil {
+    // handle error
+}
+```
