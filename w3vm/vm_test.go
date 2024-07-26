@@ -1,6 +1,7 @@
 package w3vm_test
 
 import (
+	"bytes"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -46,6 +47,66 @@ var (
 		func(methods []string) (cost int) { return len(methods) },
 	))
 )
+
+func TestVMSetNonce(t *testing.T) {
+	vm, _ := w3vm.New()
+
+	if nonce, _ := vm.Nonce(addr0); nonce != 0 {
+		t.Fatalf("Nonce: want 0, got %d", nonce)
+	}
+
+	want := uint64(42)
+	vm.SetNonce(addr0, want)
+
+	if nonce, _ := vm.Nonce(addr0); want != nonce {
+		t.Fatalf("Nonce: want %d, got %d", want, nonce)
+	}
+}
+
+func TestVMSetBalance(t *testing.T) {
+	vm, _ := w3vm.New()
+
+	if balance, _ := vm.Balance(addr0); balance.Sign() != 0 {
+		t.Fatalf("Balance: want 0, got %s", balance)
+	}
+
+	want := w3.I("1 ether")
+	vm.SetBalance(addr0, want)
+
+	if balance, _ := vm.Balance(addr0); want.Cmp(balance) != 0 {
+		t.Fatalf("Balance: want %s ether, got %s ether", w3.FromWei(want, 18), w3.FromWei(balance, 18))
+	}
+}
+
+func TestVMSetCode(t *testing.T) {
+	vm, _ := w3vm.New()
+
+	if code, _ := vm.Code(addr0); len(code) != 0 {
+		t.Fatalf("Code: want empty, got %x", code)
+	}
+
+	want := []byte{0xc0, 0xfe}
+	vm.SetCode(addr0, want)
+
+	if code, _ := vm.Code(addr0); !bytes.Equal(want, code) {
+		t.Fatalf("Code: want %x, got %x", want, code)
+	}
+}
+
+func TestVMSetStorage(t *testing.T) {
+	vm, _ := w3vm.New()
+
+	if storage, _ := vm.StorageAt(addr0, common.Hash{}); storage != w3.Hash0 {
+		t.Fatalf("Storage: want empty, got %x", storage)
+	}
+
+	want := common.Hash{0xc0, 0xfe}
+	vm.SetStorageAt(addr0, common.Hash{}, want)
+
+	if storage, _ := vm.StorageAt(addr0, common.Hash{}); want != storage {
+		t.Fatalf("Storage: want %x, got %x", want, storage)
+	}
+}
 
 func TestVMApply(t *testing.T) {
 	tests := []struct {
