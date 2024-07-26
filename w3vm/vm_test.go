@@ -250,6 +250,25 @@ func TestVMApply(t *testing.T) {
 				ContractAddress: ptr(crypto.CreateAddress(addr1, 1)),
 			},
 		},
+		{ // EOA with storage
+			PreState: w3types.State{
+				addr0: {
+					Balance: w3.I("1 ether"),
+					Storage: w3types.Storage{
+						common.Hash{0x1}: common.Hash{0x2},
+					},
+				},
+			},
+			Message: &w3types.Message{
+				From:  addr0,
+				To:    &addr1,
+				Value: w3.I("1 ether"),
+			},
+			WantReceipt: &w3vm.Receipt{
+				GasUsed:  21_000,
+				GasLimit: 21_000,
+			},
+		},
 	}
 
 	for i, test := range tests {
