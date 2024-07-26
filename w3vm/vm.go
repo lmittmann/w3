@@ -59,7 +59,9 @@ func New(opts ...Option) (*VM, error) {
 
 	// set DB
 	db := newDB(vm.opts.fetcher)
-	vm.db, _ = state.New(w3.Hash0, db, nil)
+	if vm.db == nil {
+		vm.db, _ = state.New(w3.Hash0, db, nil)
+	}
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
 		if acc.Balance != nil {
@@ -446,6 +448,13 @@ func WithBlockContext(ctx *vm.BlockContext) Option {
 // accounts, or partially overwrite the storage of an account.
 func WithState(state w3types.State) Option {
 	return func(vm *VM) { vm.opts.preState = state }
+}
+
+// WithStateDB sets the state DB for the VM.
+//
+// The state DB can originate from a snapshot of the VM.
+func WithStateDB(db *state.StateDB) Option {
+	return func(vm *VM) { vm.db = db }
 }
 
 // WithNoBaseFee forces the EIP-1559 base fee to 0 for the VM.
