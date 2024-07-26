@@ -202,6 +202,11 @@ func (vm *VM) Nonce(addr common.Address) (uint64, error) {
 	return nonce, nil
 }
 
+// SetNonce sets the nonce of the given address.
+func (vm *VM) SetNonce(addr common.Address, nonce uint64) {
+	vm.db.SetNonce(addr, nonce)
+}
+
 // Balance returns the balance of the given address.
 func (vm *VM) Balance(addr common.Address) (*big.Int, error) {
 	balance := vm.db.GetBalance(addr)
@@ -209,6 +214,11 @@ func (vm *VM) Balance(addr common.Address) (*big.Int, error) {
 		return nil, fmt.Errorf("%w: failed to fetch balance of %s", ErrFetch, addr)
 	}
 	return balance.ToBig(), nil
+}
+
+// SetBalance sets the balance of the given address.
+func (vm *VM) SetBalance(addr common.Address, balance *big.Int) {
+	vm.db.SetBalance(addr, uint256.MustFromBig(balance), tracing.BalanceChangeUnspecified)
 }
 
 // Code returns the code of the given address.
@@ -220,6 +230,11 @@ func (vm *VM) Code(addr common.Address) ([]byte, error) {
 	return code, nil
 }
 
+// SetCode sets the code of the given address.
+func (vm *VM) SetCode(addr common.Address, code []byte) {
+	vm.db.SetCode(addr, code)
+}
+
 // StorageAt returns the state of the given address at the give storage slot.
 func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
 	val := vm.db.GetState(addr, slot)
@@ -227,6 +242,11 @@ func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, err
 		return w3.Hash0, fmt.Errorf("%w: failed to fetch storage of %s at %s", ErrFetch, addr, slot)
 	}
 	return val, nil
+}
+
+// SetStorageAt sets the state of the given address at the given storage slot.
+func (vm *VM) SetStorageAt(addr common.Address, slot, val common.Hash) {
+	vm.db.SetState(addr, slot, val)
 }
 
 // Snapshot the current state of the VM. The returned state can only be rolled
