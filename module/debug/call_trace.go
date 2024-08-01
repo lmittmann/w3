@@ -37,8 +37,8 @@ type CallTrace struct {
 	Input        []byte
 	Output       []byte
 	Error        string
-	Calls        []*CallTrace
 	RevertReason string
+	Calls        []*CallTrace
 }
 
 // UnmarshalJSON implements the [json.Unmarshaler].
@@ -53,8 +53,8 @@ func (c *CallTrace) UnmarshalJSON(data []byte) error {
 		Input        hexutil.Bytes  `json:"input"`
 		Output       hexutil.Bytes  `json:"output"`
 		Error        string         `json:"error"`
-		Calls        []*CallTrace   `json:"calls"`
 		RevertReason string         `json:"revertReason"`
+		Calls        []*CallTrace   `json:"calls"`
 	}
 
 	var dec call
@@ -73,8 +73,8 @@ func (c *CallTrace) UnmarshalJSON(data []byte) error {
 	c.Input = dec.Input
 	c.Output = dec.Output
 	c.Error = dec.Error
-	c.Calls = dec.Calls
 	c.RevertReason = dec.RevertReason
+	c.Calls = dec.Calls
 	return nil
 }
 
