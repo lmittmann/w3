@@ -1,6 +1,9 @@
 /*
-Package w3 implements a blazing fast and modular Ethereum JSON RPC client with
-first-class ABI support.
+Package w3 is your toolbelt for integrating with Ethereum in Go. Closely linked
+to [go-ethereum], it provides an ergonomic wrapper for working with RPC, ABI's,
+and the EVM.
+
+[go-ethereum]: https://github.com/ethereum/go-ethereum
 */
 package w3
 
