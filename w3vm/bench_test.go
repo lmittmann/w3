@@ -104,44 +104,70 @@ func BenchmarkVM(b *testing.B) {
 	b.ReportMetric(float64(gasSimulated)/dur.Seconds(), "gas/s")
 }
 
-func BenchmarkVMCall_UniswapV3Quote(b *testing.B) {
-	addrQuoter := w3.A("0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6")
-	addrWETH := w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
-	addrUSDC := w3.A("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
-	funcQuote := w3.MustNewFunc("quoteExactInputSingle(address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96)", "uint256 amountOut")
+func BenchmarkVMCall(b *testing.B) {
+	var (
+		addrQuoter = w3.A("0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6")
+		addrWETH   = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+		addrUSDC   = w3.A("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
 
-	vm, err := w3vm.New(
-		w3vm.WithFork(client, big.NewInt(20_000_000)),
-		w3vm.WithTB(b),
+		funcQuote     = w3.MustNewFunc("quoteExactInputSingle(address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96)", "uint256 amountOut")
+		funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 	)
-	if err != nil {
-		b.Fatalf("Failed to build VM: %v", err)
+
+	benchmarks := []struct {
+		Name string
+		Opts []w3vm.Option
+		Msg  *w3types.Message
+	}{
+		{
+			Name: "UniswapV3Quote",
+			Opts: []w3vm.Option{
+				w3vm.WithFork(client, big.NewInt(20_000_000)),
+				w3vm.WithTB(b),
+			},
+			Msg: &w3types.Message{
+				To:    &addrQuoter,
+				Input: mustEncodeArgs(funcQuote, addrWETH, addrUSDC, big.NewInt(500), w3.BigEther, w3.Big0),
+			},
+		},
+		{
+			Name: "WethBalanceOf",
+			Opts: []w3vm.Option{
+				w3vm.WithFork(client, big.NewInt(20_000_000)),
+				w3vm.WithTB(b),
+			},
+			Msg: &w3types.Message{
+				To:    &addrWETH,
+				Input: mustEncodeArgs(funcBalanceOf, addrWETH),
+			},
+		},
 	}
 
-	input, err := funcQuote.EncodeArgs(addrWETH, addrUSDC, big.NewInt(500), w3.BigEther, w3.Big0)
-	if err != nil {
-		b.Fatalf("Failed to encode input: %v", err)
-	}
-	quoteMsg := &w3types.Message{
-		To:    &addrQuoter,
-		Input: input,
-	}
+	for _, bench := range benchmarks {
+		b.Run(bench.Name, func(b *testing.B) {
+			// setup VM
+			vm, err := w3vm.New(bench.Opts...)
+			if err != nil {
+				b.Fatalf("Failed to build VM: %v", err)
+			}
 
-	b.ReportAllocs()
-	b.ResetTimer()
+			b.ReportAllocs()
+			b.ResetTimer()
 
-	var gasSimulated uint64
-	for range b.N {
-		receipt, err := vm.Call(quoteMsg)
-		if err != nil {
-			b.Fatalf("Failed to quote: %v", err)
-		}
-		gasSimulated += receipt.GasUsed
+			var gasSimulated uint64
+			for range b.N {
+				receipt, err := vm.Call(bench.Msg)
+				if err != nil {
+					b.Fatal(err)
+				}
+				gasSimulated += receipt.GasUsed
+			}
+
+			// report simulated gas per second
+			dur := b.Elapsed()
+			b.ReportMetric(float64(gasSimulated)/dur.Seconds(), "gas/s")
+		})
 	}
-
-	// report simulated gas per second
-	dur := b.Elapsed()
-	b.ReportMetric(float64(gasSimulated)/dur.Seconds(), "gas/s")
 }
 
 func BenchmarkVMSnapshot(b *testing.B) {

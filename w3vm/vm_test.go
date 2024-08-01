@@ -164,7 +164,7 @@ func TestVMApply(t *testing.T) {
 			Message: &w3types.Message{
 				From:  addr0,
 				To:    &addrWETH,
-				Input: must(funcTransfer.EncodeArgs(addr1, w3.I("1 ether"))),
+				Input: mustEncodeArgs(funcTransfer, addr1, w3.I("1 ether")),
 				Gas:   100_000,
 			},
 			WantReceipt: &w3vm.Receipt{
@@ -198,7 +198,7 @@ func TestVMApply(t *testing.T) {
 			Message: &w3types.Message{
 				From:  addr0,
 				To:    &addrWETH,
-				Input: must(funcTransfer.EncodeArgs(addr1, w3.I("10 ether"))),
+				Input: mustEncodeArgs(funcTransfer, addr1, w3.I("10 ether")),
 				Gas:   100_000,
 			},
 			WantReceipt: &w3vm.Receipt{
@@ -364,7 +364,7 @@ func TestVMCall(t *testing.T) {
 			Message: &w3types.Message{
 				From:  addr0,
 				To:    &addrWETH,
-				Input: must(funcBalanceOf.EncodeArgs(addr0)),
+				Input: mustEncodeArgs(funcBalanceOf, addr0),
 			},
 			WantReceipt: &w3vm.Receipt{
 				GasUsed:  23_726,
@@ -587,11 +587,12 @@ func TestVMApply_Integration(t *testing.T) {
 	}
 }
 
-func must[T any](t T, err error) T {
+func mustEncodeArgs(f w3types.Func, args ...any) []byte {
+	input, err := f.EncodeArgs(args...)
 	if err != nil {
 		panic(err)
 	}
-	return t
+	return input
 }
 
 func BenchmarkTransferWETH9(b *testing.B) {
@@ -599,7 +600,7 @@ func BenchmarkTransferWETH9(b *testing.B) {
 	addr1 := w3vm.RandA()
 
 	// encode input
-	input := must(funcTransfer.EncodeArgs(addr1, w3.I("1 gwei")))
+	input := mustEncodeArgs(funcTransfer, addr1, w3.I("1 gwei"))
 
 	blockCtx := vm.BlockContext{
 		CanTransfer: core.CanTransfer,
