@@ -26,6 +26,17 @@ jobs:
         run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - name: staticcheck
         run: staticcheck ./...
+      - name: go mod tidy
+        run: |
+          go mod tidy
+          cd examples/ && go mod tidy
+          if [[ `git status --porcelain` ]]; then
+            echo "workspace is not tidy"
+            git diff --color
+            exit 1
+          else
+            echo "workspace is tidy"
+          fi
 
   test:
     name: Test
