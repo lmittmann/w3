@@ -32,7 +32,7 @@ jobs:
           cd examples/ && go mod tidy
           if [[ `git status --porcelain` ]]; then
             echo "workspace is not tidy"
-            git diff
+            git diff --color
             exit 1
           else
             echo "workspace is tidy"
