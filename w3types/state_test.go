@@ -70,17 +70,13 @@ func TestStateMerge(t *testing.T) {
 			Name:     "empty-code",
 			StateDst: w3types.State{common.Address{}: {Code: []byte{}}},
 			StateSrc: w3types.State{},
-			Want: w3types.State{
-				common.Address{}: {Code: []byte{}},
-			},
+			Want:     w3types.State{common.Address{}: {Code: []byte{}}},
 		},
 		{
 			Name:     "empty-code2",
 			StateDst: w3types.State{},
 			StateSrc: w3types.State{common.Address{}: {Code: []byte{}}},
-			Want: w3types.State{
-				common.Address{}: {Code: []byte{}},
-			},
+			Want:     w3types.State{common.Address{}: {Code: []byte{}}},
 		},
 	}
 
