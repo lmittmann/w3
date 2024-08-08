@@ -64,7 +64,9 @@ func TestStateMerge(t *testing.T) {
 			StateSrc: w3types.State{common.Address{}: {Storage: w3types.Storage{common.Hash{}: common.Hash{0x02}}}},
 			Want:     w3types.State{common.Address{}: {Storage: w3types.Storage{common.Hash{}: common.Hash{0x02}}}},
 		},
-		{ //
+
+		// https://github.com/lmittmann/w3/pull/176
+		{
 			Name:     "empty-code",
 			StateDst: w3types.State{common.Address{}: {Code: []byte{}}},
 			StateSrc: w3types.State{},

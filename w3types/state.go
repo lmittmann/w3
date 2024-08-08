@@ -66,7 +66,7 @@ func (acc *Account) deepCopy() *Account {
 	if acc.Balance != nil {
 		newAcc.Balance = new(big.Int).Set(acc.Balance)
 	}
-	if len(acc.Code) > 0 {
+	if acc.Code != nil {
 		newAcc.Code = bytes.Clone(acc.Code)
 	}
 	if len(acc.Storage) > 0 {
