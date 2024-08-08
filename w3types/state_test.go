@@ -64,6 +64,22 @@ func TestStateMerge(t *testing.T) {
 			StateSrc: w3types.State{common.Address{}: {Storage: w3types.Storage{common.Hash{}: common.Hash{0x02}}}},
 			Want:     w3types.State{common.Address{}: {Storage: w3types.Storage{common.Hash{}: common.Hash{0x02}}}},
 		},
+		{ //
+			Name:     "empty-code",
+			StateDst: w3types.State{common.Address{}: {Code: []byte{}}},
+			StateSrc: w3types.State{},
+			Want: w3types.State{
+				common.Address{}: {Code: []byte{}},
+			},
+		},
+		{
+			Name:     "empty-code2",
+			StateDst: w3types.State{},
+			StateSrc: w3types.State{common.Address{}: {Code: []byte{}}},
+			Want: w3types.State{
+				common.Address{}: {Code: []byte{}},
+			},
+		},
 	}
 
 	for _, test := range tests {
