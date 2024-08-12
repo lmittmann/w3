@@ -34,9 +34,8 @@ jobs:
             echo "workspace is not tidy"
             git diff --color
             exit 1
-          else
-            echo "workspace is tidy"
           fi
+          echo "workspace is tidy"
 
   test:
     name: Test
