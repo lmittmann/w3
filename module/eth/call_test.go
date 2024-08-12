@@ -15,7 +15,7 @@ import (
 var funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 
 func TestCall(t *testing.T) {
-	tests := []rpctest.TestCase[[]byte]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[[]byte]{
 		{
 			Golden: "call_func",
 			Call: eth.Call(&w3types.Message{
@@ -23,7 +23,7 @@ func TestCall(t *testing.T) {
 				Func: funcBalanceOf,
 				Args: []any{w3.A("0x000000000000000000000000000000000000c0Fe")},
 			}, nil, nil),
-			WantRet: ptr(make([]byte, 32)),
+			WantRet: make([]byte, 32),
 		},
 		{
 			Golden: "call_func__overrides",
@@ -38,11 +38,9 @@ func TestCall(t *testing.T) {
 					},
 				},
 			}),
-			WantRet: ptr(common.BigToHash(big.NewInt(42)).Bytes()),
+			WantRet: common.BigToHash(big.NewInt(42)).Bytes(),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestCallFunc(t *testing.T) {
@@ -67,7 +65,7 @@ func TestCallFunc(t *testing.T) {
 }
 
 func TestEstimateGas(t *testing.T) {
-	tests := []rpctest.TestCase[uint64]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[uint64]{
 		{
 			Golden: "estimate_gas",
 			Call: eth.EstimateGas(&w3types.Message{
@@ -75,15 +73,13 @@ func TestEstimateGas(t *testing.T) {
 				Func: funcBalanceOf,
 				Args: []any{w3.A("0x000000000000000000000000000000000000c0Fe")},
 			}, nil),
-			WantRet: ptr[uint64](23750),
+			WantRet: 23750,
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestAccessList(t *testing.T) {
-	tests := []rpctest.TestCase[eth.AccessListResponse]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*eth.AccessListResponse]{
 		{
 			Golden: "create_access_list",
 			Call: eth.AccessList(&w3types.Message{
@@ -103,7 +99,5 @@ func TestAccessList(t *testing.T) {
 				GasUsed: 26050,
 			},
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }

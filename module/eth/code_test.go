@@ -9,13 +9,11 @@ import (
 )
 
 func TestCode(t *testing.T) {
-	tests := []rpctest.TestCase[[]byte]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[[]byte]{
 		{
 			Golden:  "get_code",
 			Call:    eth.Code(w3.A("0x000000000000000000000000000000000000c0DE"), nil),
-			WantRet: ptr(w3.B("0xdeadbeef")),
+			WantRet: w3.B("0xdeadbeef"),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }

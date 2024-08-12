@@ -12,7 +12,7 @@ import (
 )
 
 func TestTraceTx(t *testing.T) {
-	tests := []rpctest.TestCase[debug.Trace]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*debug.Trace]{
 		{
 			Golden: "traceTx__1150000_0",
 			Call:   debug.TraceTx(w3.H("0x38f299591902bfada359527fa6b9b597a959c41c6f72a3b484807fbf52dc8abe"), nil),
@@ -38,13 +38,11 @@ func TestTraceTx(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestTraceCall(t *testing.T) {
-	tests := []rpctest.TestCase[debug.Trace]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*debug.Trace]{
 		{
 			Golden: "traceCall",
 			Call: debug.TraceCall(&w3types.Message{
@@ -58,7 +56,5 @@ func TestTraceCall(t *testing.T) {
 				Gas: 21000,
 			},
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }

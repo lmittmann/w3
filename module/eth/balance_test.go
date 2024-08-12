@@ -10,7 +10,7 @@ import (
 )
 
 func TestBalance(t *testing.T) {
-	tests := []rpctest.TestCase[big.Int]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*big.Int]{
 		{
 			Golden:  "get_balance",
 			Call:    eth.Balance(w3.A("0x000000000000000000000000000000000000c0Fe"), nil),
@@ -21,7 +21,5 @@ func TestBalance(t *testing.T) {
 			Call:    eth.Balance(w3.A("0x000000000000000000000000000000000000c0Fe"), big.NewInt(255)),
 			WantRet: w3.I("0.1 ether"),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
