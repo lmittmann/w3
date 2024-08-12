@@ -400,15 +400,13 @@ func (opts *options) Init() error {
 
 		latest := opts.forkBlockNumber == nil
 		if latest {
-			opts.forkBlockNumber = new(big.Int)
-			calls = append(calls, eth.BlockNumber().Returns(opts.forkBlockNumber))
+			calls = append(calls, eth.BlockNumber().Returns(&opts.forkBlockNumber))
 		}
 		if opts.header == nil && opts.blockCtx == nil {
-			opts.header = new(types.Header)
 			if latest {
-				calls = append(calls, eth.HeaderByNumber(pendingBlockNumber).Returns(opts.header))
+				calls = append(calls, eth.HeaderByNumber(pendingBlockNumber).Returns(&opts.header))
 			} else {
-				calls = append(calls, eth.HeaderByNumber(opts.forkBlockNumber).Returns(opts.header))
+				calls = append(calls, eth.HeaderByNumber(opts.forkBlockNumber).Returns(&opts.header))
 			}
 		}
 

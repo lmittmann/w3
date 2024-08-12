@@ -538,7 +538,7 @@ func TestVMApply_Integration(t *testing.T) {
 			t.Parallel()
 
 			var (
-				block    types.Block
+				block    *types.Block
 				receipts types.Receipts
 			)
 			if err := client.Call(
