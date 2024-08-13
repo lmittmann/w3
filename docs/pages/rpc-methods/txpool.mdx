@@ -5,7 +5,7 @@ List of supported RPC methods for `w3.Client` in the `txpool`-namespace.
 ## `txpool_content`
 `Content` requests the pending and queued transactions in the transaction pool.
 ```go {3}
-var content txpool.ContentResponse
+var content *txpool.ContentResponse
 client.Call(
     txpool.Content().Returns(&content),
 )
@@ -14,7 +14,7 @@ client.Call(
 ## `txpool_contentFrom`
 `ContentFrom` requests the pending and queued transactions in the transaction pool from the given address.
 ```go {3}
-var contentFrom txpool.ContentFromResponse
+var contentFrom *txpool.ContentFromResponse
 client.Call(
     txpool.ContentFrom(addr).Returns(&contentFrom),
 )
@@ -24,7 +24,7 @@ client.Call(
 ## `txpool_status`
 `Status` requests the number of pending and queued transactions in the transaction pool.
 ```go {3}
-var status txpool.StatusResponse
+var status *txpool.StatusResponse
 client.Call(
     txpool.Status().Returns(&status),
 )

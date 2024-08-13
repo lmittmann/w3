@@ -6,14 +6,14 @@
 	},
 	"dependencies": {
 		"next": "^14.2.5",
-		"nextra": "3.0.0-alpha.28",
-		"nextra-theme-docs": "3.0.0-alpha.28",
+		"nextra": "3.0.0-alpha.31",
+		"nextra-theme-docs": "3.0.0-alpha.31",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
 	},
 	"devDependencies": {
-		"autoprefixer": "^10.4.19",
-		"postcss": "^8.4.39",
-		"tailwindcss": "^3.4.4"
+		"autoprefixer": "^10.4.20",
+		"postcss": "^8.4.41",
+		"tailwindcss": "^3.4.9"
 	}
 }
