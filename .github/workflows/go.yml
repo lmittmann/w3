@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.23"
       - name: go fmt
         run: |
           output=$(gofmt -s -d .)
@@ -22,20 +22,14 @@ jobs:
           test -z "$output"
       - name: go vet
         run: go vet ./...
-      - name: install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - name: staticcheck
-        run: staticcheck ./...
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./...
       - name: go mod tidy
         run: |
-          go mod tidy
-          cd examples/ && go mod tidy
-          if [[ `git status --porcelain` ]]; then
-            echo "workspace is not tidy"
-            git diff --color
-            exit 1
-          fi
-          echo "workspace is tidy"
+          go mod tidy -diff
+          cd examples/ && go mod tidy -diff
 
   test:
     name: Test
@@ -44,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.23"
       - name: go test
         run: go test -covermode atomic -coverprofile=covprofile ./...
       - name: install goveralls
