@@ -22,10 +22,10 @@ jobs:
           test -z "$output"
       - name: go vet
         run: go vet ./...
+      - name: install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - name: staticcheck
-        run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
-          staticcheck ./...
+        run: staticcheck ./...
       - name: go mod tidy
         run: |
           go mod tidy -diff
