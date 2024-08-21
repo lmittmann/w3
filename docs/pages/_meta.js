@@ -42,6 +42,14 @@ export default {
         title: 'Overview',
         theme: { breadcrumb: false },
     },
+    'vm-tracing': {
+        title: 'Tracing',
+        theme: { breadcrumb: false },
+    },
+    'vm-testing': {
+        title: 'Testing',
+        theme: { breadcrumb: false },
+    },
     '+++ HELPER': {
         'title': '',
         'type': 'separator'
