@@ -1,6 +1,6 @@
 # Custom RPC Method Bindings
 
-Custom RPC method bindings can be created by implementing the [`w3types.RPCCaller`](https://pkg.go.dev/github.com/lmittmann/w3/w3types#RPCCaller) interface.
+Custom RPC method bindings can be created by implementing the <DocLink title="w3types.RPCCaller" /> interface. By convention, the `w3types.RPCCaller` is setup using an unexported factory, which implements the <DocLink title="w3types.RPCCallerFactory" /> interface, to keep the package API small and readable. The factory stores the method parameters and the reference to the return value.
 
 **Example:** RPC binding for the Otterscan `ots_getTransactionBySenderAndNonce` method ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3types#example-RPCCaller-GetTransactionBySenderAndNonce))
 
