@@ -106,7 +106,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	var txHash common.Hash
 	binary.BigEndian.PutUint64(txHash[:], v.txIndex)
 	v.txIndex++
-	v.db.SetTxContext(txHash, 0)
+	v.db.SetTxContext(txHash, int(v.txIndex))
 
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
 	evm := vm.NewEVM(*v.opts.blockCtx, *txCtx, v.db, v.opts.chainConfig, vm.Config{
@@ -254,7 +254,10 @@ func (vm *VM) SetStorageAt(addr common.Address, slot, val common.Hash) {
 func (vm *VM) Snapshot() *state.StateDB { return vm.db.Copy() }
 
 // Rollback the state of the VM to the given snapshot.
-func (vm *VM) Rollback(snapshot *state.StateDB) { vm.db = snapshot }
+func (vm *VM) Rollback(snapshot *state.StateDB) {
+	vm.db = snapshot
+	vm.txIndex = uint64(snapshot.TxIndex())
+}
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
