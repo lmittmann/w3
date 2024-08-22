@@ -263,7 +263,7 @@ func (vm *VM) Snapshot() *state.StateDB { return vm.db.Copy() }
 // Rollback the state of the VM to the given snapshot.
 func (vm *VM) Rollback(snapshot *state.StateDB) {
 	vm.db = snapshot
-	vm.txIndex = max(vm.txIndex, uint64(snapshot.TxIndex()+1))
+	vm.txIndex = uint64(snapshot.TxIndex()) + 1
 }
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
