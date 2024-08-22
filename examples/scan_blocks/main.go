@@ -1,5 +1,5 @@
 /*
-scan_blocks interates over blocks with their transactions from a given start block.
+scan_blocks iterates over blocks with their transactions from a given start block.
 
 Usage:
 
@@ -37,7 +37,7 @@ func main() {
 	// parse flags
 	flag.Uint64Var(&startBlock, "start", 10_000_000, "Start block")
 	flag.Usage = func() {
-		fmt.Println("scan_blocks interates over blocks with their transactions from a given start block.")
+		fmt.Println("scan_blocks iterates over blocks with their transactions from a given start block.")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -48,7 +48,7 @@ func main() {
 
 	// fetch blocks in bulk
 	calls := make([]w3types.RPCCaller, bulkSize)
-	blocks := make([]types.Block, bulkSize)
+	blocks := make([]*types.Block, bulkSize)
 
 	for i, txCount := 0, 0; ; i++ {
 		j := i % bulkSize
@@ -62,7 +62,7 @@ func main() {
 
 			for _, block := range blocks {
 				txCount += len(block.Transactions())
-				processBlock(&block)
+				processBlock(block)
 			}
 			fmt.Printf("\rFetched %d blocks with a total of %d transactions", i+1, txCount)
 		}

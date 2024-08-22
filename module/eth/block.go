@@ -11,7 +11,7 @@ import (
 )
 
 // BlockByHash requests the block with the given hash with full transactions.
-func BlockByHash(hash common.Hash) w3types.RPCCallerFactory[types.Block] {
+func BlockByHash(hash common.Hash) w3types.RPCCallerFactory[*types.Block] {
 	return module.NewFactory(
 		"eth_getBlockByHash",
 		[]any{hash, true},
@@ -21,7 +21,7 @@ func BlockByHash(hash common.Hash) w3types.RPCCallerFactory[types.Block] {
 
 // BlockByNumber requests the block with the given number with full
 // transactions. If number is nil, the latest block is requested.
-func BlockByNumber(number *big.Int) w3types.RPCCallerFactory[types.Block] {
+func BlockByNumber(number *big.Int) w3types.RPCCallerFactory[*types.Block] {
 	return module.NewFactory(
 		"eth_getBlockByNumber",
 		[]any{module.BlockNumberArg(number), true},
@@ -50,8 +50,8 @@ func BlockTxCountByNumber(number *big.Int) w3types.RPCCallerFactory[uint] {
 }
 
 // HeaderByHash requests the header with the given hash.
-func HeaderByHash(hash common.Hash) w3types.RPCCallerFactory[types.Header] {
-	return module.NewFactory[types.Header](
+func HeaderByHash(hash common.Hash) w3types.RPCCallerFactory[*types.Header] {
+	return module.NewFactory[*types.Header](
 		"eth_getBlockByHash",
 		[]any{hash, false},
 	)
@@ -59,14 +59,14 @@ func HeaderByHash(hash common.Hash) w3types.RPCCallerFactory[types.Header] {
 
 // HeaderByNumber requests the header with the given number. If number is nil,
 // the latest header is requested.
-func HeaderByNumber(number *big.Int) w3types.RPCCallerFactory[types.Header] {
-	return module.NewFactory[types.Header](
+func HeaderByNumber(number *big.Int) w3types.RPCCallerFactory[*types.Header] {
+	return module.NewFactory[*types.Header](
 		"eth_getBlockByNumber",
 		[]any{module.BlockNumberArg(number), false},
 	)
 }
 
-var blockRetWrapper = func(ret *types.Block) any { return &rpcBlock{ret} }
+func blockRetWrapper(ret **types.Block) any { *ret = new(types.Block); return &rpcBlock{*ret} }
 
 type rpcBlock struct{ *types.Block }
 

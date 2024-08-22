@@ -24,16 +24,14 @@ import (
 func BenchmarkVM(b *testing.B) {
 	const (
 		startBlock int64 = 19_000_000
-		endBlock   int64 = startBlock + 10
+		nBlocks    int   = 10
 	)
 
 	// fetch blocks
-	blocks := make([]*types.Block, 0, endBlock-startBlock)
-	calls := make([]w3types.RPCCaller, 0, endBlock-startBlock)
-	for i := startBlock; i < endBlock; i++ {
-		block := new(types.Block)
-		blocks = append(blocks, block)
-		calls = append(calls, eth.BlockByNumber(big.NewInt(i)).Returns(block))
+	blocks := make([]*types.Block, nBlocks)
+	calls := make([]w3types.RPCCaller, nBlocks)
+	for i, block := range blocks {
+		calls[i] = eth.BlockByNumber(big.NewInt(int64(i))).Returns(&block)
 	}
 
 	if err := client.Call(calls...); err != nil {
@@ -102,6 +100,72 @@ func BenchmarkVM(b *testing.B) {
 	// report simulated gas per second
 	dur := b.Elapsed()
 	b.ReportMetric(float64(gasSimulated)/dur.Seconds(), "gas/s")
+}
+
+func BenchmarkVMCall(b *testing.B) {
+	var (
+		addrQuoter = w3.A("0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6")
+		addrWETH   = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+		addrUSDC   = w3.A("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+
+		funcQuote     = w3.MustNewFunc("quoteExactInputSingle(address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96)", "uint256 amountOut")
+		funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
+	)
+
+	benchmarks := []struct {
+		Name string
+		Opts []w3vm.Option
+		Msg  *w3types.Message
+	}{
+		{
+			Name: "UniswapV3Quote",
+			Opts: []w3vm.Option{
+				w3vm.WithFork(client, big.NewInt(20_000_000)),
+				w3vm.WithTB(b),
+			},
+			Msg: &w3types.Message{
+				To:    &addrQuoter,
+				Input: mustEncodeArgs(funcQuote, addrWETH, addrUSDC, big.NewInt(500), w3.BigEther, w3.Big0),
+			},
+		},
+		{
+			Name: "WethBalanceOf",
+			Opts: []w3vm.Option{
+				w3vm.WithFork(client, big.NewInt(20_000_000)),
+				w3vm.WithTB(b),
+			},
+			Msg: &w3types.Message{
+				To:    &addrWETH,
+				Input: mustEncodeArgs(funcBalanceOf, addrWETH),
+			},
+		},
+	}
+
+	for _, bench := range benchmarks {
+		b.Run(bench.Name, func(b *testing.B) {
+			// setup VM
+			vm, err := w3vm.New(bench.Opts...)
+			if err != nil {
+				b.Fatalf("Failed to build VM: %v", err)
+			}
+
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			var gasSimulated uint64
+			for range b.N {
+				receipt, err := vm.Call(bench.Msg)
+				if err != nil {
+					b.Fatal(err)
+				}
+				gasSimulated += receipt.GasUsed
+			}
+
+			// report simulated gas per second
+			dur := b.Elapsed()
+			b.ReportMetric(float64(gasSimulated)/dur.Seconds(), "gas/s")
+		})
+	}
 }
 
 func BenchmarkVMSnapshot(b *testing.B) {

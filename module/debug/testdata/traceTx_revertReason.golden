@@ -1,0 +1,2 @@
+> {"jsonrpc":"2.0","id":1,"method":"debug_traceTransaction","params":["0x6ea1798a2d0d21db18d6e45ca00f230160b05f172f6022aa138a0b605831d740",{"tracer":"callTracer"}]}
+< {"jsonrpc":"2.0","id":1,"result":{"from":"0x84abea9c66d30d00549429f5f687e16708aa20c0","gas":"0x23cac","gasUsed":"0x13e66","to":"0xd0a7333587053a5bae772bd37b9aae724e367619","error":"execution reverted","revertReason":"BA: Insufficient gas (ETH) for refund","calls":[],"value":"0x0","type":"CALL"}}

@@ -2,7 +2,7 @@
 	"accounts": {
 		"0x0000000000000000000000000000000000000000": {
 			"nonce": "0x0",
-			"balance": "0x2d34e0decbe79293ca5",
+			"balance": "0x2d4df65069095449d6f",
 			"code": "0x"
 		},
 		"0x0000000000000000000000000000000000000001": {
@@ -360,7 +360,10 @@
 		"0x2256256526d0c615bd36cae5f3f4a074e4d84ccf": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0"
+			}
 		},
 		"0x2260fac5e5542a773aa44fbcfedf7c193bc2c599": {
 			"nonce": "0x1",
@@ -2013,7 +2016,16 @@
 		"0xacc0ad1a43696b24008703b5c5f0efb07f4d6cec": {
 			"nonce": "0x0",
 			"balance": "0x0",
-			"code": "0x"
+			"code": "0x",
+			"storage": {
+				"0x0": "0x0",
+				"0x2": "0x0",
+				"0x3": "0x0",
+				"0x4": "0x0",
+				"0x7": "0x0",
+				"0x8": "0x0",
+				"0x9": "0x0"
+			}
 		},
 		"0xae7ab96520de3a18e5e111b5eaab095312d7fe84": {
 			"nonce": "0x1",

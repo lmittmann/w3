@@ -9,20 +9,16 @@ import (
 )
 
 func TestClientVersion(t *testing.T) {
-	tests := []rpctest.TestCase[string]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[string]{
 		{
 			Golden:  "client_version",
 			Call:    web3.ClientVersion(),
-			WantRet: ptr("Geth"),
+			WantRet: "Geth",
 		},
 		{
 			Golden:  "client_version__err",
 			Call:    web3.ClientVersion(),
 			WantErr: errors.New("w3: call failed: the method web3_clientVersion does not exist/is not available"),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
-
-func ptr[T any](v T) *T { return &v }

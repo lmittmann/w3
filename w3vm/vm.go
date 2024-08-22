@@ -59,7 +59,9 @@ func New(opts ...Option) (*VM, error) {
 
 	// set DB
 	db := newDB(vm.opts.fetcher)
-	vm.db, _ = state.New(w3.Hash0, db, nil)
+	if vm.db == nil {
+		vm.db, _ = state.New(w3.Hash0, db, nil)
+	}
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
 		if acc.Balance != nil {
@@ -103,8 +105,8 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 
 	var txHash common.Hash
 	binary.BigEndian.PutUint64(txHash[:], v.txIndex)
+	v.db.SetTxContext(txHash, int(v.txIndex))
 	v.txIndex++
-	v.db.SetTxContext(txHash, 0)
 
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
 	evm := vm.NewEVM(*v.opts.blockCtx, *txCtx, v.db, v.opts.chainConfig, vm.Config{
@@ -125,9 +127,15 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		f:         msg.Func,
 		GasUsed:   result.UsedGas,
 		GasRefund: result.RefundedGas,
-		GasLimit:  result.UsedGas + v.db.GetRefund(),
 		Output:    result.ReturnData,
 		Logs:      v.db.GetLogs(txHash, 0, w3.Hash0),
+	}
+
+	// zero out the log tx hashes, indices and normalize the log indices
+	for i, log := range receipt.Logs {
+		log.Index = uint(i)
+		log.TxHash = w3.Hash0
+		log.TxIndex = 0
 	}
 
 	if err := result.Err; err != nil {
@@ -200,6 +208,11 @@ func (vm *VM) Nonce(addr common.Address) (uint64, error) {
 	return nonce, nil
 }
 
+// SetNonce sets the nonce of the given address.
+func (vm *VM) SetNonce(addr common.Address, nonce uint64) {
+	vm.db.SetNonce(addr, nonce)
+}
+
 // Balance returns the balance of the given address.
 func (vm *VM) Balance(addr common.Address) (*big.Int, error) {
 	balance := vm.db.GetBalance(addr)
@@ -207,6 +220,11 @@ func (vm *VM) Balance(addr common.Address) (*big.Int, error) {
 		return nil, fmt.Errorf("%w: failed to fetch balance of %s", ErrFetch, addr)
 	}
 	return balance.ToBig(), nil
+}
+
+// SetBalance sets the balance of the given address.
+func (vm *VM) SetBalance(addr common.Address, balance *big.Int) {
+	vm.db.SetBalance(addr, uint256.MustFromBig(balance), tracing.BalanceChangeUnspecified)
 }
 
 // Code returns the code of the given address.
@@ -218,6 +236,11 @@ func (vm *VM) Code(addr common.Address) ([]byte, error) {
 	return code, nil
 }
 
+// SetCode sets the code of the given address.
+func (vm *VM) SetCode(addr common.Address, code []byte) {
+	vm.db.SetCode(addr, code)
+}
+
 // StorageAt returns the state of the given address at the give storage slot.
 func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
 	val := vm.db.GetState(addr, slot)
@@ -227,12 +250,20 @@ func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, err
 	return val, nil
 }
 
+// SetStorageAt sets the state of the given address at the given storage slot.
+func (vm *VM) SetStorageAt(addr common.Address, slot, val common.Hash) {
+	vm.db.SetState(addr, slot, val)
+}
+
 // Snapshot the current state of the VM. The returned state can only be rolled
 // back to once. Use [state.StateDB.Copy] if you need to rollback multiple times.
 func (vm *VM) Snapshot() *state.StateDB { return vm.db.Copy() }
 
 // Rollback the state of the VM to the given snapshot.
-func (vm *VM) Rollback(snapshot *state.StateDB) { vm.db = snapshot }
+func (vm *VM) Rollback(snapshot *state.StateDB) {
+	vm.db = snapshot
+	vm.txIndex = uint64(snapshot.TxIndex()) + 1
+}
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
@@ -378,15 +409,13 @@ func (opts *options) Init() error {
 
 		latest := opts.forkBlockNumber == nil
 		if latest {
-			opts.forkBlockNumber = new(big.Int)
-			calls = append(calls, eth.BlockNumber().Returns(opts.forkBlockNumber))
+			calls = append(calls, eth.BlockNumber().Returns(&opts.forkBlockNumber))
 		}
 		if opts.header == nil && opts.blockCtx == nil {
-			opts.header = new(types.Header)
 			if latest {
-				calls = append(calls, eth.HeaderByNumber(pendingBlockNumber).Returns(opts.header))
+				calls = append(calls, eth.HeaderByNumber(pendingBlockNumber).Returns(&opts.header))
 			} else {
-				calls = append(calls, eth.HeaderByNumber(opts.forkBlockNumber).Returns(opts.header))
+				calls = append(calls, eth.HeaderByNumber(opts.forkBlockNumber).Returns(&opts.header))
 			}
 		}
 
@@ -446,6 +475,16 @@ func WithBlockContext(ctx *vm.BlockContext) Option {
 // accounts, or partially overwrite the storage of an account.
 func WithState(state w3types.State) Option {
 	return func(vm *VM) { vm.opts.preState = state }
+}
+
+// WithStateDB sets the state DB for the VM.
+//
+// The state DB can originate from a snapshot of the VM.
+func WithStateDB(db *state.StateDB) Option {
+	return func(vm *VM) {
+		vm.db = db
+		vm.txIndex = uint64(db.TxIndex() + 1)
+	}
 }
 
 // WithNoBaseFee forces the EIP-1559 base fee to 0 for the VM.

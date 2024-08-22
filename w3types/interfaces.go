@@ -41,18 +41,3 @@ type RPCSubscriber interface {
 	// subscription and an error if the request cannot be created.
 	CreateRequest() (namespace string, ch any, params []any, err error)
 }
-
-// Caller is the interface that groups the basic CreateRequest and
-// HandleResponse methods.
-//
-// Deprecated: Use the [RPCCaller] interface instead.
-type Caller = RPCCaller
-
-// CallerFactory is the interface that wraps the basic Returns method.
-//
-// Deprecated: Use the [RPCCallerFactory] interface instead.
-type CallerFactory[T any] interface {
-	// Returns given argument points to the variable in which to store the
-	// calls result.
-	Returns(*T) Caller
-}

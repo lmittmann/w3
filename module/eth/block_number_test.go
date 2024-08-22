@@ -10,13 +10,11 @@ import (
 )
 
 func TestBlockNumber(t *testing.T) {
-	tests := []rpctest.TestCase[big.Int]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*big.Int]{
 		{
 			Golden:  "block_number",
 			Call:    eth.BlockNumber(),
 			WantRet: w3.I("0xc0fe"),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }

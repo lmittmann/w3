@@ -63,7 +63,7 @@ func MustDial(rawurl string, opts ...Option) *Client {
 	return client
 }
 
-// Close closes the RPC connection and cancels any in-flight requests.
+// Close the RPC connection and cancel all in-flight requests.
 //
 // Close implements the [io.Closer] interface.
 func (c *Client) Close() error {

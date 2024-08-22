@@ -48,7 +48,7 @@ func ExampleClient() {
 
 	// 2. Make a batch request
 	var (
-		balance big.Int
+		balance *big.Int
 		nonce   uint64
 	)
 	if err := client.Call(
@@ -58,7 +58,7 @@ func ExampleClient() {
 		// handle error
 	}
 
-	fmt.Printf("balance: %s\nnonce: %d\n", w3.FromWei(&balance, 18), nonce)
+	fmt.Printf("balance: %s\nnonce: %d\n", w3.FromWei(balance, 18), nonce)
 }
 
 func ExampleClient_Call_balanceOf() {
@@ -76,8 +76,8 @@ func ExampleClient_Call_balanceOf() {
 		balanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 
 		// Declare variables for the RPC responses.
-		ethBalance   big.Int
-		weth9Balance big.Int
+		ethBalance   *big.Int
+		weth9Balance *big.Int
 	)
 
 	// Do batch request (both RPC requests are send in the same
@@ -91,7 +91,7 @@ func ExampleClient_Call_balanceOf() {
 	}
 
 	fmt.Printf("Combined balance: %v wei",
-		new(big.Int).Add(&ethBalance, &weth9Balance),
+		new(big.Int).Add(ethBalance, weth9Balance),
 	)
 }
 
@@ -103,7 +103,7 @@ func ExampleClient_Call_nonceAndBalance() {
 		addr = w3.A("0x000000000000000000000000000000000000c0Fe")
 
 		nonce   uint64
-		balance big.Int
+		balance *big.Int
 	)
 
 	if err := client.Call(
@@ -114,7 +114,7 @@ func ExampleClient_Call_nonceAndBalance() {
 		return
 	}
 
-	fmt.Printf("%s: Nonce: %d, Balance: ♦%s\n", addr, nonce, w3.FromWei(&balance, 18))
+	fmt.Printf("%s: Nonce: %d, Balance: ♦%s\n", addr, nonce, w3.FromWei(balance, 18))
 }
 
 func ExampleClient_Call_sendERC20transferTx() {
@@ -329,21 +329,6 @@ func (c *testCaller) HandleResponse(elem rpc.BatchElem) (err error) {
 	return c.ReturnErr
 }
 
-func TestClientCall_NilReference(t *testing.T) {
-	client := w3.MustDial("https://rpc.ankr.com/eth")
-	defer client.Close()
-
-	var block *types.Block
-	err := client.Call(
-		eth.BlockByNumber(nil).Returns(block),
-	)
-
-	want := "w3: cannot return Go value of type *types.Block: value must be passed as a non-nil pointer reference"
-	if diff := cmp.Diff(want, err.Error()); diff != "" {
-		t.Fatalf("(-want, +got)\n%s", diff)
-	}
-}
-
 func BenchmarkCall_BalanceNonce(b *testing.B) {
 	if *benchRPC == "" {
 		b.Skipf("Missing -benchRPC")
@@ -360,7 +345,7 @@ func BenchmarkCall_BalanceNonce(b *testing.B) {
 	b.Run("Batch", func(b *testing.B) {
 		var (
 			nonce   uint64
-			balance big.Int
+			balance *big.Int
 		)
 		for range b.N {
 			w3Client.Call(
@@ -395,7 +380,7 @@ func BenchmarkCall_Balance100(b *testing.B) {
 	}
 
 	b.Run("Batch", func(b *testing.B) {
-		var balance big.Int
+		var balance *big.Int
 		for range b.N {
 			requests := make([]w3types.RPCCaller, len(addr100))
 			for j := range len(requests) {
@@ -477,7 +462,7 @@ func BenchmarkCall_Block100(b *testing.B) {
 	}
 
 	b.Run("Batch", func(b *testing.B) {
-		var block types.Block
+		var block *types.Block
 		for range b.N {
 			requests := make([]w3types.RPCCaller, len(block100))
 			for j := range len(requests) {

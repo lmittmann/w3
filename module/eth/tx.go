@@ -11,24 +11,24 @@ import (
 )
 
 // Tx requests the transaction with the given hash.
-func Tx(hash common.Hash) w3types.RPCCallerFactory[types.Transaction] {
-	return module.NewFactory[types.Transaction](
+func Tx(hash common.Hash) w3types.RPCCallerFactory[*types.Transaction] {
+	return module.NewFactory[*types.Transaction](
 		"eth_getTransactionByHash",
 		[]any{hash},
 	)
 }
 
 // TxByBlockHashAndIndex requests the transaction in the given block with the given index.
-func TxByBlockHashAndIndex(blockHash common.Hash, index uint64) w3types.RPCCallerFactory[types.Transaction] {
-	return module.NewFactory[types.Transaction](
+func TxByBlockHashAndIndex(blockHash common.Hash, index uint64) w3types.RPCCallerFactory[*types.Transaction] {
+	return module.NewFactory[*types.Transaction](
 		"eth_getTransactionByBlockHashAndIndex",
 		[]any{blockHash, hexutil.Uint64(index)},
 	)
 }
 
 // TxByBlockNumberAndIndex requests the transaction in the given block with the given index.
-func TxByBlockNumberAndIndex(blockNumber *big.Int, index uint64) w3types.RPCCallerFactory[types.Transaction] {
-	return module.NewFactory[types.Transaction](
+func TxByBlockNumberAndIndex(blockNumber *big.Int, index uint64) w3types.RPCCallerFactory[*types.Transaction] {
+	return module.NewFactory[*types.Transaction](
 		"eth_getTransactionByBlockNumberAndIndex",
 		[]any{module.BlockNumberArg(blockNumber), hexutil.Uint64(index)},
 	)
@@ -60,8 +60,8 @@ func SendTx(tx *types.Transaction) w3types.RPCCallerFactory[common.Hash] {
 }
 
 // TxReceipt requests the receipt of the transaction with the given hash.
-func TxReceipt(txHash common.Hash) w3types.RPCCallerFactory[types.Receipt] {
-	return module.NewFactory[types.Receipt](
+func TxReceipt(txHash common.Hash) w3types.RPCCallerFactory[*types.Receipt] {
+	return module.NewFactory[*types.Receipt](
 		"eth_getTransactionReceipt",
 		[]any{txHash},
 	)

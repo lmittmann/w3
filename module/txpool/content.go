@@ -11,8 +11,8 @@ import (
 )
 
 // Content requests the pending and queued transactions in the transaction pool.
-func Content() w3types.RPCCallerFactory[ContentResponse] {
-	return module.NewFactory[ContentResponse](
+func Content() w3types.RPCCallerFactory[*ContentResponse] {
+	return module.NewFactory[*ContentResponse](
 		"txpool_content",
 		nil,
 	)
@@ -20,8 +20,8 @@ func Content() w3types.RPCCallerFactory[ContentResponse] {
 
 // ContentFrom requests the pending and queued transactions in the transaction pool
 // from the given address.
-func ContentFrom(addr common.Address) w3types.RPCCallerFactory[ContentFromResponse] {
-	return module.NewFactory[ContentFromResponse](
+func ContentFrom(addr common.Address) w3types.RPCCallerFactory[*ContentFromResponse] {
+	return module.NewFactory[*ContentFromResponse](
 		"txpool_contentFrom",
 		[]any{addr},
 	)

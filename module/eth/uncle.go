@@ -12,8 +12,8 @@ import (
 
 // UncleByBlockHashAndIndex requests the uncle of the block with the given hash
 // at the given index.
-func UncleByBlockHashAndIndex(hash common.Hash, index uint) w3types.RPCCallerFactory[types.Header] {
-	return module.NewFactory[types.Header](
+func UncleByBlockHashAndIndex(hash common.Hash, index uint) w3types.RPCCallerFactory[*types.Header] {
+	return module.NewFactory[*types.Header](
 		"eth_getUncleByBlockHashAndIndex",
 		[]any{hash, hexutil.Uint(index)},
 	)
@@ -21,8 +21,8 @@ func UncleByBlockHashAndIndex(hash common.Hash, index uint) w3types.RPCCallerFac
 
 // UncleByBlockNumberAndIndex requests the uncle of the block with the given
 // number at the given index.
-func UncleByBlockNumberAndIndex(number *big.Int, index uint) w3types.RPCCallerFactory[types.Header] {
-	return module.NewFactory[types.Header](
+func UncleByBlockNumberAndIndex(number *big.Int, index uint) w3types.RPCCallerFactory[*types.Header] {
+	return module.NewFactory[*types.Header](
 		"eth_getUncleByBlockNumberAndIndex",
 		[]any{module.BlockNumberArg(number), hexutil.Uint(index)},
 	)

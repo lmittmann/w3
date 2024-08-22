@@ -1,6 +1,7 @@
 package w3vm_test
 
 import (
+	"bytes"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -47,6 +48,66 @@ var (
 	))
 )
 
+func TestVMSetNonce(t *testing.T) {
+	vm, _ := w3vm.New()
+
+	if nonce, _ := vm.Nonce(addr0); nonce != 0 {
+		t.Fatalf("Nonce: want 0, got %d", nonce)
+	}
+
+	want := uint64(42)
+	vm.SetNonce(addr0, want)
+
+	if nonce, _ := vm.Nonce(addr0); want != nonce {
+		t.Fatalf("Nonce: want %d, got %d", want, nonce)
+	}
+}
+
+func TestVMSetBalance(t *testing.T) {
+	vm, _ := w3vm.New()
+
+	if balance, _ := vm.Balance(addr0); balance.Sign() != 0 {
+		t.Fatalf("Balance: want 0, got %s", balance)
+	}
+
+	want := w3.I("1 ether")
+	vm.SetBalance(addr0, want)
+
+	if balance, _ := vm.Balance(addr0); want.Cmp(balance) != 0 {
+		t.Fatalf("Balance: want %s ether, got %s ether", w3.FromWei(want, 18), w3.FromWei(balance, 18))
+	}
+}
+
+func TestVMSetCode(t *testing.T) {
+	vm, _ := w3vm.New()
+
+	if code, _ := vm.Code(addr0); len(code) != 0 {
+		t.Fatalf("Code: want empty, got %x", code)
+	}
+
+	want := []byte{0xc0, 0xfe}
+	vm.SetCode(addr0, want)
+
+	if code, _ := vm.Code(addr0); !bytes.Equal(want, code) {
+		t.Fatalf("Code: want %x, got %x", want, code)
+	}
+}
+
+func TestVMSetStorage(t *testing.T) {
+	vm, _ := w3vm.New()
+
+	if storage, _ := vm.StorageAt(addr0, common.Hash{}); storage != w3.Hash0 {
+		t.Fatalf("Storage: want empty, got %x", storage)
+	}
+
+	want := common.Hash{0xc0, 0xfe}
+	vm.SetStorageAt(addr0, common.Hash{}, want)
+
+	if storage, _ := vm.StorageAt(addr0, common.Hash{}); want != storage {
+		t.Fatalf("Storage: want %x, got %x", want, storage)
+	}
+}
+
 func TestVMApply(t *testing.T) {
 	tests := []struct {
 		PreState    w3types.State
@@ -86,8 +147,7 @@ func TestVMApply(t *testing.T) {
 				Value: w3.I("1 ether"),
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  21_000,
-				GasLimit: 21_000,
+				GasUsed: 21_000,
 			},
 		},
 		{ // WETH transfer
@@ -103,13 +163,12 @@ func TestVMApply(t *testing.T) {
 			Message: &w3types.Message{
 				From:  addr0,
 				To:    &addrWETH,
-				Input: must(funcTransfer.EncodeArgs(addr1, w3.I("1 ether"))),
+				Input: mustEncodeArgs(funcTransfer, addr1, w3.I("1 ether")),
 				Gas:   100_000,
 			},
 			WantReceipt: &w3vm.Receipt{
 				GasUsed:   38_853,
 				GasRefund: 9_713,
-				GasLimit:  58_753,
 				Logs: []*types.Log{
 					{
 						Address: addrWETH,
@@ -137,13 +196,12 @@ func TestVMApply(t *testing.T) {
 			Message: &w3types.Message{
 				From:  addr0,
 				To:    &addrWETH,
-				Input: must(funcTransfer.EncodeArgs(addr1, w3.I("10 ether"))),
+				Input: mustEncodeArgs(funcTransfer, addr1, w3.I("10 ether")),
 				Gas:   100_000,
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  24_019,
-				GasLimit: 24_019,
-				Err:      errors.New("execution reverted"),
+				GasUsed: 24_019,
+				Err:     errors.New("execution reverted"),
 			},
 			WantErr: errors.New("execution reverted"),
 		},
@@ -157,10 +215,9 @@ func TestVMApply(t *testing.T) {
 				To:   &addr1,
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  21_008,
-				GasLimit: 21_008,
-				Output:   w3.B("0x00"),
-				Err:      errors.New("execution reverted"),
+				GasUsed: 21_008,
+				Output:  w3.B("0x00"),
+				Err:     errors.New("execution reverted"),
 			},
 			WantErr: errors.New("execution reverted"),
 		},
@@ -171,7 +228,6 @@ func TestVMApply(t *testing.T) {
 			},
 			WantReceipt: &w3vm.Receipt{
 				GasUsed:         53_006,
-				GasLimit:        53_006,
 				ContractAddress: ptr(crypto.CreateAddress(addr1, 0)),
 			},
 		},
@@ -185,8 +241,25 @@ func TestVMApply(t *testing.T) {
 			},
 			WantReceipt: &w3vm.Receipt{
 				GasUsed:         53_006,
-				GasLimit:        53_006,
 				ContractAddress: ptr(crypto.CreateAddress(addr1, 1)),
+			},
+		},
+		{ // EOA with storage
+			PreState: w3types.State{
+				addr0: {
+					Balance: w3.I("1 ether"),
+					Storage: w3types.Storage{
+						common.Hash{0x1}: common.Hash{0x2},
+					},
+				},
+			},
+			Message: &w3types.Message{
+				From:  addr0,
+				To:    &addr1,
+				Value: w3.I("1 ether"),
+			},
+			WantReceipt: &w3vm.Receipt{
+				GasUsed: 21_000,
 			},
 		},
 	}
@@ -265,6 +338,180 @@ func TestVMSnapshot(t *testing.T) {
 	}
 }
 
+func TestVMSnapshot_Logs(t *testing.T) {
+	var (
+		preState = w3types.State{
+			addrWETH: {
+				Code: codeWETH,
+				Storage: w3types.Storage{
+					w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("10 ether")),
+				},
+			},
+		}
+		transferMsg = &w3types.Message{
+			From: addr0,
+			To:   &addrWETH,
+			Func: funcTransfer,
+			Args: []any{addr1, w3.I("1 ether")},
+		}
+	)
+
+	tests := []struct {
+		Name string
+		F    func() (receipt0, receipt1 *w3vm.Receipt, err error)
+	}{
+		{
+			Name: "rollback_0",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				snap := vm.Snapshot()
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm.Rollback(snap)
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "rollback_1",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				if _, err = vm.Apply(transferMsg); err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm.Rollback(snap)
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "rollback_2",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+				vm.Rollback(snap)
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "rollback_3",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				if _, err = vm.Apply(transferMsg); err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm2, _ := w3vm.New(w3vm.WithState(preState))
+				vm2.Rollback(snap)
+
+				receipt1, err = vm2.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "new_0",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				snap := vm.Snapshot()
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm, _ = w3vm.New(w3vm.WithStateDB(snap))
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "new_1",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				if _, err = vm.Apply(transferMsg); err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm, _ = w3vm.New(w3vm.WithStateDB(snap))
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "new_2",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+				vm, _ = w3vm.New(w3vm.WithStateDB(snap))
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			receipt0, receipt1, err := test.F()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(receipt0.Logs, receipt1.Logs); diff != "" {
+				t.Fatalf("(-want +got)\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestVMCall(t *testing.T) {
 	tests := []struct {
 		PreState    w3types.State
@@ -284,12 +531,11 @@ func TestVMCall(t *testing.T) {
 			Message: &w3types.Message{
 				From:  addr0,
 				To:    &addrWETH,
-				Input: must(funcBalanceOf.EncodeArgs(addr0)),
+				Input: mustEncodeArgs(funcBalanceOf, addr0),
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  23_726,
-				GasLimit: 23_726,
-				Output:   w3.B("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"),
+				GasUsed: 23_726,
+				Output:  w3.B("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"),
 			},
 		},
 	}
@@ -396,110 +642,79 @@ func TestVMApply_Integration(t *testing.T) {
 		t.SkipNow()
 	}
 
-	blocks := []*big.Int{
-		big.NewInt(4_369_998),
-		big.NewInt(4_369_999),
-		big.NewInt(4_370_000), // Byzantium
-		big.NewInt(4_370_001),
-
-		big.NewInt(7_279_998),
-		big.NewInt(7_279_999),
-		big.NewInt(7_280_000), // Constantinople & Petersburg
-		big.NewInt(7_280_001),
-
-		big.NewInt(9_068_998),
-		big.NewInt(9_068_999),
-		big.NewInt(9_069_000), // Istanbul
-		big.NewInt(9_069_001),
-
-		big.NewInt(9_199_998),
-		big.NewInt(9_199_999),
-		big.NewInt(9_200_000), // Muir Glacier
-		big.NewInt(9_200_001),
-
-		big.NewInt(12_243_998),
-		big.NewInt(12_243_999),
-		big.NewInt(12_244_000), // Berlin
-		big.NewInt(12_244_001),
-
-		big.NewInt(12_964_998),
-		big.NewInt(12_964_999),
-		big.NewInt(12_965_000), // London
-		big.NewInt(12_965_001),
-
-		big.NewInt(13_772_998),
-		big.NewInt(13_772_999),
-		big.NewInt(13_773_000), // Arrow Glacier
-		big.NewInt(13_773_001),
-
-		big.NewInt(15_054_998),
-		big.NewInt(15_054_999),
-		big.NewInt(15_050_000), // Gray Glacier
-		big.NewInt(15_050_001),
-
-		big.NewInt(15_537_392),
-		big.NewInt(15_537_393),
-		big.NewInt(15_537_394), // Paris (The Merge)
-		big.NewInt(15_537_395),
-
-		big.NewInt(17_034_868),
-		big.NewInt(17_034_869),
-		big.NewInt(17_034_870), // Shanghai
-		big.NewInt(17_034_871),
-
-		big.NewInt(19_426_485),
-		big.NewInt(19_426_486),
-		big.NewInt(19_426_487), // Cancun
-		big.NewInt(19_426_488),
+	tests := []struct {
+		Name   string
+		Offset uint64 // Start block number
+		Size   uint64 // Number of blocks
+	}{
+		{Name: "Byzantium", Offset: 4_370_000 - 2, Size: 4},
+		{Name: "Constantinople&Petersburg", Offset: 7_280_000 - 2, Size: 4},
+		{Name: "Istanbul", Offset: 9_069_000 - 2, Size: 4},
+		{Name: "Muir Glacier", Offset: 9_200_000 - 2, Size: 4},
+		{Name: "Berlin", Offset: 12_244_000 - 2, Size: 4},
+		{Name: "London", Offset: 12_965_000 - 2, Size: 4},
+		{Name: "Arrow Glacier", Offset: 13_773_000 - 2, Size: 4},
+		{Name: "Gray Glacier", Offset: 15_050_000 - 2, Size: 4},
+		{Name: "Paris", Offset: 15_537_394 - 2, Size: 4}, // The Merge
+		{Name: "Shanghai", Offset: 17_034_870 - 2, Size: 4},
+		{Name: "Cancun", Offset: 19_426_487 - 2, Size: 4},
 	}
 
-	for _, number := range blocks {
-		t.Run(number.String(), func(t *testing.T) {
-			t.Parallel()
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			// execute blocks
+			for i := test.Offset; i < test.Offset+test.Size; i++ {
+				// gather block and receipts
+				blockNumber := big.NewInt(int64(i))
 
-			var (
-				block    types.Block
-				receipts types.Receipts
-			)
-			if err := client.Call(
-				eth.BlockByNumber(number).Returns(&block),
-				eth.BlockReceipts(number).Returns(&receipts),
-			); err != nil {
-				t.Fatalf("Failed to fetch block and receipts: %v", err)
-			}
+				t.Run(blockNumber.String(), func(t *testing.T) {
+					t.Parallel()
 
-			f := w3vm.NewTestingRPCFetcher(t, 1, client, new(big.Int).Sub(number, w3.Big1))
-			vm, _ := w3vm.New(
-				w3vm.WithFetcher(f),
-				w3vm.WithHeader(block.Header()),
-			)
-
-			for i, tx := range block.Transactions() {
-				t.Run(fmt.Sprintf("%d_%s", i, tx.Hash()), func(t *testing.T) {
-					wantReceipt := &w3vm.Receipt{
-						GasUsed: receipts[i].GasUsed,
-						Logs:    receipts[i].Logs,
-					}
-					if receipts[i].ContractAddress != addr0 {
-						wantReceipt.ContractAddress = &receipts[i].ContractAddress
-					}
-					if receipts[i].Status == types.ReceiptStatusFailed {
-						wantReceipt.Err = cmpopts.AnyError
+					var (
+						block    *types.Block
+						receipts types.Receipts
+					)
+					if err := client.Call(
+						eth.BlockByNumber(blockNumber).Returns(&block),
+						eth.BlockReceipts(blockNumber).Returns(&receipts),
+					); err != nil {
+						t.Fatalf("Failed to fetch block and receipts: %v", err)
 					}
 
-					gotReceipt, err := vm.ApplyTx(tx)
-					if err != nil && gotReceipt == nil {
-						t.Fatalf("Failed to apply tx: %v", err)
-					}
-					if diff := cmp.Diff(wantReceipt, gotReceipt,
-						cmpopts.EquateEmpty(),
-						cmpopts.EquateErrors(),
-						cmpopts.IgnoreUnexported(w3vm.Receipt{}),
-						cmpopts.IgnoreFields(w3vm.Receipt{}, "GasRefund", "GasLimit", "Output"),
-						cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "TxHash", "TxIndex", "Index"),
-						cmpopts.EquateComparable(common.Address{}, common.Hash{}),
-					); diff != "" {
-						t.Fatalf("(-want +got)\n%s", diff)
+					// setup vm
+					f := w3vm.NewTestingRPCFetcher(t, 1, client, big.NewInt(int64(i)-1))
+					vm, _ := w3vm.New(
+						w3vm.WithFetcher(f),
+						w3vm.WithHeader(block.Header()),
+					)
+
+					// execute txs
+					for j, tx := range block.Transactions() {
+						wantReceipt := &w3vm.Receipt{
+							GasUsed: receipts[j].GasUsed,
+							Logs:    receipts[j].Logs,
+						}
+						if receipts[j].ContractAddress != addr0 {
+							wantReceipt.ContractAddress = &receipts[j].ContractAddress
+						}
+						if receipts[j].Status == types.ReceiptStatusFailed {
+							wantReceipt.Err = cmpopts.AnyError
+						}
+
+						gotReceipt, err := vm.ApplyTx(tx)
+						if err != nil && gotReceipt == nil {
+							t.Fatalf("Failed to apply tx %d (%s): %v", j, tx.Hash(), err)
+						}
+						if diff := cmp.Diff(wantReceipt, gotReceipt,
+							cmpopts.EquateEmpty(),
+							cmpopts.EquateErrors(),
+							cmpopts.IgnoreUnexported(w3vm.Receipt{}),
+							cmpopts.IgnoreFields(w3vm.Receipt{}, "GasRefund", "Output"),
+							cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "TxHash", "TxIndex", "Index"),
+							cmpopts.EquateComparable(common.Address{}, common.Hash{}),
+						); diff != "" {
+							t.Fatalf("[%v,%d,%s] (-want +got)\n%s", block.Number(), j, tx.Hash(), diff)
+						}
 					}
 				})
 			}
@@ -507,11 +722,12 @@ func TestVMApply_Integration(t *testing.T) {
 	}
 }
 
-func must[T any](t T, err error) T {
+func mustEncodeArgs(f w3types.Func, args ...any) []byte {
+	input, err := f.EncodeArgs(args...)
 	if err != nil {
 		panic(err)
 	}
-	return t
+	return input
 }
 
 func BenchmarkTransferWETH9(b *testing.B) {
@@ -519,7 +735,7 @@ func BenchmarkTransferWETH9(b *testing.B) {
 	addr1 := w3vm.RandA()
 
 	// encode input
-	input := must(funcTransfer.EncodeArgs(addr1, w3.I("1 gwei")))
+	input := mustEncodeArgs(funcTransfer, addr1, w3.I("1 gwei"))
 
 	blockCtx := vm.BlockContext{
 		CanTransfer: core.CanTransfer,

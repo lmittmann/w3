@@ -13,7 +13,7 @@ import (
 )
 
 func TestBlockByHash(t *testing.T) {
-	tests := []rpctest.TestCase[types.Block]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*types.Block]{
 		{
 			Golden: "get_block_by_hash__1",
 			Call:   eth.BlockByHash(w3.H("0x88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6")),
@@ -101,13 +101,11 @@ func TestBlockByHash(t *testing.T) {
 				},
 			}),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestBlockByNumber(t *testing.T) {
-	tests := []rpctest.TestCase[types.Block]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*types.Block]{
 		{
 			Golden: "get_block_by_number__1",
 			Call:   eth.BlockByNumber(big.NewInt(1)),
@@ -168,42 +166,36 @@ func TestBlockByNumber(t *testing.T) {
 			Call:    eth.BlockByNumber(big.NewInt(999999999)),
 			WantErr: errors.New("w3: call failed: not found"),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestBlockTxCountByHash(t *testing.T) {
-	tests := []rpctest.TestCase[uint]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[uint]{
 		{
 			Golden:  "block_transaction_count_by_hash__15050000",
 			Call:    eth.BlockTxCountByHash(w3.H("0xc43d35f6a64f8a64f046c8deb4069572d622dfe7f028f62301b186f08f0e96f2")),
-			WantRet: ptr[uint](32),
+			WantRet: 32,
 		},
 		{
 			Golden:  "block_transaction_count_by_hash__0x00",
 			Call:    eth.BlockTxCountByHash(common.Hash{}),
 			WantErr: errors.New("w3: call failed: not found"),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestBlockTxCountByNumber(t *testing.T) {
-	tests := []rpctest.TestCase[uint]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[uint]{
 		{
 			Golden:  "block_transaction_count_by_number__15050000",
 			Call:    eth.BlockTxCountByNumber(big.NewInt(15050000)),
-			WantRet: ptr[uint](32),
+			WantRet: 32,
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestHeaderByHash(t *testing.T) {
-	tests := []rpctest.TestCase[types.Header]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*types.Header]{
 		{
 			Golden: "get_block_by_hash__12965000",
 			Call:   eth.HeaderByHash(w3.H("0x9b83c12c69edb74f6c8dd5d052765c1adf940e320bd1291696e6fa07829eee71")),
@@ -226,13 +218,11 @@ func TestHeaderByHash(t *testing.T) {
 				BaseFee:     w3.I("0x3b9aca00"),
 			},
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestHeaderByNumber(t *testing.T) {
-	tests := []rpctest.TestCase[types.Header]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*types.Header]{
 		{
 			Golden: "get_block_by_number__12965000",
 			Call:   eth.HeaderByNumber(big.NewInt(12965000)),
@@ -255,9 +245,7 @@ func TestHeaderByNumber(t *testing.T) {
 				BaseFee:     w3.I("0x3b9aca00"),
 			},
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func ptr[T any](v T) *T { return &v }

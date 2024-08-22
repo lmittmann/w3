@@ -41,7 +41,7 @@ func blockBloom(data []byte) (bloom types.Bloom) {
 }
 
 func TestUncleByBlockHashAndIndex(t *testing.T) {
-	tests := []rpctest.TestCase[types.Header]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*types.Header]{
 		{
 			Golden:  "uncle_by_hash_and_index__15050036",
 			Call:    eth.UncleByBlockHashAndIndex(w3.H("0x7a98a492c1288a8451905bc665cb28d45fbdf8913c34d4ad756acb0609342e67"), 0),
@@ -52,43 +52,35 @@ func TestUncleByBlockHashAndIndex(t *testing.T) {
 			Call:    eth.UncleByBlockHashAndIndex(w3.H("0x7a98a492c1288a8451905bc665cb28d45fbdf8913c34d4ad756acb0609342e67"), 1),
 			WantErr: errors.New("w3: call failed: not found"),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestUncleByBlockNumberAndIndex(t *testing.T) {
-	tests := []rpctest.TestCase[types.Header]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*types.Header]{
 		{
 			Golden:  "uncle_by_number_and_index__15050036",
 			Call:    eth.UncleByBlockNumberAndIndex(big.NewInt(15050036), 0),
 			WantRet: header15050036,
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestUncleCountByBlockHash(t *testing.T) {
-	tests := []rpctest.TestCase[uint]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[uint]{
 		{
 			Golden:  "uncle_count_by_hash__15050036",
 			Call:    eth.UncleCountByBlockHash(w3.H("0x7a98a492c1288a8451905bc665cb28d45fbdf8913c34d4ad756acb0609342e67")),
-			WantRet: ptr[uint](1),
+			WantRet: 1,
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
 
 func TestUncleCountByBlockNumber(t *testing.T) {
-	tests := []rpctest.TestCase[uint]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[uint]{
 		{
 			Golden:  "uncle_count_by_number__15050036",
 			Call:    eth.UncleCountByBlockNumber(big.NewInt(15050036)),
-			WantRet: ptr[uint](1),
+			WantRet: 1,
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }
