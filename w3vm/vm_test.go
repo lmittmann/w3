@@ -345,6 +345,179 @@ func TestVMSnapshot(t *testing.T) {
 	}
 }
 
+func TestVMSnapshot_Logs(t *testing.T) {
+	var (
+		preState = w3types.State{
+			addrWETH: {
+				Code: codeWETH,
+				Storage: w3types.Storage{
+					w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("10 ether")),
+				}},
+		}
+		transferMsg = &w3types.Message{
+			From: addr0,
+			To:   &addrWETH,
+			Func: funcTransfer,
+			Args: []any{addr1, w3.I("1 ether")},
+		}
+	)
+
+	tests := []struct {
+		Name string
+		F    func() (receipt0, receipt1 *w3vm.Receipt, err error)
+	}{
+		{
+			Name: "rollback_0",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				snap := vm.Snapshot()
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm.Rollback(snap)
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "rollback_1",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				if _, err = vm.Apply(transferMsg); err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm.Rollback(snap)
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "rollback_2",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+				vm.Rollback(snap)
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "rollback_3",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				if _, err = vm.Apply(transferMsg); err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm2, _ := w3vm.New(w3vm.WithState(preState))
+				vm2.Rollback(snap)
+
+				receipt1, err = vm2.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "new_0",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				snap := vm.Snapshot()
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm, _ = w3vm.New(w3vm.WithStateDB(snap))
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "new_1",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				if _, err = vm.Apply(transferMsg); err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm, _ = w3vm.New(w3vm.WithStateDB(snap))
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+		{
+			Name: "new_2",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+				vm, _ = w3vm.New(w3vm.WithStateDB(snap))
+
+				receipt1, err = vm.Apply(transferMsg)
+				return
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			receipt0, receipt1, err := test.F()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(receipt0.Logs, receipt1.Logs); diff != "" {
+				t.Fatalf("(-want +got)\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestVMCall(t *testing.T) {
 	tests := []struct {
 		PreState    w3types.State

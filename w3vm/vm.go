@@ -132,6 +132,13 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		Logs:      v.db.GetLogs(txHash, 0, w3.Hash0),
 	}
 
+	// zero out the log tx hashes, indices and normalize the log indices
+	for i, log := range receipt.Logs {
+		log.Index = uint(i)
+		log.TxHash = w3.Hash0
+		log.TxIndex = 0
+	}
+
 	if err := result.Err; err != nil {
 		if reason, unpackErr := abi.UnpackRevert(result.ReturnData); unpackErr != nil {
 			receipt.Err = ErrRevert
@@ -254,7 +261,10 @@ func (vm *VM) SetStorageAt(addr common.Address, slot, val common.Hash) {
 func (vm *VM) Snapshot() *state.StateDB { return vm.db.Copy() }
 
 // Rollback the state of the VM to the given snapshot.
-func (vm *VM) Rollback(snapshot *state.StateDB) { vm.db = snapshot }
+func (vm *VM) Rollback(snapshot *state.StateDB) {
+	vm.db = snapshot
+	vm.txIndex = uint64(snapshot.TxIndex()) + 1
+}
 
 func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
 	nonce := msg.Nonce
@@ -474,7 +484,10 @@ func WithState(state w3types.State) Option {
 //
 // The state DB can originate from a snapshot of the VM.
 func WithStateDB(db *state.StateDB) Option {
-	return func(vm *VM) { vm.db = db }
+	return func(vm *VM) {
+		vm.db = db
+		vm.txIndex = uint64(db.TxIndex() + 1)
+	}
 }
 
 // WithNoBaseFee forces the EIP-1559 base fee to 0 for the VM.
