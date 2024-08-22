@@ -649,110 +649,79 @@ func TestVMApply_Integration(t *testing.T) {
 		t.SkipNow()
 	}
 
-	blocks := []*big.Int{
-		big.NewInt(4_369_998),
-		big.NewInt(4_369_999),
-		big.NewInt(4_370_000), // Byzantium
-		big.NewInt(4_370_001),
-
-		big.NewInt(7_279_998),
-		big.NewInt(7_279_999),
-		big.NewInt(7_280_000), // Constantinople & Petersburg
-		big.NewInt(7_280_001),
-
-		big.NewInt(9_068_998),
-		big.NewInt(9_068_999),
-		big.NewInt(9_069_000), // Istanbul
-		big.NewInt(9_069_001),
-
-		big.NewInt(9_199_998),
-		big.NewInt(9_199_999),
-		big.NewInt(9_200_000), // Muir Glacier
-		big.NewInt(9_200_001),
-
-		big.NewInt(12_243_998),
-		big.NewInt(12_243_999),
-		big.NewInt(12_244_000), // Berlin
-		big.NewInt(12_244_001),
-
-		big.NewInt(12_964_998),
-		big.NewInt(12_964_999),
-		big.NewInt(12_965_000), // London
-		big.NewInt(12_965_001),
-
-		big.NewInt(13_772_998),
-		big.NewInt(13_772_999),
-		big.NewInt(13_773_000), // Arrow Glacier
-		big.NewInt(13_773_001),
-
-		big.NewInt(15_054_998),
-		big.NewInt(15_054_999),
-		big.NewInt(15_050_000), // Gray Glacier
-		big.NewInt(15_050_001),
-
-		big.NewInt(15_537_392),
-		big.NewInt(15_537_393),
-		big.NewInt(15_537_394), // Paris (The Merge)
-		big.NewInt(15_537_395),
-
-		big.NewInt(17_034_868),
-		big.NewInt(17_034_869),
-		big.NewInt(17_034_870), // Shanghai
-		big.NewInt(17_034_871),
-
-		big.NewInt(19_426_485),
-		big.NewInt(19_426_486),
-		big.NewInt(19_426_487), // Cancun
-		big.NewInt(19_426_488),
+	tests := []struct {
+		Name   string
+		Offset uint64 // Start block number
+		Size   uint64 // Number of blocks
+	}{
+		{Name: "Byzantium", Offset: 4_370_000 - 2, Size: 4},
+		{Name: "Constantinople&Petersburg", Offset: 7_280_000 - 2, Size: 4},
+		{Name: "Istanbul", Offset: 9_069_000 - 2, Size: 4},
+		{Name: "Muir Glacier", Offset: 9_200_000 - 2, Size: 4},
+		{Name: "Berlin", Offset: 12_244_000 - 2, Size: 4},
+		{Name: "London", Offset: 12_965_000 - 2, Size: 4},
+		{Name: "Arrow Glacier", Offset: 13_773_000 - 2, Size: 4},
+		{Name: "Gray Glacier", Offset: 15_050_000 - 2, Size: 4},
+		{Name: "Paris", Offset: 15_537_394 - 2, Size: 4}, // The Merge
+		{Name: "Shanghai", Offset: 17_034_870 - 2, Size: 4},
+		{Name: "Cancun", Offset: 19_426_487 - 2, Size: 4},
 	}
 
-	for _, number := range blocks {
-		t.Run(number.String(), func(t *testing.T) {
-			t.Parallel()
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			// execute blocks
+			for i := test.Offset; i < test.Offset+test.Size; i++ {
+				// gather block and receipts
+				blockNumber := big.NewInt(int64(i))
 
-			var (
-				block    *types.Block
-				receipts types.Receipts
-			)
-			if err := client.Call(
-				eth.BlockByNumber(number).Returns(&block),
-				eth.BlockReceipts(number).Returns(&receipts),
-			); err != nil {
-				t.Fatalf("Failed to fetch block and receipts: %v", err)
-			}
+				t.Run(blockNumber.String(), func(t *testing.T) {
+					t.Parallel()
 
-			f := w3vm.NewTestingRPCFetcher(t, 1, client, new(big.Int).Sub(number, w3.Big1))
-			vm, _ := w3vm.New(
-				w3vm.WithFetcher(f),
-				w3vm.WithHeader(block.Header()),
-			)
-
-			for i, tx := range block.Transactions() {
-				t.Run(fmt.Sprintf("%d_%s", i, tx.Hash()), func(t *testing.T) {
-					wantReceipt := &w3vm.Receipt{
-						GasUsed: receipts[i].GasUsed,
-						Logs:    receipts[i].Logs,
-					}
-					if receipts[i].ContractAddress != addr0 {
-						wantReceipt.ContractAddress = &receipts[i].ContractAddress
-					}
-					if receipts[i].Status == types.ReceiptStatusFailed {
-						wantReceipt.Err = cmpopts.AnyError
+					var (
+						block    *types.Block
+						receipts types.Receipts
+					)
+					if err := client.Call(
+						eth.BlockByNumber(blockNumber).Returns(&block),
+						eth.BlockReceipts(blockNumber).Returns(&receipts),
+					); err != nil {
+						t.Fatalf("Failed to fetch block and receipts: %v", err)
 					}
 
-					gotReceipt, err := vm.ApplyTx(tx)
-					if err != nil && gotReceipt == nil {
-						t.Fatalf("Failed to apply tx: %v", err)
-					}
-					if diff := cmp.Diff(wantReceipt, gotReceipt,
-						cmpopts.EquateEmpty(),
-						cmpopts.EquateErrors(),
-						cmpopts.IgnoreUnexported(w3vm.Receipt{}),
-						cmpopts.IgnoreFields(w3vm.Receipt{}, "GasRefund", "GasLimit", "Output"),
-						cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "TxHash", "TxIndex", "Index"),
-						cmpopts.EquateComparable(common.Address{}, common.Hash{}),
-					); diff != "" {
-						t.Fatalf("(-want +got)\n%s", diff)
+					// setup vm
+					f := w3vm.NewTestingRPCFetcher(t, 1, client, big.NewInt(int64(i)-1))
+					vm, _ := w3vm.New(
+						w3vm.WithFetcher(f),
+						w3vm.WithHeader(block.Header()),
+					)
+
+					// execute txs
+					for j, tx := range block.Transactions() {
+						wantReceipt := &w3vm.Receipt{
+							GasUsed: receipts[j].GasUsed,
+							Logs:    receipts[j].Logs,
+						}
+						if receipts[j].ContractAddress != addr0 {
+							wantReceipt.ContractAddress = &receipts[j].ContractAddress
+						}
+						if receipts[j].Status == types.ReceiptStatusFailed {
+							wantReceipt.Err = cmpopts.AnyError
+						}
+
+						gotReceipt, err := vm.ApplyTx(tx)
+						if err != nil && gotReceipt == nil {
+							t.Fatalf("Failed to apply tx %d (%s): %v", j, tx.Hash(), err)
+						}
+						if diff := cmp.Diff(wantReceipt, gotReceipt,
+							cmpopts.EquateEmpty(),
+							cmpopts.EquateErrors(),
+							cmpopts.IgnoreUnexported(w3vm.Receipt{}),
+							cmpopts.IgnoreFields(w3vm.Receipt{}, "GasRefund", "GasLimit", "Output"),
+							cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "TxHash", "TxIndex", "Index"),
+							cmpopts.EquateComparable(common.Address{}, common.Hash{}),
+						); diff != "" {
+							t.Fatalf("[%v,%d,%s] (-want +got)\n%s", block.Number(), j, tx.Hash(), diff)
+						}
 					}
 				})
 			}

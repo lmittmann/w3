@@ -105,8 +105,8 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 
 	var txHash common.Hash
 	binary.BigEndian.PutUint64(txHash[:], v.txIndex)
+	v.db.SetTxContext(txHash, int(v.txIndex))
 	v.txIndex++
-	v.db.SetTxContext(txHash, 0)
 
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
 	evm := vm.NewEVM(*v.opts.blockCtx, *txCtx, v.db, v.opts.chainConfig, vm.Config{
