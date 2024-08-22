@@ -127,7 +127,6 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		f:         msg.Func,
 		GasUsed:   result.UsedGas,
 		GasRefund: result.RefundedGas,
-		GasLimit:  result.UsedGas + v.db.GetRefund(),
 		Output:    result.ReturnData,
 		Logs:      v.db.GetLogs(txHash, 0, w3.Hash0),
 	}

@@ -147,8 +147,7 @@ func TestVMApply(t *testing.T) {
 				Value: w3.I("1 ether"),
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  21_000,
-				GasLimit: 21_000,
+				GasUsed: 21_000,
 			},
 		},
 		{ // WETH transfer
@@ -170,7 +169,6 @@ func TestVMApply(t *testing.T) {
 			WantReceipt: &w3vm.Receipt{
 				GasUsed:   38_853,
 				GasRefund: 9_713,
-				GasLimit:  58_753,
 				Logs: []*types.Log{
 					{
 						Address: addrWETH,
@@ -202,9 +200,8 @@ func TestVMApply(t *testing.T) {
 				Gas:   100_000,
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  24_019,
-				GasLimit: 24_019,
-				Err:      errors.New("execution reverted"),
+				GasUsed: 24_019,
+				Err:     errors.New("execution reverted"),
 			},
 			WantErr: errors.New("execution reverted"),
 		},
@@ -218,10 +215,9 @@ func TestVMApply(t *testing.T) {
 				To:   &addr1,
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  21_008,
-				GasLimit: 21_008,
-				Output:   w3.B("0x00"),
-				Err:      errors.New("execution reverted"),
+				GasUsed: 21_008,
+				Output:  w3.B("0x00"),
+				Err:     errors.New("execution reverted"),
 			},
 			WantErr: errors.New("execution reverted"),
 		},
@@ -232,7 +228,6 @@ func TestVMApply(t *testing.T) {
 			},
 			WantReceipt: &w3vm.Receipt{
 				GasUsed:         53_006,
-				GasLimit:        53_006,
 				ContractAddress: ptr(crypto.CreateAddress(addr1, 0)),
 			},
 		},
@@ -246,7 +241,6 @@ func TestVMApply(t *testing.T) {
 			},
 			WantReceipt: &w3vm.Receipt{
 				GasUsed:         53_006,
-				GasLimit:        53_006,
 				ContractAddress: ptr(crypto.CreateAddress(addr1, 1)),
 			},
 		},
@@ -265,8 +259,7 @@ func TestVMApply(t *testing.T) {
 				Value: w3.I("1 ether"),
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  21_000,
-				GasLimit: 21_000,
+				GasUsed: 21_000,
 			},
 		},
 	}
@@ -540,9 +533,8 @@ func TestVMCall(t *testing.T) {
 				Input: mustEncodeArgs(funcBalanceOf, addr0),
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:  23_726,
-				GasLimit: 23_726,
-				Output:   w3.B("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"),
+				GasUsed: 23_726,
+				Output:  w3.B("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"),
 			},
 		},
 	}
@@ -716,7 +708,7 @@ func TestVMApply_Integration(t *testing.T) {
 							cmpopts.EquateEmpty(),
 							cmpopts.EquateErrors(),
 							cmpopts.IgnoreUnexported(w3vm.Receipt{}),
-							cmpopts.IgnoreFields(w3vm.Receipt{}, "GasRefund", "GasLimit", "Output"),
+							cmpopts.IgnoreFields(w3vm.Receipt{}, "GasRefund", "Output"),
 							cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "TxHash", "TxIndex", "Index"),
 							cmpopts.EquateComparable(common.Address{}, common.Hash{}),
 						); diff != "" {
