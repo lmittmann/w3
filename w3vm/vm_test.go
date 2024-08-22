@@ -424,6 +424,28 @@ func TestVMSnapshot_Logs(t *testing.T) {
 			},
 		},
 		{
+			Name: "rollback_3",
+			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
+				vm, _ := w3vm.New(w3vm.WithState(preState))
+
+				if _, err = vm.Apply(transferMsg); err != nil {
+					return
+				}
+
+				snap := vm.Snapshot()
+				receipt0, err = vm.Apply(transferMsg)
+				if err != nil {
+					return
+				}
+
+				vm2, _ := w3vm.New(w3vm.WithState(preState))
+				vm2.Rollback(snap)
+
+				receipt1, err = vm2.Apply(transferMsg)
+				return
+			},
+		},
+		{
 			Name: "new_0",
 			F: func() (receipt0, receipt1 *w3vm.Receipt, err error) {
 				vm, _ := w3vm.New(w3vm.WithState(preState))
