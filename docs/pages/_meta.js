@@ -2,7 +2,7 @@ export default {
     index: {
         title: 'Overview',
         display: 'hidden',
-        theme: { breadcrumb: false },
+        theme: { breadcrumb: false, toc: false, pagination: false },
     },
     '404': {
         title: '404',
