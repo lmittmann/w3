@@ -10,13 +10,11 @@ import (
 )
 
 func TestGasTipCap(t *testing.T) {
-	tests := []rpctest.TestCase[big.Int]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*big.Int]{
 		{
 			Golden:  "gas_tip_cap",
 			Call:    eth.GasTipCap(),
 			WantRet: w3.I("0xc0fe"),
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }

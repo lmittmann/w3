@@ -10,7 +10,7 @@ import (
 )
 
 func TestCallTraceTx(t *testing.T) {
-	tests := []rpctest.TestCase[debug.CallTrace]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[*debug.CallTrace]{
 		{
 			Golden: "traceCall_callTracer",
 			Call: debug.CallTraceCall(&w3types.Message{
@@ -41,7 +41,5 @@ func TestCallTraceTx(t *testing.T) {
 				RevertReason: "BA: Insufficient gas (ETH) for refund",
 			},
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }

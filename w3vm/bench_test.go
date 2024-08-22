@@ -24,16 +24,14 @@ import (
 func BenchmarkVM(b *testing.B) {
 	const (
 		startBlock int64 = 19_000_000
-		endBlock   int64 = startBlock + 10
+		nBlocks    int   = 10
 	)
 
 	// fetch blocks
-	blocks := make([]*types.Block, 0, endBlock-startBlock)
-	calls := make([]w3types.RPCCaller, 0, endBlock-startBlock)
-	for i := startBlock; i < endBlock; i++ {
-		block := new(types.Block)
-		blocks = append(blocks, block)
-		calls = append(calls, eth.BlockByNumber(big.NewInt(i)).Returns(block))
+	blocks := make([]*types.Block, nBlocks)
+	calls := make([]w3types.RPCCaller, nBlocks)
+	for i, block := range blocks {
+		calls[i] = eth.BlockByNumber(big.NewInt(int64(i))).Returns(&block)
 	}
 
 	if err := client.Call(calls...); err != nil {

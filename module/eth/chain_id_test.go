@@ -8,13 +8,11 @@ import (
 )
 
 func TestChainID(t *testing.T) {
-	tests := []rpctest.TestCase[uint64]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[uint64]{
 		{
 			Golden:  "chain_id",
 			Call:    eth.ChainID(),
-			WantRet: ptr[uint64](1),
+			WantRet: 1,
 		},
-	}
-
-	rpctest.RunTestCases(t, tests)
+	})
 }

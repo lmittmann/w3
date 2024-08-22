@@ -14,23 +14,23 @@ import (
 )
 
 // TraceCall requests the trace of the given message.
-func TraceCall(msg *w3types.Message, blockNumber *big.Int, config *TraceConfig) w3types.RPCCallerFactory[Trace] {
+func TraceCall(msg *w3types.Message, blockNumber *big.Int, config *TraceConfig) w3types.RPCCallerFactory[*Trace] {
 	if config == nil {
 		config = &TraceConfig{}
 	}
 	return module.NewFactory(
 		"debug_traceCall",
 		[]any{msg, module.BlockNumberArg(blockNumber), config},
-		module.WithArgsWrapper[Trace](msgArgsWrapper),
+		module.WithArgsWrapper[*Trace](msgArgsWrapper),
 	)
 }
 
 // TraceTx requests the trace of the transaction with the given hash.
-func TraceTx(txHash common.Hash, config *TraceConfig) w3types.RPCCallerFactory[Trace] {
+func TraceTx(txHash common.Hash, config *TraceConfig) w3types.RPCCallerFactory[*Trace] {
 	if config == nil {
 		config = &TraceConfig{}
 	}
-	return module.NewFactory[Trace](
+	return module.NewFactory[*Trace](
 		"debug_traceTransaction",
 		[]any{txHash, config},
 	)

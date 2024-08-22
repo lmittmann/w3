@@ -670,7 +670,6 @@ func TestVMApply_Integration(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			// execute blocks
-
 			for i := test.Offset; i < test.Offset+test.Size; i++ {
 				// gather block and receipts
 				blockNumber := big.NewInt(int64(i))
@@ -679,7 +678,7 @@ func TestVMApply_Integration(t *testing.T) {
 					t.Parallel()
 
 					var (
-						block    types.Block
+						block    *types.Block
 						receipts types.Receipts
 					)
 					if err := client.Call(
