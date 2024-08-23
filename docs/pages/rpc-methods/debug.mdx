@@ -1,0 +1,38 @@
+# `debug`-Namespace
+
+List of supported RPC methods for `w3.Client` in the `debug`-namespace.
+
+## `debug_traceCall`
+`TraceCall` requests the trace of the given message.
+```go {3}
+var trace *debug.Trace
+client.Call(
+    debug.TraceCall(msg, blockNumber, config).Returns(&trace),
+)
+```
+
+`CallTraceCall` requests the call trace of the given message.
+```go {3}
+var trace *debug.CallTrace
+client.Call(
+    debug.CallTraceCall(msg, blockNumber, overrides).Returns(&trace),
+)
+```
+
+## `debug_traceTransaction`
+`TraceTx` requests the trace of the transaction with the given hash.
+TraceTx requests the trace of the transaction with the given hash.
+```go {3}
+var trace *debug.Trace
+client.Call(
+    debug.TraceTx(txHash, config).Returns(&trace),
+)
+```
+
+`CallTraceTx` requests the call trace of the transaction with the given hash.
+```go {3}
+var trace *debug.CallTrace
+client.Call(
+    debug.CallTraceTx(txHash, overrides).Returns(&trace),
+)
+```

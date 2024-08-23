@@ -345,7 +345,8 @@ func TestVMSnapshot_Logs(t *testing.T) {
 				Code: codeWETH,
 				Storage: w3types.Storage{
 					w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("10 ether")),
-				}},
+				},
+			},
 		}
 		transferMsg = &w3types.Message{
 			From: addr0,

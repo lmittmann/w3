@@ -38,9 +38,9 @@ func ExampleNewFunc_balanceOf() {
 	// ABI-decode the functions output.
 	var (
 		output = w3.B("0x000000000000000000000000000000000000000000000000000000000000c0fe")
-		amount = new(big.Int)
+		amount *big.Int
 	)
-	funcBalanceOf.DecodeReturns(output, amount)
+	funcBalanceOf.DecodeReturns(output, &amount)
 	fmt.Printf("balanceOf returns: %v\n", amount)
 	// Output:
 	// balanceOf input: 0x70a08231000000000000000000000000ab5801a7d398351b8be11c439e05c5b3259aec9b

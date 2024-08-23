@@ -1,0 +1,243 @@
+# `eth`-Namespace
+
+List of supported RPC methods for `w3.Client` in the `eth`-namespace.
+
+## `eth_blockNumber`
+`BlockNumber` requests the number of the most recent block.
+```go {3}
+var blockNumber *big.Int
+client.Call(
+    eth.BlockNumber().Returns(&blockNumber),
+)
+```
+
+## `eth_call`
+`Call` requests the output data of the given message at the given blockNumber. If blockNumber is nil, the output of the message at the latest known block is requested.
+```go {3}
+var output []byte
+client.Call(
+    eth.Call(msg, blockNumber, overrides).Returns(&output),
+)
+```
+
+## `eth_chainId`
+`ChainID` requests the chains ID.
+```go {3}
+var chainID uint64
+client.Call(
+    eth.ChainID().Returns(&chainID),
+)
+```
+
+## `eth_createAccessList`
+`AccessList` requests the access list of the given message at the given blockNumber. If blockNumber is nil, the access list of the message at the latest block is requested.
+```go {3}
+var accessListResp *AccessListResponse
+client.Call(
+    eth.AccessList(msg, blockNumber).Returns(&accessListResp),
+)
+```
+
+## `eth_estimateGas`
+`EstimateGas` requests the estimated gas cost of the given message at the given blockNumber. If blockNumber is nil, the estimated gas cost of the message at the latest block is requested.
+```go {3}
+var gas uint64
+client.Call(
+    eth.EstimateGas(msg, blockNumber).Returns(&gas),
+)
+```
+
+## `eth_gasPrice`
+`GasPrice` requests the current gas price in wei.
+```go {3}
+var gasPrice *big.Int
+client.Call(
+    eth.GasPrice().Returns(&gasPrice),
+)
+```
+
+## `eth_maxPriorityFeePerGas`
+`GasTipCap` requests the currently suggested gas tip cap after EIP-1559 to allow a timely execution of a transaction.
+```go {3}
+var gasTipCap *big.Int
+client.Call(
+    eth.GasTipCap().Returns(&gasTipCap),
+)
+```
+
+## `eth_getBalance`
+`Balance` requests the balance of the given common.Address addr at the given blockNumber. If blockNumber is nil, the balance at the latest known block is requested.
+```go {3}
+var balance *big.Int
+client.Call(
+    eth.Balance(addr, blockNumber).Returns(&balance),
+)
+```
+
+## `eth_getBlockByHash`
+`BlockByHash` requests the block with the given hash with full transactions.
+```go {3}
+var block *types.Block
+client.Call(
+    eth.BlockByHash(hash).Returns(&block),
+)
+```
+
+## `eth_getBlockByNumber`
+`BlockByNumber` requests the block with the given number with full transactions. If number is nil, the latest block is requested.
+```go {3}
+var block *types.Block
+client.Call(
+    eth.BlockByNumber(number).Returns(&block),
+)
+```
+
+## `eth_getBlockReceipts`
+`BlockReceipts` requests all receipts of the transactions in the given block.
+```go {3}
+var receipts types.Receipts
+client.Call(
+    eth.BlockReceipts(blockNumber).Returns(&receipts),
+)
+```
+
+## `eth_getBlockTransactionCountByHash`
+`BlockTxCountByHash` requests the number of transactions in the block with the given hash.
+```go {3}
+var count uint
+client.Call(
+    eth.BlockTxCountByHash(hash).Returns(&count),
+)
+```
+
+## `eth_getBlockTransactionCountByNumber`
+`BlockTxCountByNumber` requests the number of transactions in the block with the given number.
+```go {3}
+var count uint
+client.Call(
+    eth.BlockTxCountByNumber(number).Returns(&count),
+)
+```
+
+## `eth_getCode`
+`Code` requests the code of the given common.Address addr at the given blockNumber. If blockNumber is nil, the code at the latest known block is requested.
+```go {3}
+var code []byte
+client.Call(
+    eth.Code(addr, blockNumber).Returns(&code),
+)
+```
+
+## `eth_getLogs`
+`Logs` requests the logs of the given ethereum.FilterQuery q.
+```go {3}
+var logs []types.Log
+client.Call(
+    eth.Logs(query).Returns(&logs),
+)
+```
+
+## `eth_getStorageAt`
+`StorageAt` requests the storage of the given common.Address addr at the given common.Hash slot at the given blockNumber. If block number is nil, the slot at the latest known block is requested.
+```go {3}
+var storage common.Hash
+client.Call(
+    eth.StorageAt(addr, slot, blockNumber).Returns(&storage),
+)
+```
+
+## `eth_getTransactionByHash`
+`Tx` requests the transaction with the given hash.
+```go {3}
+var tx *types.Transaction
+client.Call(
+    eth.Tx(hash).Returns(&tx),
+)
+```
+
+## `eth_getTransactionByBlockHashAndIndex`
+`TxByBlockHashAndIndex` requests the transaction in the given block with the given index.
+```go {3}
+var tx *types.Transaction
+client.Call(
+    eth.TxByBlockHashAndIndex(blockHash, index).Returns(&tx),
+)
+```
+
+## `eth_getTransactionByBlockNumberAndIndex`
+`TxByBlockNumberAndIndex` requests the transaction in the given block with the given index.
+```go {3}
+var tx *types.Transaction
+client.Call(
+    eth.TxByBlockNumberAndIndex(blockNumber, index).Returns(&tx),
+)
+```
+## `eth_getTransactionCount`
+`Nonce` requests the nonce of the given common.Address addr at the given blockNumber. If blockNumber is nil, the nonce at the latest known block is requested.
+```go {3}
+var count uint
+client.Call(
+    eth.Nonce(addr, blockHash).Returns(&count),
+)
+```
+
+## `eth_getTransactionReceipt`
+`TxReceipt` requests the receipt of the transaction with the given hash.
+```go {3}
+var receipt *types.Receipt
+client.Call(
+    eth.TxReceipt(txHash).Returns(&receipt),
+)
+```
+
+## `eth_sendRawTransaction`
+`SendRawTx` sends a raw transaction to the network and returns its hash.
+```go {3}
+var txHash common.Hash
+client.Call(
+    eth.SendRawTx(rawTx).Returns(&txHash),
+)
+```
+
+SendTx sends a signed transaction to the network and returns its hash.
+```go {3}
+var txHash common.Hash
+client.Call(
+    eth.SendTx(tx).Returns(&txHash),
+)
+```
+
+## `eth_getUncleByBlockHashAndIndex`
+`UncleByBlockHashAndIndex` requests the uncle of the block with the given hash at the given index.
+```go {3}
+var uncle *types.Header
+client.Call(
+    eth.UncleByBlockHashAndIndex(hash, index).Returns(&uncle),
+)
+```
+
+## `eth_getUncleByBlockNumberAndIndex`
+`UncleByBlockNumberAndIndex` requests the uncle of the block with the given number at the given index.
+```go {3}
+var uncle *types.Header
+client.Call(
+    eth.UncleByBlockNumberAndIndex(number, index).Returns(&uncle),
+)
+```
+## `eth_getUncleCountByBlockHash`
+`UncleCountByBlockHash` requests the number of uncles of the block with the given hash.
+```go {3}
+var count uint
+client.Call(
+    eth.UncleCountByBlockHash(hash).Returns(&count),
+)
+```
+
+## `eth_getUncleCountByBlockNumber`
+`UncleCountByBlockNumber` requests the number of uncles of the block with the given number.
+```go {3}
+var count uint
+client.Call(
+    eth.UncleCountByBlockNumber(number).Returns(&count),
+)
+```
