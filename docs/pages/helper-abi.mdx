@@ -15,6 +15,30 @@ Function ABI bindings can be defined using
 * `func NewFunc(signature, returns string) (*Func, error)`, or
 * `func MustNewFunc(signature, returns string) *Func` which panics on error.
 
+### Syntax
+
+Function signatures are defined using Solidity syntax. Arguments and return variables can optionally be named. While naming is optional, it is recommended for more complex functions or tuple variables.
+
+### Examples
+
+#### `ERC20.balanceOf`
+
+```solidity
+interface IERC20 {
+  function balanceOf(address account) external view returns (uint256);
+  // ...
+}
+```
+
+```go
+funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
+```
+```go
+funcBalanceOf := w3.MustNewFunc("balanceOf(address who)", "uint256 amount")
+```
+
+
+
 ### Examples
 
 #### ERC20 `transfer`
@@ -102,3 +126,15 @@ A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
 * encode arguments to the contracts input data ([`Func.EncodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.EncodeArgs)),
 * decode arguments from the contracts input data ([`Func.DecodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeArgs)), and
 * decode returns form the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
+
+## Type Mapping
+
+| Solidity Type            | Go Type              |
+|:-------------------------|:---------------------|
+| `bool`                   | `bool`               |
+| `uint`/`uint8`…`uint256` | `*big.Int`           |
+| `int`/`int8`…`int256`    | `*big.Int`           |
+| `bytes`                  | `[]byte`             |
+| `bytes1`…`bytes32`       | `[1]byte`…`[32]byte` |
+| `address`/`bytes20 `     | `common.Address`     |
+| `bytes32`                | `common.Hash`        |
