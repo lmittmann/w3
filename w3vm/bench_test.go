@@ -30,8 +30,9 @@ func BenchmarkVM(b *testing.B) {
 	// fetch blocks
 	blocks := make([]*types.Block, nBlocks)
 	calls := make([]w3types.RPCCaller, nBlocks)
-	for i, block := range blocks {
-		calls[i] = eth.BlockByNumber(big.NewInt(int64(i))).Returns(&block)
+	for i := range blocks {
+		number := big.NewInt(startBlock + int64(i))
+		calls[i] = eth.BlockByNumber(number).Returns(&blocks[i])
 	}
 
 	if err := client.Call(calls...); err != nil {
