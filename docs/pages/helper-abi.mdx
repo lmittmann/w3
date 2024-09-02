@@ -17,26 +17,73 @@ Function ABI bindings can be defined using
 
 ### Syntax
 
-Function signatures are defined using Solidity syntax. Arguments and return variables can optionally be named. While naming is optional, it is recommended for more complex functions or tuple variables.
+Function signatures are defined using Solidity syntax. Arguments and returns can optionally be named. While naming is optional, it is recommended for more complex functions or tuple variables. Alias types, such as `uint` for `uint256`, are supported.
 
 ### Examples
 
 #### `ERC20.balanceOf`
 
-```solidity
+```go
 interface IERC20 {
-  function balanceOf(address account) external view returns (uint256);
-  // ...
+    function balanceOf(address account) external view returns (uint256);
+    // ...
 }
 ```
 
 ```go
-funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
-```
-```go
-funcBalanceOf := w3.MustNewFunc("balanceOf(address who)", "uint256 amount")
+var funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
+// or
+var funcBalanceOf = w3.MustNewFunc("balanceOf(address who)", "uint256 amount")
 ```
 
+#### Uniswap `QuoterV2.quoteExactInputSingle`
+
+```solidity
+interface QuoterV2 {
+
+    struct QuoteExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        uint24 fee;
+        uint160 sqrtPriceLimitX96;
+    }
+
+    function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
+        external
+        returns (
+            uint256 amountOut,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed,
+            uint256 gasEstimate
+        );
+    // ...
+}
+```
+
+```go
+type QuoteExactInputSingleParams struct {
+    TokenIn           common.Address
+    TokenOut          common.Address
+    AmountIn          *big.Int
+    Fee               *big.Int
+    SqrtPriceLimitX96 *big.Int
+}
+
+var funcQuoteExactInputSingle = w3.MustNewFunc(
+    `quoteExactInputSingle((
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint24 fee,
+        uint160 sqrtPriceLimitX96
+    ) params)`,
+    `uint256 amountOut,
+     uint160 sqrtPriceX96After,
+     uint32 initializedTicksCrossed,
+     uint256 gasEstimate`,
+)
+```
 
 
 ### Examples
@@ -129,12 +176,20 @@ A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
 
 ## Type Mapping
 
-| Solidity Type            | Go Type              |
-|:-------------------------|:---------------------|
-| `bool`                   | `bool`               |
-| `uint`/`uint8`…`uint256` | `*big.Int`           |
-| `int`/`int8`…`int256`    | `*big.Int`           |
-| `bytes`                  | `[]byte`             |
-| `bytes1`…`bytes32`       | `[1]byte`…`[32]byte` |
-| `address`/`bytes20 `     | `common.Address`     |
-| `bytes32`                | `common.Hash`        |
+| Solidity Type                                         | Go Type                     |
+|:------------------------------------------------------|:----------------------------|
+| `bool`                                                | `bool`                      |
+| `int8`                                                | `int8`                      |
+| `int16`                                               | `int16`                     |
+| `int32`                                               | `int32`                     |
+| `int64`                                               | `int64`                     |
+| `int24`,`int40`…`int56`,`int72`..`int256`,`int`       | `*big.Int`                  |
+| `uint8`                                               | `uint8`                     |
+| `uint16`                                              | `uint16`                    |
+| `uint32`                                              | `uint32`                    |
+| `uint64`                                              | `uint64`                    |
+| `uint24`,`uint40`…`uint56`,`uint72`..`uint256`,`uint` | `*big.Int`                  |
+| `bytes`                                               | `[]byte`                    |
+| `bytes1`…`bytes32`                                    | `[1]byte`…`[32]byte`        |
+| `address`                                             | `common.Address`/`[20]byte` |
+| `bytes32`                                             | `common.Hash`/`[32]byte`    |
