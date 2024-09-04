@@ -23,14 +23,16 @@ Function signatures are defined using Solidity syntax. Arguments and returns can
 
 #### `ERC20.balanceOf`
 
-```go
+ABI binding for the `ERC20.balanceOf` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf)):
+
+```solidity filename="Solidity"
 interface IERC20 {
     function balanceOf(address account) external view returns (uint256);
     // ...
 }
 ```
 
-```go
+```go filename="Go"
 var funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 // or
 var funcBalanceOf = w3.MustNewFunc("balanceOf(address who)", "uint256 amount")
@@ -38,7 +40,9 @@ var funcBalanceOf = w3.MustNewFunc("balanceOf(address who)", "uint256 amount")
 
 #### Uniswap `QuoterV2.quoteExactInputSingle`
 
-```solidity
+ABI binding for the `QuoterV2.quoteExactInputSingle` function:
+
+```solidity filename="Solidity"
 interface QuoterV2 {
 
     struct QuoteExactInputSingleParams {
@@ -61,7 +65,7 @@ interface QuoterV2 {
 }
 ```
 
-```go
+```go filename="Go"
 type QuoteExactInputSingleParams struct {
     TokenIn           common.Address
     TokenOut          common.Address
@@ -84,6 +88,10 @@ var funcQuoteExactInputSingle = w3.MustNewFunc(
      uint256 gasEstimate`,
 )
 ```
+
+### Tuples
+
+---
 
 
 ### Examples
