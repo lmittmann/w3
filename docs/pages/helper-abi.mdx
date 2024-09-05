@@ -1,4 +1,4 @@
-# ABI
+# ABI Bindings
 
 ABI bindings allow the encoding and decoding of Smart Contract function calls or the decoding of events.
 In `w3` ABI bindings are defined for individual functions or events at runtime using Solidity syntax.
@@ -118,50 +118,20 @@ var evtTransfer = w3.MustNewEvent("Transfer(address indexed from, address indexe
 
 ## Type Mappings
 
-| Solidity Type                                         | Go Type                     |
-|:------------------------------------------------------|:----------------------------|
-| `bool`                                                | `bool`                      |
-| `int8`                                                | `int8`                      |
-| `int16`                                               | `int16`                     |
-| `int32`                                               | `int32`                     |
-| `int64`                                               | `int64`                     |
-| `int24`,`int40`…`int56`,`int72`..`int256`,`int`       | `*big.Int`                  |
-| `uint8`                                               | `uint8`                     |
-| `uint16`                                              | `uint16`                    |
-| `uint32`                                              | `uint32`                    |
-| `uint64`                                              | `uint64`                    |
-| `uint24`,`uint40`…`uint56`,`uint72`..`uint256`,`uint` | `*big.Int`                  |
-| `bytes`                                               | `[]byte`                    |
-| `bytes1`…`bytes32`                                    | `[1]byte`…`[32]byte`        |
-| `address`                                             | `common.Address`/`[20]byte` |
-| `bytes32`                                             | `common.Hash`/`[32]byte`    |
-
-
----
-
-
-# ABI Bindings
-
-ABI bindings in `w3` are specified for individual functions using Solidity syntax and are usable for any contract that supports that function.
-
-**Example:** ABI binding for the ERC20 `balanceOf` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf))
-
-```go
-funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
-```
-
-**Example:** ABI binding for the Uniswap v4 `swap` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-UniswapV4Swap))
-
-```go
-funcSwap := w3.MustNewFunc(`swap(
-    (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key,
-    (bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params,
-    bytes hookData
-)`, "int256 delta")
-```
-
-A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
-
-* encode arguments to the contracts input data ([`Func.EncodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.EncodeArgs)),
-* decode arguments from the contracts input data ([`Func.DecodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeArgs)), and
-* decode returns form the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
+| **Solidity Type**                                    | **Go Type**                 |
+|:-----------------------------------------------------|:----------------------------|
+| `bool`                                               | `bool`                      |
+| `int8`                                               | `int8`                      |
+| `int16`                                              | `int16`                     |
+| `int32`                                              | `int32`                     |
+| `int64`                                              | `int64`                     |
+| `int24`,`int40`…`int56`,`int72`…`int256`,`int`       | `*big.Int`                  |
+| `uint8`                                              | `uint8`                     |
+| `uint16`                                             | `uint16`                    |
+| `uint32`                                             | `uint32`                    |
+| `uint64`                                             | `uint64`                    |
+| `uint24`,`uint40`…`uint56`,`uint72`…`uint256`,`uint` | `*big.Int`                  |
+| `bytes`                                              | `[]byte`                    |
+| `bytes1`…`bytes32`                                   | `[1]byte`…`[32]byte`        |
+| `address`                                            | `common.Address`/`[20]byte` |
+| `bytes32`                                            | `common.Hash`/`[32]byte`    |
