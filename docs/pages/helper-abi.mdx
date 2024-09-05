@@ -19,11 +19,9 @@ Function ABI bindings can be defined using
 
 Function signatures are defined using Solidity syntax. Arguments and returns can optionally be named. While naming is optional, it is recommended for more complex functions or tuple variables. Alias types, such as `uint` for `uint256`, are supported.
 
-### Examples
+#### Example: ERC20 `balanceOf`
 
-#### `ERC20.balanceOf`
-
-ABI binding for the `ERC20.balanceOf` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf)):
+ABI binding for the ERC20 `balanceOf` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf)):
 
 ```solidity filename="Solidity"
 interface IERC20 {
@@ -38,9 +36,9 @@ var funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 var funcBalanceOf = w3.MustNewFunc("balanceOf(address who)", "uint256 amount")
 ```
 
-#### Uniswap `QuoterV2.quoteExactInputSingle`
+#### Example: QuoterV2 `quoteExactInputSingle`
 
-ABI binding for the `QuoterV2.quoteExactInputSingle` function:
+ABI binding for the QuoterV2 `quoteExactInputSingle` function:
 
 ```solidity filename="Solidity"
 interface QuoterV2 {
@@ -91,53 +89,10 @@ var funcQuoteExactInputSingle = w3.MustNewFunc(
 
 ### Tuples
 
----
-
-
-### Examples
-
-#### ERC20 `transfer`
-
-The ERC20 `transfer` function can be defined as follows:
-```go
-funcTransfer := w3.MustNewFunc("transfer(address,uint256)", "bool")
-```
-
-Alternatively the function arguments and returns can also be named. Note, that Solidity type aliases
-are also supported (e.g. `uint` for `uint256`):
-```go
-funcTransfer := w3.MustNewFunc("transfer(address to, uint amount)", "bool success")
-```
-
-#### Tuples
-
-The UniSwap V3 [`IQuoterV2.sol`](https://github.com/Uniswap/v3-periphery/blob/main/contracts/interfaces/IQuoterV2.sol#L27-L53)
-uses a tuple as argument for e.g. `quoteExactInputSingle`, which can be defined as follows:
-
-```go
-funcQuoteExactInputSingle := w3.MustNewFunc(
-    `quoteExactInputSingle((
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn,
-        uint24 fee,
-        uint160 sqrtPriceLimitX96
-    ) params)`,
-    `uint256 amountOut,
-     uint160 sqrtPriceX96After,
-     uint32 initializedTicksCrossed,
-     uint256 gasEstimate`,
-)
-```
-
-Note, that the Solidity struct arguments are wrapped in parenthesis and names are mandatory.
 
 ### `EncodeArgs`
 
 ### `DecodeArgs` and `DecodeReturns`
-
-
-
 
 ## Events
 
@@ -145,13 +100,42 @@ Event ABI bindings can be defined using
 * `func NewEvent(signature string) (*Event, error)`, or
 * `func MustNewEvent(signature string) *Event` which panics on error.
 
-### Examples
+#### Example: ERC20 `Transfer`
 
-#### ERC20 `Transfer`
+ABI binding for the ERC20 `Transfer` event:
 
-```go
-evtTransfer := w3.MustNewEvent("Transfer(address indexed from, address indexed to, uint256 value)")
+```solidity filename="Solidity"
+interface IERC20 {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    // ...
+}
 ```
+
+```go filename="Go"
+var evtTransfer = w3.MustNewEvent("Transfer(address indexed from, address indexed to, uint256 value)")
+```
+
+
+## Type Mappings
+
+| Solidity Type                                         | Go Type                     |
+|:------------------------------------------------------|:----------------------------|
+| `bool`                                                | `bool`                      |
+| `int8`                                                | `int8`                      |
+| `int16`                                               | `int16`                     |
+| `int32`                                               | `int32`                     |
+| `int64`                                               | `int64`                     |
+| `int24`,`int40`…`int56`,`int72`..`int256`,`int`       | `*big.Int`                  |
+| `uint8`                                               | `uint8`                     |
+| `uint16`                                              | `uint16`                    |
+| `uint32`                                              | `uint32`                    |
+| `uint64`                                              | `uint64`                    |
+| `uint24`,`uint40`…`uint56`,`uint72`..`uint256`,`uint` | `*big.Int`                  |
+| `bytes`                                               | `[]byte`                    |
+| `bytes1`…`bytes32`                                    | `[1]byte`…`[32]byte`        |
+| `address`                                             | `common.Address`/`[20]byte` |
+| `bytes32`                                             | `common.Hash`/`[32]byte`    |
+
 
 ---
 
@@ -181,23 +165,3 @@ A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
 * encode arguments to the contracts input data ([`Func.EncodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.EncodeArgs)),
 * decode arguments from the contracts input data ([`Func.DecodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeArgs)), and
 * decode returns form the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
-
-## Type Mapping
-
-| Solidity Type                                         | Go Type                     |
-|:------------------------------------------------------|:----------------------------|
-| `bool`                                                | `bool`                      |
-| `int8`                                                | `int8`                      |
-| `int16`                                               | `int16`                     |
-| `int32`                                               | `int32`                     |
-| `int64`                                               | `int64`                     |
-| `int24`,`int40`…`int56`,`int72`..`int256`,`int`       | `*big.Int`                  |
-| `uint8`                                               | `uint8`                     |
-| `uint16`                                              | `uint16`                    |
-| `uint32`                                              | `uint32`                    |
-| `uint64`                                              | `uint64`                    |
-| `uint24`,`uint40`…`uint56`,`uint72`..`uint256`,`uint` | `*big.Int`                  |
-| `bytes`                                               | `[]byte`                    |
-| `bytes1`…`bytes32`                                    | `[1]byte`…`[32]byte`        |
-| `address`                                             | `common.Address`/`[20]byte` |
-| `bytes32`                                             | `common.Hash`/`[32]byte`    |
