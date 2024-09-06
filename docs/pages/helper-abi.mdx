@@ -38,7 +38,7 @@ var funcBalanceOf = w3.MustNewFunc("balanceOf(address who)", "uint256 amount")
 
 #### Example: QuoterV2 `quoteExactInputSingle`
 
-ABI binding for the QuoterV2 `quoteExactInputSingle` function:
+ABI binding for the QuoterV2 `quoteExactInputSingle` function with a tuple parameter (Solidity `struct`):
 
 ```solidity filename="Solidity"
 interface QuoterV2 {
@@ -87,12 +87,20 @@ var funcQuoteExactInputSingle = w3.MustNewFunc(
 )
 ```
 
-### Tuples
+### Tuples (Solidity `struct`'s)
 
+Tuple types need to be embedded in parentheses, with comma-separated fields. Fields must be named, so they can be mapped to the fields of a Go struct.
+
+To map a tuple type to a Go struct, the struct must be defined manually with each tuple field being mapped to a Go struct field. Field names need to match, but Go field names must always start with an uppercase letter. E.g. the tuple field `address tokenIn{:solidity}` must be matched to the Go struct field `TokenIn common.Address{:go}`.
+
+<Callout type="info">
+    See [Type Mappings](#type-mappings) for more information on how to map primitive Solidity types to Go types and vice versa.
+</Callout>
 
 ### `EncodeArgs`
 
 ### `DecodeArgs` and `DecodeReturns`
+
 
 ## Events
 
@@ -135,3 +143,12 @@ var evtTransfer = w3.MustNewEvent("Transfer(address indexed from, address indexe
 | `bytes1`…`bytes32`                                   | `[1]byte`…`[32]byte`        |
 | `address`                                            | `common.Address`/`[20]byte` |
 | `bytes32`                                            | `common.Hash`/`[32]byte`    |
+
+### Arrays and Slices
+
+Solidity arrays and slices are mapped to Go arrays and slices respectively and vice versa.
+
+| **Solidity Type** | **Go Type** |
+|:------------------|:------------|
+| `type[n]`         | `[n]type`   |
+| `type[]`          | `[]type`    |
