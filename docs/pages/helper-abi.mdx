@@ -1,25 +1,179 @@
 # ABI Bindings
 
-ABI bindings in `w3` are specified for individual functions using Solidity syntax and are usable for any contract that supports that function.
+ABI bindings allow the encoding and decoding of Smart Contract function calls or the decoding of events.
+In `w3` ABI bindings are defined for individual functions or events at runtime using Solidity syntax.
 
-**Example:** ABI binding for the ERC20 `balanceOf` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf))
+* **Easy to write:** Creating an ABI binding only requires the Solidity function signature. No need
+  to firstly generate an ABI json file using `solc` and secondly generate ABI bindings using `abigen`.
+* **Flexible:** ABI bindings for a function or event can be used with any Smart Contract. No need to
+  generate overlapping bindings for multiple Smart Contracts.
 
-```go
-funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
+
+## Functions
+
+Function ABI bindings can be defined using
+* `func NewFunc(signature, returns string) (*Func, error)`, or
+* `func MustNewFunc(signature, returns string) *Func` which panics on error.
+
+### Syntax
+
+Function signatures are defined using Solidity syntax. Arguments and returns can optionally be named. While naming is optional, it is recommended for more complex functions or tuple variables. Alias types, such as `uint` for `uint256`, are supported.
+
+#### Example: ERC20 `balanceOf`
+
+ABI binding for the ERC20 `balanceOf` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-BalanceOf)):
+
+```solidity filename="Solidity"
+interface IERC20 {
+    function balanceOf(address account) external view returns (uint256);
+    // ...
+}
 ```
 
-**Example:** ABI binding for the Uniswap v4 `swap` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-NewFunc-UniswapV4Swap))
-
-```go
-funcSwap := w3.MustNewFunc(`swap(
-    (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key,
-    (bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params,
-    bytes hookData
-)`, "int256 delta")
+```go filename="Go"
+var funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
+// or
+var funcBalanceOf = w3.MustNewFunc("balanceOf(address who)", "uint256 amount")
 ```
 
-A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
+#### Example: QuoterV2 `quoteExactInputSingle`
 
-* encode arguments to the contracts input data ([`Func.EncodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.EncodeArgs)),
-* decode arguments from the contracts input data ([`Func.DecodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeArgs)), and
-* decode returns form the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
+ABI binding for the Uniswap QuoterV2 `quoteExactInputSingle` function with a tuple parameter (Solidity `struct`):
+
+```solidity filename="Solidity"
+interface QuoterV2 {
+
+    struct QuoteExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        uint24 fee;
+        uint160 sqrtPriceLimitX96;
+    }
+
+    function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
+        external
+        returns (
+            uint256 amountOut,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed,
+            uint256 gasEstimate
+        );
+    // ...
+}
+```
+
+```go filename="Go"
+type QuoteExactInputSingleParams struct {
+    TokenIn           common.Address
+    TokenOut          common.Address
+    AmountIn          *big.Int
+    Fee               *big.Int
+    SqrtPriceLimitX96 *big.Int
+}
+
+var funcQuoteExactInputSingle = w3.MustNewFunc(
+    `quoteExactInputSingle((
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint24 fee,
+        uint160 sqrtPriceLimitX96
+    ) params)`,
+    `uint256 amountOut,
+     uint160 sqrtPriceX96After,
+     uint32 initializedTicksCrossed,
+     uint256 gasEstimate`,
+)
+```
+
+### Tuples (Solidity `struct`'s)
+
+Tuple types need to be embedded in parentheses, with comma-separated fields. Fields must be named, so they can be mapped to the fields of a Go struct.
+
+To map a tuple type to a Go struct, the struct must be defined manually with each tuple field being mapped to a Go struct field. Field names need to match, but Go field names must always start with an uppercase letter. E.g. the tuple field `address tokenIn{:solidity}` must be matched to the Go struct field `TokenIn common.Address{:go}`.
+
+<Callout type="info">
+    See [Type Mappings](#type-mappings) for more information on how to map primitive Solidity types to Go types and vice versa.
+</Callout>
+
+### `EncodeArgs`
+
+The `EncodeArgs` method of a `Func` ABI encodes a Solidity function call. Each argument of the Solidity function must be matched by a corresponding Go value.
+
+### `DecodeArgs` and `DecodeReturns`
+
+The `DecodeArgs` and `DecodeReturns` methods of a `Func` ABI decode the arguments and returns of a Solidity function call. The Go values that should hold the decoded data must be defined beforehand, and passed as pointers to the decode methods. Values that should not be decoded can be passed as `nil`. Tailing `nil` values can be omitted.
+
+#### Example: Uniswap Pair `getReserves`
+
+ABI decode the output of the Uniswap Pair `getReserves` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Func.DecodeReturns-GetReserves)):
+
+```go filename="Go"
+var (
+    funcGetReserves = w3.MustNewFunc("getReserves()", "uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast")
+    output []byte   = w3.B("0x00…")
+)
+
+var (
+    reserve0, reserve1 *big.Int
+    blockTimestampLast uint32
+)
+if err := funcGetReserves.DecodeReturns(output, &reserve0, &reserve1, &blockTimestampLast); err != nil {
+    // ...
+}
+```
+
+In case only the reserves should be decoded, the `blockTimestampLast` can be ignored using `funcGetReserves.DecodeReturns(output, &reserve0, &reserve1, nil){:go}`, which is equivalent to `funcGetReserves.DecodeReturns(output, &reserve0, &reserve1){:go}`.
+
+
+## Events
+
+Event ABI bindings can be defined using
+* `func NewEvent(signature string) (*Event, error)`, or
+* `func MustNewEvent(signature string) *Event` which panics on error.
+
+#### Example: ERC20 `Transfer`
+
+ABI binding for the ERC20 `Transfer` event:
+
+```solidity filename="Solidity"
+interface IERC20 {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    // ...
+}
+```
+
+```go filename="Go"
+var evtTransfer = w3.MustNewEvent("Transfer(address indexed from, address indexed to, uint256 value)")
+```
+
+
+## Type Mappings
+
+| **Solidity Type**                                    | **Go Type**                 |
+|:-----------------------------------------------------|:----------------------------|
+| `bool`                                               | `bool`                      |
+| `int8`                                               | `int8`                      |
+| `int16`                                              | `int16`                     |
+| `int32`                                              | `int32`                     |
+| `int64`                                              | `int64`                     |
+| `int24`,`int40`…`int56`,`int72`…`int256`,`int`       | `*big.Int`                  |
+| `uint8`                                              | `uint8`                     |
+| `uint16`                                             | `uint16`                    |
+| `uint32`                                             | `uint32`                    |
+| `uint64`                                             | `uint64`                    |
+| `uint24`,`uint40`…`uint56`,`uint72`…`uint256`,`uint` | `*big.Int`                  |
+| `bytes`                                              | `[]byte`                    |
+| `bytes1`…`bytes32`                                   | `[1]byte`…`[32]byte`        |
+| `address`                                            | `common.Address`/`[20]byte` |
+| `bytes32`                                            | `common.Hash`/`[32]byte`    |
+
+### Arrays and Slices
+
+Solidity arrays and slices are mapped to Go arrays and slices respectively and vice versa.
+
+| **Solidity Type** | **Go Type** |
+|:------------------|:------------|
+| `type[n]`         | `[n]type`   |
+| `type[]`          | `[]type`    |

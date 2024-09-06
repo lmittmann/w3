@@ -23,6 +23,16 @@ a._underline {
     @apply no-underline;
 }
 
+/* Tables */
+tr._border-gray-300 td,
+tr._border-gray-300 th {
+    @apply dark:border-neutral-700;
+}
+
+tr._border-gray-300 {
+    @apply even:bg-neutral-900 !important;
+}
+
 /* Customize header */
 .nextra-nav-container nav a[target="_blank"]:nth-child(2):after,
 .nextra-nav-container nav a[target="_blank"]:nth-child(3):after,

@@ -63,16 +63,16 @@ var (
 //
 // Use [common.HexToAddress] to get the address from a hexstring without
 // panicking.
-func A(hexAddress string) (addr common.Address) {
-	if has0xPrefix(hexAddress) {
-		hexAddress = hexAddress[2:]
+func A(hexAddr string) (addr common.Address) {
+	if has0xPrefix(hexAddr) {
+		hexAddr = hexAddr[2:]
 	}
 
-	n, err := hex.Decode(addr[:], []byte(hexAddress))
+	n, err := hex.Decode(addr[:], []byte(hexAddr))
 	if err != nil {
-		panic(fmt.Sprintf("invalid address %q: %v", hexAddress, err))
+		panic(fmt.Sprintf("invalid address %q: %v", hexAddr, err))
 	} else if n != 20 {
-		panic(fmt.Sprintf("invalid address %q: must have 20 bytes", hexAddress))
+		panic(fmt.Sprintf("invalid address %q: must have 20 bytes", hexAddr))
 	}
 	return addr
 }
