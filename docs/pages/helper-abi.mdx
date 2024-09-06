@@ -38,7 +38,7 @@ var funcBalanceOf = w3.MustNewFunc("balanceOf(address who)", "uint256 amount")
 
 #### Example: QuoterV2 `quoteExactInputSingle`
 
-ABI binding for the QuoterV2 `quoteExactInputSingle` function with a tuple parameter (Solidity `struct`):
+ABI binding for the Uniswap QuoterV2 `quoteExactInputSingle` function with a tuple parameter (Solidity `struct`):
 
 ```solidity filename="Solidity"
 interface QuoterV2 {
@@ -99,7 +99,32 @@ To map a tuple type to a Go struct, the struct must be defined manually with eac
 
 ### `EncodeArgs`
 
+The `EncodeArgs` method of a `Func` ABI encodes a Solidity function call. Each argument of the Solidity function must be matched by a corresponding Go value.
+
 ### `DecodeArgs` and `DecodeReturns`
+
+The `DecodeArgs` and `DecodeReturns` methods of a `Func` ABI decode the arguments and returns of a Solidity function call. The Go values that should hold the decoded data must be defined beforehand, and passed as pointers to the decode methods. Values that should not be decoded can be passed as `nil`. Tailing `nil` values can be omitted.
+
+#### Example: Uniswap Pair `getReserves`
+
+ABI decode the output of the Uniswap Pair `getReserves` function ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Func.DecodeReturns-GetReserves)):
+
+```go filename="Go"
+var (
+    funcGetReserves = w3.MustNewFunc("getReserves()", "uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast")
+    output []byte   = w3.B("0x00…")
+)
+
+var (
+    reserve0, reserve1 *big.Int
+    blockTimestampLast uint32
+)
+if err := funcGetReserves.DecodeReturns(output, &reserve0, &reserve1, &blockTimestampLast); err != nil {
+    // ...
+}
+```
+
+In case only the reserves should be decoded, the `blockTimestampLast` can be ignored using `funcGetReserves.DecodeReturns(output, &reserve0, &reserve1, nil){:go}`, which is equivalent to `funcGetReserves.DecodeReturns(output, &reserve0, &reserve1){:go}`.
 
 
 ## Events
