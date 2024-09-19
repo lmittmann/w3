@@ -154,7 +154,7 @@ func TestVMApply(t *testing.T) {
 				addr0: {Balance: w3.I("1 ether")},
 				addrWETH: {
 					Code: codeWETH,
-					Storage: map[common.Hash]common.Hash{
+					Storage: w3types.Storage{
 						w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
 					},
 				},
@@ -187,7 +187,7 @@ func TestVMApply(t *testing.T) {
 				addr0: {Balance: w3.I("1 ether")},
 				addrWETH: {
 					Code: codeWETH,
-					Storage: map[common.Hash]common.Hash{
+					Storage: w3types.Storage{
 						w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
 					},
 				},
@@ -522,7 +522,7 @@ func TestVMCall(t *testing.T) {
 			PreState: w3types.State{
 				addrWETH: {
 					Code: codeWETH,
-					Storage: map[common.Hash]common.Hash{
+					Storage: w3types.Storage{
 						w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
 					},
 				},
@@ -566,7 +566,7 @@ func TestVMCallFunc(t *testing.T) {
 		w3vm.WithState(w3types.State{
 			addrWETH: {
 				Code: codeWETH,
-				Storage: map[common.Hash]common.Hash{
+				Storage: w3types.Storage{
 					w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
 				},
 			},
@@ -754,7 +754,7 @@ func BenchmarkTransferWETH9(b *testing.B) {
 			w3vm.WithState(w3types.State{
 				addrWETH: {
 					Code: codeWETH,
-					Storage: map[common.Hash]common.Hash{
+					Storage: w3types.Storage{
 						w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
 					},
 				},
@@ -857,7 +857,7 @@ func ExampleVM() {
 		w3vm.WithFork(client, nil),
 		w3vm.WithNoBaseFee(),
 		w3vm.WithState(w3types.State{
-			addrWETH: {Storage: map[common.Hash]common.Hash{
+			addrWETH: {Storage: w3types.Storage{
 				w3vm.WETHBalanceSlot(addrEOA):               common.BigToHash(w3.I("1 ether")),
 				w3vm.WETHAllowanceSlot(addrEOA, addrRouter): common.BigToHash(w3.I("1 ether")),
 			}},
@@ -903,7 +903,7 @@ func ExampleVM_Call() {
 	vm, err := w3vm.New(
 		w3vm.WithFork(client, nil),
 		w3vm.WithState(w3types.State{
-			addrWETH: {Storage: map[common.Hash]common.Hash{
+			addrWETH: {Storage: w3types.Storage{
 				w3vm.WETHBalanceSlot(addrEOA): common.BigToHash(w3.I("1 ether")),
 			}},
 		}),

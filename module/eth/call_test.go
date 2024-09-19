@@ -33,7 +33,7 @@ func TestCall(t *testing.T) {
 				Args: []any{w3.A("0x000000000000000000000000000000000000c0Fe")},
 			}, nil, w3types.State{
 				w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"): &w3types.Account{
-					Storage: map[common.Hash]common.Hash{
+					Storage: w3types.Storage{
 						w3.H("0xf68b260b81af177c0bf1a03b5d62b15aea1b486f8df26c77f33aed7538cfeb2c"): w3.H("0x000000000000000000000000000000000000000000000000000000000000002a"),
 					},
 				},

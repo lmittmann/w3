@@ -49,7 +49,7 @@ func ExampleWETHBalanceSlot() {
 		w3vm.WithFork(client, nil),
 		w3vm.WithState(w3types.State{
 			addrWETH: {
-				Storage: map[common.Hash]common.Hash{
+				Storage: w3types.Storage{
 					w3vm.WETHBalanceSlot(addrC0fe): common.BigToHash(w3.I("100 ether")),
 				},
 			},

@@ -80,7 +80,7 @@ type StructLog struct {
 	Op      vm.OpCode
 	Stack   []uint256.Int
 	Memory  []byte
-	Storage map[common.Hash]common.Hash
+	Storage w3types.Storage
 }
 
 func (l *StructLog) UnmarshalJSON(data []byte) error {
@@ -109,7 +109,7 @@ func (l *StructLog) UnmarshalJSON(data []byte) error {
 	l.Memory = dec.Memory
 
 	if len(dec.Storage) > 0 {
-		l.Storage = make(map[common.Hash]common.Hash, len(dec.Storage))
+		l.Storage = make(w3types.Storage, len(dec.Storage))
 		for k, v := range dec.Storage {
 			l.Storage[(common.Hash)(k)] = (common.Hash)(v)
 		}
