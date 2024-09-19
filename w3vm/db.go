@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/state/snapshot"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/trie"
@@ -14,7 +15,7 @@ import (
 	"github.com/holiman/uint256"
 )
 
-// db implements the [state.Database] and [state.Trie] interfaces.
+// db implements the [state.Reader], [state.Database], and [state.Trie] interfaces.
 type db struct {
 	fetcher Fetcher
 }
@@ -26,8 +27,29 @@ func newDB(fetcher Fetcher) *db {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// state.Reader methods ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func (db *db) Account(addr common.Address) (*types.StateAccount, error) {
+	return db.GetAccount(addr)
+}
+
+func (db *db) Storage(addr common.Address, slot common.Hash) (common.Hash, error) {
+	val, err := db.GetStorage(addr, slot[:])
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return common.BytesToHash(val), nil
+}
+
+// Copy returns a deep-copied state reader.
+func (*db) Copy() state.Reader { panic("not implemented") }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // state.Database methods //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func (db *db) Reader(root common.Hash) (state.Reader, error) { return db, nil }
 
 func (db *db) OpenTrie(root common.Hash) (state.Trie, error) { return db, nil }
 
@@ -64,9 +86,11 @@ func (db *db) ContractCodeSize(addr common.Address, codeHash common.Hash) (int, 
 
 func (*db) DiskDB() ethdb.KeyValueStore { panic("not implemented") }
 
-func (*db) TrieDB() *triedb.Database { panic("not implemented") }
+func (db *db) TrieDB() *triedb.Database { panic("not implemented") }
 
 func (*db) PointCache() *utils.PointCache { panic("not implemented") }
+
+func (*db) Snapshot() *snapshot.Tree { panic("not implemented") }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // state.Trie methods //////////////////////////////////////////////////////////////////////////////
@@ -100,7 +124,7 @@ func (db *db) GetAccount(addr common.Address) (*types.StateAccount, error) {
 
 func (*db) UpdateStorage(addr common.Address, key, value []byte) error { panic("not implemented") }
 
-func (*db) UpdateAccount(addr common.Address, acc *types.StateAccount) error {
+func (*db) UpdateAccount(addr common.Address, acc *types.StateAccount, codeLen int) error {
 	panic("not implemented")
 }
 
