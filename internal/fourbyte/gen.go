@@ -53,21 +53,28 @@ func genFuncs(fn, goFn string) error {
 
 	// parse function definitions from file
 	var functions []function
+	knownIdentifiers := make(map[[4]byte]struct{})
 
 	scanner := bufio.NewScanner(f)
 	for i := 0; scanner.Scan(); i++ {
-		tokens := strings.Split(scanner.Text(), "\t")
+		line := scanner.Text()
+		tokens := strings.Split(line, "\t")
 		if len(tokens) == 1 && strings.HasSuffix(tokens[0], ")") {
 			tokens = append(tokens, "") // no returns
 		}
 		if len(tokens) != 2 {
-			return fmt.Errorf("line %d: invalid line %q", i, scanner.Text())
+			return fmt.Errorf("line %d: invalid line %q", i, line)
 		}
 
 		fn, err := w3.NewFunc(tokens[0], tokens[1])
 		if err != nil {
-			return fmt.Errorf("line %d: %v", i, err)
+			return fmt.Errorf("line %d: %v (%q)", i, err, line)
 		}
+
+		if _, ok := knownIdentifiers[fn.Selector]; ok {
+			return fmt.Errorf("line %d: duplicate function selector %q", i, line)
+		}
+		knownIdentifiers[fn.Selector] = struct{}{}
 
 		functions = append(functions, function{
 			Selector:  fn.Selector,
