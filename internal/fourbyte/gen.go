@@ -21,15 +21,15 @@ func main() {
 		wg                  sync.WaitGroup
 	)
 
-	wg.Add(1)
+	wg.Add(2)
 	go func() {
 		defer wg.Done()
 		errFuncs = genFuncs("funcs.txt", "funcs.go")
 	}()
-	// go func() {
-	// 	defer wg.Done()
-	// 	errEvents = genEvents("events.txt", "events.go")
-	// }()
+	go func() {
+		defer wg.Done()
+		errEvents = genEvents("events.txt", "events.go")
+	}()
 
 	wg.Wait()
 	if errFuncs != nil {
@@ -121,17 +121,71 @@ func genFuncs(fn, goFn string) error {
 }
 
 func genEvents(fn, goFn string) error {
-	panic("not implemented")
+	// open event definitions
+	f, err := os.Open(fn)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var events []event
+	knownTopic0s := make(map[[32]byte]struct{})
+	scanner := bufio.NewScanner(f)
+	for i := 0; scanner.Scan(); i++ {
+		line := scanner.Text()
+
+		evt, err := w3.NewEvent(line)
+		if err != nil {
+			return fmt.Errorf("line %d: %v (%q)", i, err, line)
+		}
+
+		if _, ok := knownTopic0s[evt.Topic0]; ok {
+			return fmt.Errorf("line %d: duplicate function selector %q", i, line)
+		}
+		knownTopic0s[evt.Topic0] = struct{}{}
+
+		events = append(events, event{
+			Topic0:    evt.Topic0,
+			Signature: line,
+		})
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("scan lines: %v", err)
+	}
+
+	// generate go file
+	goF, err := os.Create(goFn)
+	if err != nil {
+		return err
+	}
+	defer goF.Close()
+
+	slices.SortFunc(events, func(a, b event) int {
+		return bytes.Compare(a.Topic0[:], b.Topic0[:])
+	})
+
+	if err := tmplEvents.Execute(goF, &model{Events: events}); err != nil {
+		return fmt.Errorf("execute template: %v", err)
+	}
+
+	return nil
+
 }
 
 type model struct {
 	Functions []function
+	Events    []event
 }
 
 type function struct {
 	Selector  [4]byte
 	Signature string
 	Returns   string
+}
+
+type event struct {
+	Topic0    [32]byte
+	Signature string
 }
 
 var (
@@ -159,6 +213,44 @@ package fourbyte
 
 import "github.com/lmittmann/w3"
 
-var events = map[[32]byte]*w3.Event{}
+var events = map[[32]byte]*w3.Event{
+	{{- range .Events }}
+	{{ printf "{0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x}: w3.MustNewEvent(%q)"
+		(index .Topic0 0)
+		(index .Topic0 1)
+		(index .Topic0 2)
+		(index .Topic0 3)
+		(index .Topic0 4)
+		(index .Topic0 5)
+		(index .Topic0 6)
+		(index .Topic0 7)
+		(index .Topic0 8)
+		(index .Topic0 9)
+		(index .Topic0 10)
+		(index .Topic0 11)
+		(index .Topic0 12)
+		(index .Topic0 13)
+		(index .Topic0 14)
+		(index .Topic0 15)
+		(index .Topic0 16)
+		(index .Topic0 17)
+		(index .Topic0 18)
+		(index .Topic0 19)
+		(index .Topic0 20)
+		(index .Topic0 21)
+		(index .Topic0 22)
+		(index .Topic0 23)
+		(index .Topic0 24)
+		(index .Topic0 25)
+		(index .Topic0 26)
+		(index .Topic0 27)
+		(index .Topic0 28)
+		(index .Topic0 29)
+		(index .Topic0 30)
+		(index .Topic0 31)
+		.Signature
+	}},
+	{{- end }}
+}
 `))
 )
