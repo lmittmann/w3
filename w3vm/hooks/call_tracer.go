@@ -102,8 +102,8 @@ func (c *callTracer) ExitHook(depth int, output []byte, gasUsed uint64, err erro
 	defer func() { c.callStack = c.callStack[:depth] }()
 
 	if reverted {
-		reason, err := abi.UnpackRevert(output)
-		if err != nil {
+		reason, unpackErr := abi.UnpackRevert(output)
+		if unpackErr != nil {
 			reason = hex.EncodeToString(output)
 		}
 		fmt.Fprintf(c.w, "%s%s\n", renderIdent(c.callStack, c.opts.targetStyler, -1), styleRevert.Render(fmt.Sprintf("[%d]", gasUsed), err.Error()+":", reason))
