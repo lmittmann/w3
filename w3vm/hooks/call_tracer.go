@@ -87,14 +87,17 @@ func (c *callTracer) EnterHook(depth int, typ byte, from common.Address, to comm
 		c.opts.targetAddr = to
 	})
 
-	var fn *w3.Func
+	var (
+		fn           *w3.Func
+		isPrecompile bool
+	)
 	if c.opts.DecodeABI && len(input) >= 4 {
 		sig := ([4]byte)(input[:4])
-		fn = fourbyte.Function(sig)
+		fn, isPrecompile = fourbyte.Function(sig, to)
 	}
 	defer func() { c.callStack = append(c.callStack, call{to, fn}) }()
 
-	fmt.Fprintf(c.w, "%s%s %s%s%s\n", renderIdent(c.callStack, c.opts.targetStyler, 1), renderAddr(to, c.opts.targetStyler), renderCallType(typ), renderValue(c.opts.DecodeABI, value), renderInput(fn, input, c.opts.targetStyler))
+	fmt.Fprintf(c.w, "%s%s %s%s%s\n", renderIdent(c.callStack, c.opts.targetStyler, 1), renderAddr(to, c.opts.targetStyler), renderCallType(typ), renderValue(c.opts.DecodeABI, value), renderInput(fn, isPrecompile, input, c.opts.targetStyler))
 }
 
 func (c *callTracer) ExitHook(depth int, output []byte, gasUsed uint64, err error, reverted bool) {
@@ -165,9 +168,9 @@ func renderValue(decodeABI bool, val *big.Int) string {
 	return styleValue.Render(w3.FromWei(val, 18), "ETH") + " "
 }
 
-func renderInput(fn *w3.Func, input []byte, styler func(addr common.Address) lipgloss.Style) string {
+func renderInput(fn *w3.Func, isPrecompile bool, input []byte, styler func(addr common.Address) lipgloss.Style) string {
 	if fn != nil && len(input) >= 4 {
-		s, err := renderAbiInput(fn, input, styler)
+		s, err := renderAbiInput(fn, isPrecompile, input, styler)
 		if err == nil {
 			return s
 		}
@@ -219,8 +222,12 @@ func renderWord(word []byte, _ func(addr common.Address) lipgloss.Style) string 
 	return s
 }
 
-func renderAbiInput(fn *w3.Func, input []byte, styler func(addr common.Address) lipgloss.Style) (string, error) {
-	args, err := fn.Args.Unpack(input[4:])
+func renderAbiInput(fn *w3.Func, isPrecompile bool, input []byte, styler func(addr common.Address) lipgloss.Style) (string, error) {
+	if !isPrecompile {
+		input = input[4:]
+	}
+
+	args, err := fn.Args.Unpack(input)
 	if err != nil {
 		return "", err
 	}
