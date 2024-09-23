@@ -27,8 +27,6 @@ var (
 	styleRevert        = lipgloss.NewStyle().Foreground(lipgloss.Color("#FE5F86"))
 	stylesStaticcall   = lipgloss.NewStyle().Faint(true)
 	stylesDelegatecall = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFA500"))
-
-	funcError = w3.MustNewFunc("Error(string)", "")
 )
 
 type CallTracerOptions struct {
@@ -104,8 +102,8 @@ func (c *callTracer) ExitHook(depth int, output []byte, gasUsed uint64, err erro
 	defer func() { c.callStack = c.callStack[:depth] }()
 
 	if reverted {
-		var reason string
-		if err := funcError.DecodeArgs(output, &reason); err != nil {
+		reason, err := abi.UnpackRevert(output)
+		if err != nil {
 			reason = hex.EncodeToString(output)
 		}
 		fmt.Fprintf(c.w, "%s%s\n", renderIdent(c.callStack, c.opts.targetStyler, -1), styleRevert.Render(fmt.Sprintf("[%d]", gasUsed), err.Error()+":", reason))
