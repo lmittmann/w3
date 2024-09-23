@@ -1,2 +1,7 @@
-Transfer(address indexed from, address indexed to, uint256 value)
 Approval(address indexed owner, address indexed spender, uint256 value)
+Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to)
+Mint(address indexed sender, uint256 amount0, uint256 amount1)
+PairCreated(address indexed token0, address indexed token1, address pair, uint256)
+Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)
+Sync(uint112 reserve0, uint112 reserve1)
+Transfer(address indexed from, address indexed to, uint256 value)

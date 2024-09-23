@@ -153,6 +153,22 @@ func genEvents(fn, goFn string) error {
 		return fmt.Errorf("scan lines: %v", err)
 	}
 
+	// make sure event definitions stay in alphabetical order
+	slices.SortFunc(events, func(a, b event) int {
+		return strings.Compare(strings.ToLower(a.Signature), strings.ToLower(b.Signature))
+	})
+	f, err = os.OpenFile(fn, os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	for _, evt := range events {
+		if _, err := f.WriteString(evt.Signature + "\n"); err != nil {
+			return err
+		}
+	}
+
 	// generate go file
 	goF, err := os.Create(goFn)
 	if err != nil {
