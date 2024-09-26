@@ -811,6 +811,41 @@ func BenchmarkTransferWETH9(b *testing.B) {
 
 func ptr[T any](t T) *T { return &t }
 
+func ExampleVM_transferEthFromZeroAddress() {
+	client, err := w3.Dial("https://rpc.ankr.com/eth")
+	if err != nil {
+		// handle error
+	}
+	defer client.Close()
+
+	vm, err := w3vm.New(
+		w3vm.WithFork(client, nil),
+		w3vm.WithNoBaseFee(),
+	)
+	if err != nil {
+		// handle error
+	}
+
+	recipient := w3vm.RandA()
+
+	_, err = vm.Apply(&w3types.Message{
+		From:  common.Address{},
+		To:    &recipient,
+		Value: w3.I("1 ether"),
+	})
+	if err != nil {
+		// handle error
+	}
+
+	balance, err := vm.Balance(recipient)
+	if err != nil {
+		// handle error
+	}
+
+	fmt.Printf("Balance: %s ETH\n", w3.FromWei(balance, 18))
+	// Output: Balance: 1 ETH
+}
+
 func ExampleVM() {
 	var (
 		addrEOA    = w3.A("0x000000000000000000000000000000000000c0Fe")
