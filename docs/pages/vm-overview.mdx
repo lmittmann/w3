@@ -1,6 +1,68 @@
 # VM
 
-<DocLink title="w3vm.VM" /> is a high-level EVM environment with a simple but powerful API to simulate EVM execution, test Smart Contracts, or trace transactions. It supports Mainnet state forking via RPC and state caching for faster testing.
+<DocLink title="w3vm.VM" /> is a super simple to use Ethereum Virtual Machine (EVM), built on to of `go-ethereum/core/vm.EVM`. It supports **tracing**, **state forking** via RPC, and can be used for simulation, debugging EVM execution, or testing Smart Contracts.
+
+* **State forking** via RPC, or custom state fetchers enable transaction simulations or Smart Contract tests on live, or historic chain state.
+* **Tracing** of EVM execution is supported via `go-ethereum/core/tracing.Hooks`.
+
+
+## Get Started
+
+<Steps>
+
+### Create a VM Instance
+
+Create a VM instance, that forks the latest Mainnet state.
+
+```go
+client, err := w3.Dial("https://rpc.ankr.com/eth")
+if err != nil {
+    // ...
+}
+defer client.Close()
+
+vm, err := w3vm.New(
+    w3vm.WithFork(client, nil),
+    w3vm.WithNoBaseFee(),
+)
+if err != nil {
+    // ...
+}
+```
+
+### Simulate a Simple Message
+
+Transfer ETH from the zero address to a random recipient.
+
+```go
+recipient := w3vm.RandA()
+
+receipt, err := vm.Apply(&w3types.Message{
+    From:  common.Address{},
+    To:    &recipient,
+    Value: w3.I("1 ether"),
+})
+if err != nil {
+    // ...
+}
+```
+
+### Verify the Recipient's Balance
+
+Verify the recipient's balance after the applied message.
+
+```go
+balance, err := vm.Balance(recipient)
+if err != nil {
+    // ...
+}
+
+fmt.Printf("Balance: %s ETH\n", w3.FromWei(balance, 18))
+// Output: Balance: 1 ETH
+```
+
+</Steps>
+
 
 **Example:** Simulate an Uniswap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
 
