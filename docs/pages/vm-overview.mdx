@@ -64,7 +64,7 @@ fmt.Printf("Balance: %s ETH\n", w3.FromWei(balance, 18))
 </Steps>
 
 
-## VM Setup
+## Setup
 
 A new VM instances is created using the `w3vm.New` function, which accepts various options to customize the VM behavior.
 
@@ -76,7 +76,85 @@ A new VM instances is created using the `w3vm.New` function, which accepts vario
 * `WithStateDB(db *state.StateDB)`: Sets the state database for the VM, that is usually a snapshot obtained from `VM.Snapshot`.
 * `WithFork(client *w3.Client, blockNumber *big.Int)`: Forks state from a live Ethereum client at a specific block number.
 * `WithFetcher(fetcher Fetcher)`: Sets the fetcher for the VM.
-* `WithTB(tb testing.TB)`: Enables persistent state caching when used together with [WithFork].
+* `WithTB(tb testing.TB)`: Enables persistent state caching when used together with `WithFork`.
+
+
+## Execution
+
+Messages represent transactions or contract calls that can be executed by the VM.
+
+<Callout type="info">All execution methods support **tracing** via `go-ethereum/core/tracing.Hooks`. [Learn&nbsp;more&nbsp;➔](/vm-tracing) </Callout>
+
+### `Apply` Method
+
+<DocLink title="Apply" id="w3vm.VM.Apply" /> applies a `w3types.Message` to the VM and returns a `Receipt`. If the execution doesn't revert, the VM's underlying state may change.
+
+#### Example: Apply a Message
+
+```go
+msg := &w3types.Message{
+    From:  senderAddress,
+    To:    &receiverAddress,
+    Value: w3.I("1 ether"),
+    Gas:   21000,
+}
+
+receipt, err := vm.Apply(msg)
+if err != nil {
+    // handle error
+}
+fmt.Printf("Gas Used: %d\n", receipt.GasUsed)
+```
+
+### `ApplyTx` Method
+
+<DocLink title="ApplyTx" id="w3vm.VM.ApplyTx" /> is like `Apply`, but takes a `types.Transaction` instead of a message. The given transaction is converted to a message internally, using a signer, that is derived from the VM's chain configuration and fork block.
+
+### `Call` Method
+
+<DocLink title="Call" id="w3vm.VM.Call" /> is like `Apply`, but any state changes during execution are reverted in the end, so the VM's state is never modified.
+
+#### Example: Call `balanceOf`
+
+```go filename="Go"
+funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
+
+msg := &w3types.Message{
+    To:    &addrToken,
+    Func:  funcBalanceOf,
+    Args:  []any{ownerAddr},
+}
+
+receipt, err := vm.Call(msg)
+if err != nil {
+    // handle error
+}
+
+var balance *big.Int
+if err := receipt.DecodeReturns(&balance); err != nil {
+    // handle error
+}
+fmt.Printf("Balance: %s\n", balance)
+```
+
+### `CallFunc` Method
+
+<DocLink title="CallFunc" id="w3vm.VM.CallFunc" /> is a helper, that greatly simplifies common usage of `Call`. It is designed analogues to the `eth.CallFunc` RPC client method.
+
+#### Example: Call `balanceOf` with `CallFunc`
+
+This is a simplified version of the [Call `balanceOf`](#example-call-balanceof) example.
+
+```go
+funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
+
+var balance *big.Int
+err := vm.CallFunc(addrToken, funcBalanceOf, ownerAddr).Returns(&balance)
+if err != nil {
+    // handle error
+}
+fmt.Printf("Balance: %s\n", balance)
+```
 
 
 **Example:** Simulate an Uniswap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
