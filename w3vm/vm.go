@@ -477,9 +477,8 @@ func WithState(state w3types.State) Option {
 	return func(vm *VM) { vm.opts.preState = state }
 }
 
-// WithStateDB sets the state DB for the VM.
-//
-// The state DB can originate from a snapshot of the VM.
+// WithStateDB sets the state DB for the VM, that is usually a snapshot
+// obtained from [VM.Snapshot].
 func WithStateDB(db *state.StateDB) Option {
 	return func(vm *VM) {
 		vm.db = db
@@ -505,7 +504,7 @@ func WithFork(client *w3.Client, blockNumber *big.Int) Option {
 	}
 }
 
-// WithHeader sets the block context for the VM based on the given header
+// WithHeader sets the block context for the VM based on the given header.
 func WithHeader(header *types.Header) Option {
 	return func(vm *VM) { vm.opts.header = header }
 }

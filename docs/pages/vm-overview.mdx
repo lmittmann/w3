@@ -64,6 +64,21 @@ fmt.Printf("Balance: %s ETH\n", w3.FromWei(balance, 18))
 </Steps>
 
 
+## VM Setup
+
+A new VM instances is created using the `w3vm.New` function, which accepts various options to customize the VM behavior.
+
+* `WithChainConfig(cfg *params.ChainConfig)`: Sets the chain configuration. If not set, the VM falls back to the Mainnet configuration.
+* `WithNoBaseFee()`: Forces the EIP-1559 base fee to 0.
+* `WithBlockContext(ctx *vm.BlockContext)`: Sets the block context for the VM.
+* `WithHeader(header *types.Header)`: Sets the block context for the VM based on the given header.
+* `WithState(state w3types.State)`: Sets the pre state of the VM. If used with `WithFork`, the pre state overrides the forked state.
+* `WithStateDB(db *state.StateDB)`: Sets the state database for the VM, that is usually a snapshot obtained from `VM.Snapshot`.
+* `WithFork(client *w3.Client, blockNumber *big.Int)`: Forks state from a live Ethereum client at a specific block number.
+* `WithFetcher(fetcher Fetcher)`: Sets the fetcher for the VM.
+* `WithTB(tb testing.TB)`: Enables persistent state caching when used together with [WithFork].
+
+
 **Example:** Simulate an Uniswap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
 
 ```go
