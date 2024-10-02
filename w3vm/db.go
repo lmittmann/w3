@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/state/snapshot"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -14,6 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/triedb"
 	"github.com/holiman/uint256"
 )
+
+var fakeTrieDB = triedb.NewDatabase(rawdb.NewMemoryDatabase(), &triedb.Config{})
 
 // db implements the [state.Reader], [state.Database], and [state.Trie] interfaces.
 type db struct {
@@ -86,7 +89,7 @@ func (db *db) ContractCodeSize(addr common.Address, codeHash common.Hash) (int, 
 
 func (*db) DiskDB() ethdb.KeyValueStore { panic("not implemented") }
 
-func (db *db) TrieDB() *triedb.Database { panic("not implemented") }
+func (db *db) TrieDB() *triedb.Database { return fakeTrieDB }
 
 func (*db) PointCache() *utils.PointCache { panic("not implemented") }
 
