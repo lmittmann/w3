@@ -15,6 +15,7 @@ burnAfterSeize(uint256 amount)	uint256
 buyAsset(uint256 minAmount, address receiver)	uint256, uint256
 buyAssetWithSig(address originator, uint256 minAmount, address receiver, uint256 deadline, bytes signature)	uint256, uint256
 canPerform(bytes32 actionId, address account, address where)	bool
+cbrt(uint256 x)	uint256
 claimMintReward()
 claimMintRewardAndShare(address other, uint256 pct)
 claimMintRewardAndStake(uint256 pct, uint256 term)
@@ -46,6 +47,7 @@ exchange(int128 i, int128 j, uint256 dx, uint256 min_dy)
 exchange(int128 i, int128 j, uint256 dx, uint256 min_dy, address receiver)
 exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy)
 exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth)
+exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth, address receiver)	uint256
 exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy)
 execute(bytes commands, bytes[] inputs)
 execute(bytes commands, bytes[] inputs, uint256 deadline)
@@ -54,10 +56,13 @@ fee()	uint24
 feeGrowthGlobal0X128()	uint256
 feeGrowthGlobal1X128()	uint256
 flash(address recipient, uint256 amount0, uint256 amount1, bytes data)
+geometric_mean(uint256[3] x)	uint256
 get_address(uint256 idx)	address
 get_dy(int128 i, int128 j, uint256 amount)	uint256
 get_dy_underlying(int128 i, int128 j, uint256 amount)	uint256
+get_p(uint256[3] xp, uint256 D, uint256[2] A_gamma)	uint256[2]
 get_registry()	address
+get_y(uint256 ANN, uint256 gamma, uint256[3] x, uint256 D, uint256 i)	uint256[2]
 getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)	uint256 amountIn
 getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)	uint256 amountOut
 getAmountsIn(uint256 amountOut, address[] path)	uint256[] amounts
@@ -99,6 +104,7 @@ mint()
 mint(address to, uint256 amount)
 mint(uint256)
 name()	string
+newton_D(uint256 ANN, uint256 gamma, uint256[3] x_unsorted, uint256 K0_prev)	uint256
 onERC721Received(address operator, address from, uint256 tokenId, bytes data)	bytes4
 owner()	address
 ownerOf(uint256 tokenId)	address
@@ -109,6 +115,7 @@ permit(address owner, address spender, uint256 amount, uint256 deadline, uint8 v
 price0CumulativeLast()	uint256
 price1CumulativeLast()	uint256
 quote(uint256 amountA, uint256 reserveA, uint256 reserveB)	uint256 amountB
+reduction_coefficient(uint256[3] x, uint256 fee_gamma)	uint256
 removeLiquidity(address tokenA, address tokenB, uint256 liquidity, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline)	uint256 amountA, uint256 amountB
 removeLiquidityETH(address token, uint256 liquidity, uint256 amountTokenMin, uint256 amountETHMin, address to, uint256 deadline)	uint256 amountToken, uint256 amountETH
 removeLiquidityETHSupportingFeeOnTransferTokens(address token, uint256 liquidity, uint256 amountTokenMin, uint256 amountETHMin, address to, uint256 deadline)	uint256 amountETH
@@ -179,6 +186,7 @@ uniswapV3Swap(uint256 amount, uint256 minReturn, uint256[] pools)	uint256 return
 uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
 updatedAt()	uint256
 version()	uint256
+wad_exp(int256 power)	uint256
 WETH()	address
 withdraw(uint256)
 wrapAll()
