@@ -60,7 +60,7 @@ func New(opts ...Option) (*VM, error) {
 	// set DB
 	db := newDB(vm.opts.fetcher)
 	if vm.db == nil {
-		vm.db, _ = state.New(w3.Hash0, db, nil)
+		vm.db, _ = state.New(w3.Hash0, db)
 	}
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
@@ -301,19 +301,20 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 	}
 
 	return &core.Message{
-			To:                msg.To,
-			From:              msg.From,
-			Nonce:             nonce,
-			Value:             nilToZero(msg.Value),
-			GasLimit:          gasLimit,
-			GasPrice:          gasPrice,
-			GasFeeCap:         gasFeeCap,
-			GasTipCap:         gasFeeCap,
-			Data:              input,
-			AccessList:        msg.AccessList,
-			BlobGasFeeCap:     msg.BlobGasFeeCap,
-			BlobHashes:        msg.BlobHashes,
-			SkipAccountChecks: skipAccChecks,
+			To:               msg.To,
+			From:             msg.From,
+			Nonce:            nonce,
+			Value:            nilToZero(msg.Value),
+			GasLimit:         gasLimit,
+			GasPrice:         gasPrice,
+			GasFeeCap:        gasFeeCap,
+			GasTipCap:        gasFeeCap,
+			Data:             input,
+			AccessList:       msg.AccessList,
+			BlobGasFeeCap:    msg.BlobGasFeeCap,
+			BlobHashes:       msg.BlobHashes,
+			SkipNonceChecks:  skipAccChecks,
+			SkipFromEOACheck: skipAccChecks,
 		},
 		&vm.TxContext{
 			Origin:     msg.From,

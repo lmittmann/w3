@@ -14,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -778,24 +777,25 @@ func BenchmarkTransferWETH9(b *testing.B) {
 	})
 
 	b.Run("geth", func(b *testing.B) {
-		stateDB, _ := state.New(common.Hash{}, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
+		stateDB, _ := state.New(common.Hash{}, state.NewDatabaseForTesting())
 		stateDB.SetCode(addrWETH, codeWETH)
 		stateDB.SetState(addrWETH, w3vm.WETHBalanceSlot(addr0), common.BigToHash(w3.I("1 ether")))
 
 		b.ResetTimer()
 		for i := range b.N {
 			msg := &core.Message{
-				To:                &addrWETH,
-				From:              addr0,
-				Nonce:             uint64(i),
-				Value:             new(big.Int),
-				GasLimit:          100_000,
-				GasPrice:          new(big.Int),
-				GasFeeCap:         new(big.Int),
-				GasTipCap:         new(big.Int),
-				Data:              input,
-				AccessList:        nil,
-				SkipAccountChecks: false,
+				To:               &addrWETH,
+				From:             addr0,
+				Nonce:            uint64(i),
+				Value:            new(big.Int),
+				GasLimit:         100_000,
+				GasPrice:         new(big.Int),
+				GasFeeCap:        new(big.Int),
+				GasTipCap:        new(big.Int),
+				Data:             input,
+				AccessList:       nil,
+				SkipNonceChecks:  false,
+				SkipFromEOACheck: false,
 			}
 			txCtx := core.NewEVMTxContext(msg)
 			evm := vm.NewEVM(blockCtx, txCtx, stateDB, params.AllEthashProtocolChanges, vm.Config{NoBaseFee: true})
