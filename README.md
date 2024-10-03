@@ -57,7 +57,7 @@ if err := client.Call(
 
 #### Error Handling
 
-If one ore more calls in a batch request fail, `Client.Call` returns an error of type [`w3.CallErrors`](https://pkg.go.dev/github.com/lmittmann/w3#CallErrors).
+If one or more calls in a batch request fail, `Client.Call` returns an error of type [`w3.CallErrors`](https://pkg.go.dev/github.com/lmittmann/w3#CallErrors).
 
 **Example:** Check which RPC calls failed in a batch request ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-CallErrors))
 ```go
@@ -144,7 +144,7 @@ A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
 
 * encode arguments to the contracts input data ([`Func.EncodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.EncodeArgs)),
 * decode arguments from the contracts input data ([`Func.DecodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeArgs)), and
-* decode returns form the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
+* decode returns from the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
 
 ### Utils
 
