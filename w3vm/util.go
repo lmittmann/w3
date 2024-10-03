@@ -28,8 +28,8 @@ func RandA() (addr common.Address) {
 }
 
 var (
-	weth9BalancePos   = common.BigToHash(big.NewInt(3))
-	weth9AllowancePos = common.BigToHash(big.NewInt(4))
+	weth9BalancePos   = common.BytesToHash([]byte{3})
+	weth9AllowancePos = common.BytesToHash([]byte{4})
 )
 
 // WETHBalanceSlot returns the storage slot that stores the WETH balance of
@@ -39,18 +39,26 @@ func WETHBalanceSlot(addr common.Address) common.Hash {
 }
 
 // WETHAllowanceSlot returns the storage slot that stores the WETH allowance
-// of the given owner and spender.
+// of the given owner to the spender.
 func WETHAllowanceSlot(owner, spender common.Address) common.Hash {
 	return Slot2(weth9AllowancePos, common.BytesToHash(owner[:]), common.BytesToHash(spender[:]))
 }
 
 // Slot returns the storage slot of a mapping with the given position and key.
+//
+// Slot follows the Solidity storage layout for:
+//
+//	mapping(bytes32 => bytes32)
 func Slot(pos, key common.Hash) common.Hash {
 	return crypto.Keccak256Hash(key[:], pos[:])
 }
 
 // Slot2 returns the storage slot of a double mapping with the given position
 // and keys.
+//
+// Slot2 follows the Solidity storage layout for:
+//
+//	mapping(bytes32 => mapping(bytes32 => bytes32))
 func Slot2(pos, key, key2 common.Hash) common.Hash {
 	return crypto.Keccak256Hash(
 		key2[:],
