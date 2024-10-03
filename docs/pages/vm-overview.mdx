@@ -156,6 +156,23 @@ if err != nil {
 fmt.Printf("Balance: %s\n", balance)
 ```
 
+### `Receipt` Type
+
+The `Receipt` struct contains the result of an executed message.
+
+#### Fields
+
+* `GasUsed uint64`: Gas used for executing the message.
+* `GasRefund uint64`: Gas refunded after executing the message.
+* `Logs []*types.Log`: Logs emitted while executing the message.
+* `Output []byte`: Output of the executed message.
+* `ContractAddress *common.Address`: Address of the created contract, if any.
+* `Err error`: Execution error, if any.
+
+#### Methods
+
+* `DecodeReturns(returns ...any) error`: Decodes the return values. This method only works, if the executed message had `w3types.Message.Func` set.
+
 
 ## State
 
