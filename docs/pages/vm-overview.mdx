@@ -93,8 +93,8 @@ Messages represent transactions or contract calls that can be executed by the VM
 
 ```go
 msg := &w3types.Message{
-    From:  senderAddress,
-    To:    &receiverAddress,
+    From:  addrSender,
+    To:    &addrRecipient,
     Value: w3.I("1 ether"),
     Gas:   21000,
 }
@@ -122,7 +122,7 @@ funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
 msg := &w3types.Message{
     To:    &addrToken,
     Func:  funcBalanceOf,
-    Args:  []any{ownerAddr},
+    Args:  []any{addrOwner},
 }
 
 receipt, err := vm.Call(msg)
@@ -149,7 +149,7 @@ This is a simplified version of the [Call `balanceOf`](#example-call-balanceof) 
 funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
 
 var balance *big.Int
-err := vm.CallFunc(addrToken, funcBalanceOf, ownerAddr).Returns(&balance)
+err := vm.CallFunc(addrToken, funcBalanceOf, addrOwner).Returns(&balance)
 if err != nil {
     // handle error
 }
@@ -163,10 +163,10 @@ The VM provides methods to read, and write account state.
 
 ### Reading State
 
-* `vm.Balance(address common.Address) (*big.Int, error)`: Returns the balance of the given address.
-* `vm.Nonce(address common.Address) (uint64, error)`: Returns the nonce of the given address.
-* `vm.Code(address common.Address) ([]byte, error)`: Returns the code of the given address.
-* `vm.StorageAt(address common.Address, slot common.Hash) (common.Hash, error)`: Returns the state of the given address at the give storage slot.
+* `vm.Balance(addr common.Address) (*big.Int, error)`: Returns the balance of the given address.
+* `vm.Nonce(addr common.Address) (uint64, error)`: Returns the nonce of the given address.
+* `vm.Code(addr common.Address) ([]byte, error)`: Returns the code of the given address.
+* `vm.StorageAt(addr common.Address, slot common.Hash) (common.Hash, error)`: Returns the state of the given address at the give storage slot.
 
 <Callout type="info">
 An error only can only occur, if the VM fails to fetch state via a `w3vm.Fetcher`. Thus, it is safe to ignore the error, if no state fetcher is used by the VM.
@@ -174,16 +174,16 @@ An error only can only occur, if the VM fails to fetch state via a `w3vm.Fetcher
 
 ### Writing State
 
-* `vm.SetBalance(address common.Address, balance *big.Int)`: Sets the balance of the given address.
-* `vm.SetNonce(address common.Address, nonce uint64)`: Sets the nonce of the given address.
-* `vm.SetCode(address common.Address, code []byte)`: Sets the code of the given address.
-* `vm.SetStorageAt(address common.Address, slot common.Hash, value common.Hash)`: Sets the state of the given address at the give storage slot.
+* `vm.SetBalance(addr common.Address, balance *big.Int)`: Sets the balance of the given address.
+* `vm.SetNonce(addr common.Address, nonce uint64)`: Sets the nonce of the given address.
+* `vm.SetCode(addr common.Address, code []byte)`: Sets the code of the given address.
+* `vm.SetStorageAt(addr common.Address, slot common.Hash, value common.Hash)`: Sets the state of the given address at the give storage slot.
 
 
 ## Helper
 
 * `w3vm.RandA() common.Address`: Returns a random address.
-* `WETHBalanceSlot(addr common.Address) common.Hash`: Returns the storage slot that stores the WETH balance of the given addr.
+* `WETHBalanceSlot(addr common.Address) common.Hash`: Returns the storage slot that stores the WETH balance of the given address.
 * `WETHAllowanceSlot(owner, spender common.Address) common.Hash`: Returns the storage slot that stores the WETH allowance of the given owner to the spender.
 * `Slot(pos, key common.Hash) common.Hash`: Returns the storage slot of a mapping with the given position and key.
 * `Slot2(pos, key, key2 common.Hash) common.Hash`: Returns the storage slot of a double mapping with the given position and keys.
