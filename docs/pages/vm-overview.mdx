@@ -1,6 +1,6 @@
 # VM
 
-<DocLink title="w3vm.VM" /> is a super simple to use Ethereum Virtual Machine (EVM), built on to of `go-ethereum/core/vm.EVM`. It supports **tracing**, **state forking** via RPC, and can be used for simulation, debugging EVM execution, or testing Smart Contracts.
+<DocLink title="w3vm.VM" /> is a super simple to use Ethereum Virtual Machine (EVM), built on top of `go-ethereum/core/vm.EVM`. It supports **tracing**, **state forking** via RPC, and can be used for simulation, debugging EVM execution, or testing Smart Contracts.
 
 * **State forking** via RPC, or custom state fetchers enable transaction simulations or Smart Contract tests on live, or historic chain state.
 * **Tracing** of EVM execution is supported via `go-ethereum/core/tracing.Hooks`.
@@ -66,7 +66,7 @@ fmt.Printf("Balance: %s ETH\n", w3.FromWei(balance, 18))
 
 ## Setup
 
-A new VM instances is created using the `w3vm.New` function, which accepts various options to customize the VM behavior.
+A new VM instance is created using the `w3vm.New` function, which accepts various options to customize the VM behavior.
 
 * `WithChainConfig(cfg *params.ChainConfig)`: Sets the chain configuration. If not set, the VM falls back to the Mainnet configuration.
 * `WithNoBaseFee()`: Forces the EIP-1559 base fee to 0.
@@ -183,7 +183,7 @@ The VM provides methods to read, and write account state.
 * `vm.Balance(addr common.Address) (*big.Int, error)`: Returns the balance of the given address.
 * `vm.Nonce(addr common.Address) (uint64, error)`: Returns the nonce of the given address.
 * `vm.Code(addr common.Address) ([]byte, error)`: Returns the code of the given address.
-* `vm.StorageAt(addr common.Address, slot common.Hash) (common.Hash, error)`: Returns the state of the given address at the give storage slot.
+* `vm.StorageAt(addr common.Address, slot common.Hash) (common.Hash, error)`: Returns the state of the given address at the given storage slot.
 
 <Callout type="info">
 An error only can only occur, if the VM fails to fetch state via a `w3vm.Fetcher`. Thus, it is safe to ignore the error, if no state fetcher is used by the VM.
