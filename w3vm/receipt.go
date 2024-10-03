@@ -16,11 +16,11 @@ type Receipt struct {
 
 	GasUsed         uint64          // Gas used for executing the message
 	GasRefund       uint64          // Gas refunded after executing the message
-	Logs            []*types.Log    // Logs emitted by the message
-	Output          []byte          // Output bytes of the applied message
-	ContractAddress *common.Address // Contract address created by a contract creation transaction
+	Logs            []*types.Log    // Logs emitted while executing the message
+	Output          []byte          // Output of the executed message
+	ContractAddress *common.Address // Address of the created contract, if any
 
-	Err error // Revert reason
+	Err error // Execution error, if any
 }
 
 // DecodeReturns is like [w3types.Func.DecodeReturns], but returns [ErrMissingFunc]

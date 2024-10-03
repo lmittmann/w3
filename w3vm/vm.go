@@ -77,8 +77,8 @@ func New(opts ...Option) (*VM, error) {
 	return vm, nil
 }
 
-// Apply the given message to the VM and return its receipt. Multiple tracing hooks
-// can be given to trace the execution of the message.
+// Apply the given message to the VM, and return its receipt. Multiple tracing hooks
+// may be given to trace the execution of the message.
 func (vm *VM) Apply(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, error) {
 	return vm.apply(msg, false, joinHooks(hooks))
 }
@@ -158,15 +158,15 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	return receipt, receipt.Err
 }
 
-// Call calls the given message on the VM and returns a receipt. Any state changes
-// of a call are reverted. Multiple tracing hooks can be passed to trace the execution
+// Call the given message on the VM, and returns its receipt. Any state changes
+// of a call are reverted. Multiple tracing hooks may be given to trace the execution
 // of the message.
 func (vm *VM) Call(msg *w3types.Message, hooks ...*tracing.Hooks) (*Receipt, error) {
 	return vm.apply(msg, true, joinHooks(hooks))
 }
 
 // CallFunc is a utility function for [VM.Call] that calls the given function
-// on the given contract address with the given arguments and parses the
+// on the given contract address with the given arguments and decodes the
 // output into the given returns.
 //
 // Example:
@@ -477,9 +477,8 @@ func WithState(state w3types.State) Option {
 	return func(vm *VM) { vm.opts.preState = state }
 }
 
-// WithStateDB sets the state DB for the VM.
-//
-// The state DB can originate from a snapshot of the VM.
+// WithStateDB sets the state DB for the VM, that is usually a snapshot
+// obtained from [VM.Snapshot].
 func WithStateDB(db *state.StateDB) Option {
 	return func(vm *VM) {
 		vm.db = db
@@ -505,7 +504,7 @@ func WithFork(client *w3.Client, blockNumber *big.Int) Option {
 	}
 }
 
-// WithHeader sets the block context for the VM based on the given header
+// WithHeader sets the block context for the VM based on the given header.
 func WithHeader(header *types.Header) Option {
 	return func(vm *VM) { vm.opts.header = header }
 }
