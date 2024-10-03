@@ -5,7 +5,7 @@
 		"build": "next build"
 	},
 	"dependencies": {
-		"next": "^14.2.12",
+		"next": "^14.2.14",
 		"nextra": "3.0.0-alpha.40",
 		"nextra-theme-docs": "3.0.0-alpha.40",
 		"react": "^18.3.1",

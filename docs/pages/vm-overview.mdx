@@ -101,7 +101,7 @@ msg := &w3types.Message{
 
 receipt, err := vm.Apply(msg)
 if err != nil {
-    // handle error
+    // ...
 }
 fmt.Printf("Gas Used: %d\n", receipt.GasUsed)
 ```
@@ -116,7 +116,7 @@ fmt.Printf("Gas Used: %d\n", receipt.GasUsed)
 
 #### Example: Call `balanceOf`
 
-```go filename="Go"
+```go
 funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
 
 msg := &w3types.Message{
@@ -155,6 +155,29 @@ if err != nil {
 }
 fmt.Printf("Balance: %s\n", balance)
 ```
+
+
+## State
+
+The VM provides methods to read, and write account state.
+
+### Reading State
+
+* `vm.Balance(address common.Address) (*big.Int, error)`: Returns the balance of the given address.
+* `vm.Nonce(address common.Address) (uint64, error)`: Returns the nonce of the given address.
+* `vm.Code(address common.Address) ([]byte, error)`: Returns the code of the given address.
+* `vm.StorageAt(address common.Address, slot common.Hash) (common.Hash, error)`: Returns the state of the given address at the give storage slot.
+
+<Callout type="info">
+An error only can only occur, if the VM fails to fetch state via a `w3vm.Fetcher`. Thus, it is safe to ignore the error, if no state fetcher is used by the VM.
+</Callout>
+
+### Writing State
+
+* `vm.SetBalance(address common.Address, balance *big.Int)`: Sets the balance of the given address.
+* `vm.SetNonce(address common.Address, nonce uint64)`: Sets the nonce of the given address.
+* `vm.SetCode(address common.Address, code []byte)`: Sets the code of the given address.
+* `vm.SetStorageAt(address common.Address, slot common.Hash, value common.Hash)`: Sets the state of the given address at the give storage slot.
 
 
 **Example:** Simulate an Uniswap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
