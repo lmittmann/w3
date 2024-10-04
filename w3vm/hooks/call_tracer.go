@@ -35,6 +35,9 @@ type CallTracerOptions struct {
 
 	DecodeABI bool
 
+	ShowOp   func(op byte, addr common.Address) bool
+	OpStyler func(op byte) lipgloss.Style
+
 	NoColor bool
 }
 
@@ -49,6 +52,20 @@ func (opts *CallTracerOptions) targetStyler(addr common.Address) lipgloss.Style 
 	return opts.TargetStyler(addr)
 }
 
+func (opts *CallTracerOptions) showOp(op byte, pc uint64, addr common.Address) bool {
+	if opts.ShowOp == nil {
+		return false
+	}
+	return opts.ShowOp(op, addr)
+}
+
+func (opts *CallTracerOptions) opStyler(op byte) lipgloss.Style {
+	if opts.OpStyler == nil {
+		return defaultOpStyler(op)
+	}
+	return opts.OpStyler(op)
+}
+
 var TargetAddress = common.BytesToAddress([]byte("target"))
 
 func defaultTargetStyler(addr common.Address) lipgloss.Style {
@@ -58,6 +75,10 @@ func defaultTargetStyler(addr common.Address) lipgloss.Style {
 	default:
 		return lipgloss.NewStyle()
 	}
+}
+
+func defaultOpStyler(op byte) lipgloss.Style {
+	return lipgloss.NewStyle()
 }
 
 func NewCallTracer(w io.Writer, opts *CallTracerOptions) *tracing.Hooks {
@@ -116,6 +137,10 @@ func (c *callTracer) ExitHook(depth int, output []byte, gasUsed uint64, err erro
 }
 
 func (c *callTracer) OpcodeHook(pc uint64, op byte, gas, cost uint64, scope tracing.OpContext, rData []byte, depth int, err error) {
+	if !c.opts.showOp(op, pc, scope.Address()) {
+		return
+	}
+	fmt.Fprintln(c.w, renderIdent(c.callStack, c.opts.targetStyler, 0)+renderOp(op, c.opts.opStyler, pc, scope))
 }
 
 func (c *callTracer) OnLog(log *types.Log) {}
@@ -126,9 +151,10 @@ func renderIdent(callStack []call, styler func(addr common.Address) lipgloss.Sty
 
 		s := "│ "
 		if isLast := i == len(callStack)-1; isLast {
-			if kind > 0 {
+			switch kind {
+			case 1:
 				s = "├╴"
-			} else {
+			case -1:
 				s = "└╴"
 			}
 		}
@@ -374,7 +400,54 @@ func renderAbiTyp(typ *abi.Type, name string, val any, styler func(addr common.A
 	return s
 }
 
+func renderOp(op byte, style func(byte) lipgloss.Style, pc uint64, scope tracing.OpContext) string {
+	const maxStackDepth = 7
+	sb := new(strings.Builder)
+	sb.WriteString(styleDim.Render(fmt.Sprintf("0x%04x ", pc)))
+	sb.WriteString(style(op).Render(fmt.Sprintf("%-12s ", vm.OpCode(op))))
+
+	stack := scope.StackData()
+	for i, j := len(stack)-1, 0; i >= 0 && i >= len(stack)-maxStackDepth; i, j = i-1, j+1 {
+		notLast := i > 0 && i > len(stack)-maxStackDepth
+		if isAccessed := opAccessesStack(op, j); isAccessed {
+			sb.WriteString(stack[i].Hex())
+		} else {
+			sb.WriteString(styleDim.Render(stack[i].Hex()))
+		}
+		if notLast {
+			sb.WriteString(" ")
+		}
+	}
+
+	if len(stack) > maxStackDepth {
+		sb.WriteString(styleDim.Render(fmt.Sprintf(" …%d", len(stack)-maxStackDepth)))
+	}
+
+	return sb.String()
+}
+
 type call struct {
 	Target common.Address
 	Func   *w3.Func
+}
+
+func opAccessesStack(op byte, i int) bool {
+	if vm.SWAP1 <= op && op <= vm.SWAP16 {
+		return i == 0 || i == int(op)-int(vm.SWAP1)+1
+	} else if vm.DUP1 <= op && op <= vm.DUP16 {
+		return i == int(op)-int(vm.DUP1)
+	}
+
+	return i < pops[op]
+}
+
+var pops = [256]int{
+	vm.STOP: 0, vm.ADD: 2, vm.MUL: 2, vm.SUB: 2, vm.DIV: 2, vm.SDIV: 2, vm.MOD: 2, vm.SMOD: 2, vm.ADDMOD: 3, vm.MULMOD: 3, vm.EXP: 2, vm.SIGNEXTEND: 2,
+	vm.LT: 2, vm.GT: 2, vm.SLT: 2, vm.SGT: 2, vm.EQ: 2, vm.ISZERO: 1, vm.AND: 2, vm.OR: 2, vm.XOR: 2, vm.NOT: 1, vm.BYTE: 2, vm.SHL: 2, vm.SHR: 2, vm.SAR: 2,
+	vm.KECCAK256: 2,
+	vm.BALANCE:   1, vm.CALLDATALOAD: 1, vm.CALLDATACOPY: 3, vm.CODECOPY: 3, vm.EXTCODESIZE: 1, vm.EXTCODECOPY: 4, vm.RETURNDATACOPY: 3, vm.EXTCODEHASH: 1,
+	vm.BLOCKHASH: 1, vm.BLOBHASH: 1,
+	vm.POP: 1, vm.MLOAD: 1, vm.MSTORE: 2, vm.MSTORE8: 2, vm.SLOAD: 1, vm.SSTORE: 2, vm.JUMP: 1, vm.JUMPI: 2, vm.TLOAD: 1, vm.TSTORE: 2, vm.MCOPY: 3,
+	vm.LOG0: 2, vm.LOG1: 3, vm.LOG2: 4, vm.LOG3: 5, vm.LOG4: 6,
+	vm.CREATE: 3, vm.CALL: 7, vm.CALLCODE: 7, vm.RETURN: 2, vm.DELEGATECALL: 6, vm.CREATE2: 4, vm.STATICCALL: 6, vm.REVERT: 2, vm.SELFDESTRUCT: 1,
 }
