@@ -6,7 +6,13 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
+	"github.com/ethereum/go-ethereum/core/types"
+	gethVm "github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/eth/tracers/logger"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/lmittmann/w3"
+	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 	"github.com/lmittmann/w3/w3vm"
 )
@@ -255,4 +261,82 @@ func ExampleVM_prankZeroAddress() {
 	fmt.Printf("Received %s ETH from zero address\n", w3.FromWei(balance, 18))
 	// Output:
 	// Received 13365.401185473565028721 ETH from zero address
+}
+
+func ExampleVM_traceAccessList() {
+	txHash := w3.H("0xbb4b3fc2b746877dce70862850602f1d19bd890ab4db47e6b7ee1da1fe578a0d")
+
+	var (
+		tx      *types.Transaction
+		receipt *types.Receipt
+	)
+	if err := client.Call(
+		eth.Tx(txHash).Returns(&tx),
+		eth.TxReceipt(txHash).Returns(&receipt),
+	); err != nil {
+		// ...
+	}
+
+	var header *types.Header
+	if err := client.Call(eth.HeaderByNumber(receipt.BlockNumber).Returns(&header)); err != nil {
+		// ...
+	}
+
+	vm, err := w3vm.New(
+		w3vm.WithFork(client, receipt.BlockNumber),
+	)
+	if err != nil {
+		// ...
+	}
+
+	// setup access list hook
+	signer := types.MakeSigner(params.MainnetChainConfig, header.Number, header.Time)
+	from, _ := signer.Sender(tx)
+
+	accessListTracer := logger.NewAccessListTracer(
+		nil,
+		from, *tx.To(),
+		gethVm.ActivePrecompiles(params.MainnetChainConfig.Rules(header.Number, header.Difficulty.Sign() == 0, header.Time)),
+	)
+
+	if _, err := vm.ApplyTx(tx, accessListTracer.Hooks()); err != nil {
+		// ...
+	}
+	fmt.Println("Access List:", accessListTracer.AccessList())
+}
+
+func ExampleVM_traceBlock() {
+	blockNumber := big.NewInt(20_000_000)
+
+	var block *types.Block
+	if err := client.Call(eth.BlockByNumber(blockNumber).Returns(&block)); err != nil {
+		// ...
+	}
+
+	vm, err := w3vm.New(
+		w3vm.WithFork(client, blockNumber),
+	)
+	if err != nil {
+		// ...
+	}
+
+	var ops [256]uint64
+	tracer := &tracing.Hooks{
+		OnOpcode: func(pc uint64, op byte, gas, cost uint64, scope tracing.OpContext, rData []byte, depth int, err error) {
+			ops[op]++
+		},
+	}
+
+	for i, tx := range block.Transactions() {
+		if i > 4 {
+			break
+		}
+		vm.ApplyTx(tx, tracer)
+	}
+
+	for op, count := range ops {
+		if count > 0 {
+			fmt.Printf("0x%02x %-14s %d\n", op, gethVm.OpCode(op), count)
+		}
+	}
 }
