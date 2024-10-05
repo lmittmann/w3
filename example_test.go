@@ -93,7 +93,6 @@ func ExampleClient_batchCallFuncUniswapQuoter() {
 	fmt.Printf("Pool with 0.05%% fee: %s DAI\n", w3.FromWei(amountOut500, 18))
 	fmt.Printf("Pool with  0.3%% fee: %s DAI\n", w3.FromWei(amountOut3000, 18))
 	fmt.Printf("Pool with    1%% fee: %s DAI\n", w3.FromWei(amountOut10000, 18))
-
 	// Output:
 	// Swap 100 WETH for DAI:
 	// Pool with 0.01% fee: 0.840975419471618588 DAI
@@ -177,7 +176,6 @@ func ExampleClient_batchHandleError() {
 		}
 		fmt.Printf("%s: %s\n", tokens[i], symbol)
 	}
-
 	// Output:
 	// 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2: WETH
 	// 0x0a00000000000000000000000000000000000000: call failed
@@ -193,7 +191,6 @@ func ExampleClient_callFunc() {
 	}
 
 	fmt.Printf("Balance: %s WETH\n", w3.FromWei(balance, 18))
-
 	// Output:
 	// Balance: 0 WETH
 }
@@ -211,7 +208,6 @@ func ExampleClient_callFuncWithStateOverride() {
 	}
 
 	fmt.Printf("Balance: %s WETH\n", w3.FromWei(balance, 18))
-
 	// Output:
 	// Balance: 100 WETH
 }
@@ -389,7 +385,6 @@ func ExampleFunc_balanceOf() {
 		// ...
 	}
 	fmt.Printf("decoded: balanceOf(%s)\n", who)
-
 	// Output:
 	// encoded: 0x70a082310000000000000000000000000a00000000000000000000000000000000000000
 	// decoded: balanceOf(0x0a00000000000000000000000000000000000000)
@@ -435,7 +430,6 @@ func ExampleFunc_uniswapV4Swap() {
 		[]byte{},
 	)
 	fmt.Printf("encoded: 0x%x\n", input)
-
 	// Output:
 	// encoded: 0xf3cd914c000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20000000000000000000000006b175474e89094c44da98b954eedeac495271d0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000000
 }
@@ -487,7 +481,6 @@ func ExampleEvent_decodeTransferEvent() {
 		return
 	}
 	fmt.Printf("Transferred %s WETH9 from %s to %s", w3.FromWei(&value, 18), from, to)
-
 	// Output:
 	// Transferred 1.23 WETH9 from 0x000000000000000000000000000000000000c0Fe to 0x000000000000000000000000000000000000dEaD
 }

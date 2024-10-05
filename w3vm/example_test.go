@@ -39,7 +39,6 @@ func ExampleVM_simpleTransfer() {
 	balA, _ = vm.Balance(addrA)
 	balB, _ = vm.Balance(addrB)
 	fmt.Printf("After transfer:\nA: %s ETH, B: %s ETH\n", w3.FromWei(balA, 18), w3.FromWei(balB, 18))
-
 	// Output:
 	// Before transfer:
 	// A: 100 ETH, B: 0 ETH
@@ -89,7 +88,6 @@ func ExampleVM_fakeTokenBalance() {
 		// ...
 	}
 	fmt.Printf("After transfer:\nA: %s WETH, B: %s WETH\n", w3.FromWei(balA, 18), w3.FromWei(balB, 18))
-
 	// Output:
 	// Before transfer:
 	// A: 100 WETH, B: 0 WETH
@@ -124,7 +122,6 @@ func ExampleVM_call() {
 		// ...
 	}
 	fmt.Printf("Balance: %s WETH\n", w3.FromWei(balance, 18))
-
 	// Output:
 	// Balance: 100 WETH
 }
@@ -147,7 +144,6 @@ func ExampleVM_callFunc() {
 		// ...
 	}
 	fmt.Printf("Balance: %s WETH\n", w3.FromWei(balance, 18))
-
 	// Output:
 	// Balance: 100 WETH
 }
@@ -222,7 +218,6 @@ func ExampleVM_uniswapV3Swap() {
 	}
 
 	fmt.Printf("AmountOut: %s UNI\n", w3.FromWei(amountOut, 18))
-
 	// Output:
 	// AmountOut: 278.327327986946583271 UNI
 }
@@ -258,7 +253,6 @@ func ExampleVM_prankZeroAddress() {
 	}
 
 	fmt.Printf("Received %s ETH from zero address\n", w3.FromWei(balance, 18))
-
 	// Output:
 	// Received 13365.401185473565028721 ETH from zero address
 }
