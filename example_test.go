@@ -13,6 +13,7 @@ import (
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
+	"github.com/lmittmann/w3/w3vm"
 	"golang.org/x/time/rate"
 )
 
@@ -181,6 +182,38 @@ func ExampleClient_batchHandleError() {
 	// 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2: WETH
 	// 0x0a00000000000000000000000000000000000000: call failed
 	// 0x0B00000000000000000000000000000000000000: call failed
+}
+
+func ExampleClient_callFunc() {
+	var balance *big.Int
+	if err := client.Call(
+		eth.CallFunc(addrWETH, funcBalanceOf, addrA).Returns(&balance),
+	); err != nil {
+		// ...
+	}
+
+	fmt.Printf("Balance: %s WETH\n", w3.FromWei(balance, 18))
+
+	// Output:
+	// Balance: 0 WETH
+}
+
+func ExampleClient_callFuncWithStateOverride() {
+	var balance *big.Int
+	if err := client.Call(
+		eth.CallFunc(addrWETH, funcBalanceOf, addrA).Overrides(w3types.State{
+			addrWETH: {Storage: w3types.Storage{
+				w3vm.WETHBalanceSlot(addrA): common.BigToHash(w3.I("100 ether")),
+			}},
+		}).Returns(&balance),
+	); err != nil {
+		// ...
+	}
+
+	fmt.Printf("Balance: %s WETH\n", w3.FromWei(balance, 18))
+
+	// Output:
+	// Balance: 100 WETH
 }
 
 // Transfer 1 ETH from addrA to addrB.
