@@ -10,6 +10,7 @@ const pkgNameToPath = {
     'web3': 'github.com/lmittmann/w3/module/web3',
     'w3types': 'github.com/lmittmann/w3/w3types',
     'w3vm': 'github.com/lmittmann/w3/w3vm',
+    'tracing': 'github.com/ethereum/go-ethereum/core/tracing',
 }
 
 export const DocLink = ({ title, id }) => {
