@@ -12,6 +12,7 @@ batchSwap(uint8 swapKind, (bytes32 poolId, uint256 assetInIndex, uint256 assetOu
 burn(address user, uint256 amount)
 burn(uint256)
 burnAfterSeize(uint256 amount)	uint256
+burnFrom(address to, uint256 value)	bool
 buyAsset(uint256 minAmount, address receiver)	uint256, uint256
 buyAssetWithSig(address originator, uint256 minAmount, address receiver, uint256 deadline, bytes signature)	uint256, uint256
 canPerform(bytes32 actionId, address account, address where)	bool
@@ -92,7 +93,7 @@ increaseAllowance(address spender, uint256 addedValue)	bool success
 initialize(address token0, address token1)
 isApprovedForAll(address owner, address operator)	bool
 isSolver(address)	bool
-isValidSignature(bytes32 hash, bytes data)	bytes4
+isValidSignature(bytes32 hash, bytes data)	magic bytes4
 kLast()	uint256
 latestRoundData()	uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
 liquidity()	uint128
@@ -103,6 +104,7 @@ MINIMUM_LIQUIDITY()	uint256
 mint()
 mint(address to, uint256 amount)
 mint(uint256)
+mint_relative(address to, uint256 frac)	uint256
 name()	string
 newton_D(uint256 ANN, uint256 gamma, uint256[3] x_unsorted, uint256 K0_prev)	uint256
 onERC721Received(address operator, address from, uint256 tokenId, bytes data)	bytes4

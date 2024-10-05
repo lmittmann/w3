@@ -33,12 +33,13 @@ type CallTracerOptions struct {
 	TargetStyler func(addr common.Address) lipgloss.Style
 	targetAddr   common.Address
 
-	DecodeABI bool
+	ShowStaticcall bool
 
-	ShowOp   func(op byte, addr common.Address) bool
+	ShowOp   func(op byte, pc uint64, addr common.Address) bool
 	OpStyler func(op byte) lipgloss.Style
 
-	NoColor bool
+	DecodeABI bool
+	NoColor   bool
 }
 
 func (opts *CallTracerOptions) targetStyler(addr common.Address) lipgloss.Style {
@@ -56,7 +57,7 @@ func (opts *CallTracerOptions) showOp(op byte, pc uint64, addr common.Address) b
 	if opts.ShowOp == nil {
 		return false
 	}
-	return opts.ShowOp(op, addr)
+	return opts.ShowOp(op, pc, addr)
 }
 
 func (opts *CallTracerOptions) opStyler(op byte) lipgloss.Style {
@@ -101,6 +102,10 @@ type callTracer struct {
 	once sync.Once
 
 	callStack []call
+
+	// isInStaticcall is the number of nested staticcalls on the callStack.
+	// It is only incremented if opts.ShowStatic is true.
+	isInStaticcall int
 }
 
 func (c *callTracer) EnterHook(depth int, typ byte, from common.Address, to common.Address, input []byte, gas uint64, value *big.Int) {
@@ -116,7 +121,15 @@ func (c *callTracer) EnterHook(depth int, typ byte, from common.Address, to comm
 		sig := ([4]byte)(input[:4])
 		fn, isPrecompile = fourbyte.Function(sig, to)
 	}
-	defer func() { c.callStack = append(c.callStack, call{to, fn}) }()
+
+	callType := vm.OpCode(typ)
+	defer func() { c.callStack = append(c.callStack, call{callType, to, fn}) }()
+	if !c.opts.ShowStaticcall && callType == vm.STATICCALL {
+		c.isInStaticcall++
+	}
+	if c.isInStaticcall > 0 {
+		return
+	}
 
 	fmt.Fprintf(c.w, "%s%s %s%s%s\n", renderIdent(c.callStack, c.opts.targetStyler, 1), renderAddr(to, c.opts.targetStyler), renderCallType(typ), renderValue(c.opts.DecodeABI, value), renderInput(fn, isPrecompile, input, c.opts.targetStyler))
 }
@@ -124,6 +137,13 @@ func (c *callTracer) EnterHook(depth int, typ byte, from common.Address, to comm
 func (c *callTracer) ExitHook(depth int, output []byte, gasUsed uint64, err error, reverted bool) {
 	call := c.callStack[len(c.callStack)-1]
 	defer func() { c.callStack = c.callStack[:depth] }()
+
+	if !c.opts.ShowStaticcall && call.Type == vm.STATICCALL {
+		defer func() { c.isInStaticcall-- }()
+	}
+	if c.isInStaticcall > 0 {
+		return
+	}
 
 	if reverted {
 		reason, unpackErr := abi.UnpackRevert(output)
@@ -137,13 +157,18 @@ func (c *callTracer) ExitHook(depth int, output []byte, gasUsed uint64, err erro
 }
 
 func (c *callTracer) OpcodeHook(pc uint64, op byte, gas, cost uint64, scope tracing.OpContext, rData []byte, depth int, err error) {
-	if !c.opts.showOp(op, pc, scope.Address()) {
+	if c.isInStaticcall > 0 ||
+		!c.opts.showOp(op, pc, scope.Address()) {
 		return
 	}
 	fmt.Fprintln(c.w, renderIdent(c.callStack, c.opts.targetStyler, 0)+renderOp(op, c.opts.opStyler, pc, scope))
 }
 
-func (c *callTracer) OnLog(log *types.Log) {}
+func (c *callTracer) OnLog(log *types.Log) {
+	if c.isInStaticcall > 0 {
+		return
+	}
+}
 
 func renderIdent(callStack []call, styler func(addr common.Address) lipgloss.Style, kind int) (ident string) {
 	for i, call := range callStack {
@@ -409,7 +434,7 @@ func renderOp(op byte, style func(byte) lipgloss.Style, pc uint64, scope tracing
 	stack := scope.StackData()
 	for i, j := len(stack)-1, 0; i >= 0 && i >= len(stack)-maxStackDepth; i, j = i-1, j+1 {
 		notLast := i > 0 && i > len(stack)-maxStackDepth
-		if isAccessed := opAccessesStack(op, j); isAccessed {
+		if isAccessed := opAccessesStackElem(op, j); isAccessed {
 			sb.WriteString(stack[i].Hex())
 		} else {
 			sb.WriteString(styleDim.Render(stack[i].Hex()))
@@ -426,19 +451,24 @@ func renderOp(op byte, style func(byte) lipgloss.Style, pc uint64, scope tracing
 	return sb.String()
 }
 
+// call stores state of the current call in execution.
 type call struct {
+	Type   vm.OpCode
 	Target common.Address
 	Func   *w3.Func
 }
 
-func opAccessesStack(op byte, i int) bool {
-	if vm.SWAP1 <= op && op <= vm.SWAP16 {
+// opAccessesStackElem returns true, if the given opcode accesses the stack at
+// index i, otherwise false.
+func opAccessesStackElem(op byte, i int) bool {
+	switch {
+	case vm.SWAP1 <= op && op <= vm.SWAP16:
 		return i == 0 || i == int(op)-int(vm.SWAP1)+1
-	} else if vm.DUP1 <= op && op <= vm.DUP16 {
+	case vm.DUP1 <= op && op <= vm.DUP16:
 		return i == int(op)-int(vm.DUP1)
+	default:
+		return i < pops[op]
 	}
-
-	return i < pops[op]
 }
 
 var pops = [256]int{
