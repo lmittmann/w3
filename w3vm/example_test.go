@@ -327,10 +327,7 @@ func ExampleVM_traceBlock() {
 		},
 	}
 
-	for i, tx := range block.Transactions() {
-		if i > 4 {
-			break
-		}
+	for _, tx := range block.Transactions() {
 		vm.ApplyTx(tx, tracer)
 	}
 
