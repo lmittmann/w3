@@ -34,6 +34,8 @@ var (
 	client = w3.MustDial("https://rpc.ankr.com/eth")
 )
 
+// Call the name, symbol, decimals, and balanceOf functions of the Wrapped Ether
+// in a single batch.
 func ExampleClient_batchCallFunc() {
 	blockNumber := big.NewInt(20_000_000)
 
@@ -56,6 +58,8 @@ func ExampleClient_batchCallFunc() {
 	// Wrapped Ether's own balance: 748.980125465356473638 WETH
 }
 
+// Call the Uniswap V3 Quoter for quotes on swapping 100 WETH for DAI in pools
+// of all fee tiers in a single batch.
 func ExampleClient_batchCallFuncUniswapQuoter() {
 	blockNumber := big.NewInt(20_000_000)
 
@@ -101,6 +105,7 @@ func ExampleClient_batchCallFuncUniswapQuoter() {
 	// Pool with    1% fee: 3447.634026125332130689 DAI
 }
 
+// Fetch the nonce and balance of an EOA in a single batch.
 func ExampleClient_batchEOAState() {
 	var (
 		nonce   uint64
@@ -116,6 +121,7 @@ func ExampleClient_batchEOAState() {
 	fmt.Printf("Nonce: %d\nBalance: %d\n", nonce, balance)
 }
 
+// Fetch a transaction and its receipt in a single batch.
 func ExampleClient_batchTxDetails() {
 	txHash := w3.H("0xc31d7e7e85cab1d38ce1b8ac17e821ccd47dbde00f9d57f2bd8613bff9428396")
 
@@ -133,6 +139,7 @@ func ExampleClient_batchTxDetails() {
 	fmt.Printf("Tx: %#v\nReceipt: %#v\n", tx, receipt)
 }
 
+// Fetch 1000 blocks in batches.
 func ExampleClient_batchBlocks() {
 	const (
 		startBlock = 20_000_000
@@ -154,6 +161,7 @@ func ExampleClient_batchBlocks() {
 	}
 }
 
+// Handle errors of individual calls in a batch.
 func ExampleClient_batchHandleError() {
 	tokens := []common.Address{addrWETH, addrA, addrB}
 	symbols := make([]string, len(tokens))
@@ -182,6 +190,7 @@ func ExampleClient_batchHandleError() {
 	// 0x0B00000000000000000000000000000000000000: call failed
 }
 
+// Fetch the token balance of an address.
 func ExampleClient_callFunc() {
 	var balance *big.Int
 	if err := client.Call(
@@ -195,6 +204,7 @@ func ExampleClient_callFunc() {
 	// Balance: 0 WETH
 }
 
+// Fetch the token balance of an address, with state override.
 func ExampleClient_callFuncWithStateOverride() {
 	var balance *big.Int
 	if err := client.Call(
@@ -212,7 +222,7 @@ func ExampleClient_callFuncWithStateOverride() {
 	// Balance: 100 WETH
 }
 
-// Transfer 1 ETH from addrA to addrB.
+// Send Ether transfer.
 func ExampleClient_sendETHTransfer() {
 	var (
 		nonce    uint64
@@ -242,7 +252,7 @@ func ExampleClient_sendETHTransfer() {
 	fmt.Printf("Sent tx: %s\n", txHash)
 }
 
-// Transfer 1 WETH from addrA to addrB.
+// Send ERC20 token transfer (Wrapped Ether).
 func ExampleClient_sendTokenTransfer() {
 	var (
 		nonce    uint64
@@ -303,7 +313,7 @@ func ExampleClient_subscribeToPendingTransactions() {
 	}
 }
 
-// Limit the number of requests to 10 per second, with bursts of up to 20
+// Rate Limit the number of requests to 10 per second, with bursts of up to 20
 // requests.
 func ExampleClient_rateLimitByRequest() {
 	client, err := w3.Dial("https://rpc.ankr.com/eth",
@@ -315,7 +325,7 @@ func ExampleClient_rateLimitByRequest() {
 	defer client.Close()
 }
 
-// Limit the number of requests to 300 compute units (CUs) per second, with
+// Rate Limit the number of requests to 300 compute units (CUs) per second, with
 // bursts of up to 300 CUs.
 // An individual CU can be charged per RPC method call.
 func ExampleClient_rateLimitByComputeUnits() {

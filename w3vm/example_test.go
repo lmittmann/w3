@@ -22,6 +22,7 @@ var (
 	addrB = common.Address{0x0b}
 )
 
+// Execute an Ether transfer.
 func ExampleVM_simpleTransfer() {
 	vm, _ := w3vm.New(
 		w3vm.WithState(w3types.State{
@@ -52,6 +53,7 @@ func ExampleVM_simpleTransfer() {
 	// A: 90 ETH, B: 10 ETH
 }
 
+// Execute an ERC20 token transfer with faked token balance (Wrapped Ether).
 func ExampleVM_fakeTokenBalance() {
 	vm, err := w3vm.New(
 		w3vm.WithFork(client, nil),
@@ -101,6 +103,8 @@ func ExampleVM_fakeTokenBalance() {
 	// A: 90 WETH, B: 10 WETH
 }
 
+// Execute an ERC20 balanceOf call with raw a [w3types.Message] using the
+// messages Func and Args helper.
 func ExampleVM_call() {
 	vm, err := w3vm.New(
 		w3vm.WithFork(client, nil),
@@ -132,6 +136,7 @@ func ExampleVM_call() {
 	// Balance: 100 WETH
 }
 
+// Execute an ERC20 balanceOf call using the [VM.CallFunc] helper.
 func ExampleVM_callFunc() {
 	vm, err := w3vm.New(
 		w3vm.WithFork(client, nil),
@@ -154,6 +159,7 @@ func ExampleVM_callFunc() {
 	// Balance: 100 WETH
 }
 
+// Execute an Uniswap V3 swap.
 func ExampleVM_uniswapV3Swap() {
 	var (
 		addrRouter = w3.A("0xE592427A0AEce92De3Edee1F18E0157C05861564")
@@ -228,8 +234,9 @@ func ExampleVM_uniswapV3Swap() {
 	// AmountOut: 278.327327986946583271 UNI
 }
 
-// The [w3types.Message] sender can be freely chosen. Thus executions by any
-// sender can be simulated.
+// Execute a message sent from the zero address.
+// The [w3types.Message] sender can be freely chosen, making it possible to
+// execute a message from any address.
 func ExampleVM_prankZeroAddress() {
 	vm, err := w3vm.New(
 		w3vm.WithFork(client, big.NewInt(20_000_000)),
@@ -263,6 +270,7 @@ func ExampleVM_prankZeroAddress() {
 	// Received 13365.401185473565028721 ETH from zero address
 }
 
+// Trace a message execution to obtain the access list.
 func ExampleVM_traceAccessList() {
 	txHash := w3.H("0xbb4b3fc2b746877dce70862850602f1d19bd890ab4db47e6b7ee1da1fe578a0d")
 
@@ -305,6 +313,7 @@ func ExampleVM_traceAccessList() {
 	fmt.Println("Access List:", accessListTracer.AccessList())
 }
 
+// Trace the execution of all op's in a block.
 func ExampleVM_traceBlock() {
 	blockNumber := big.NewInt(20_000_000)
 
