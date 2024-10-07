@@ -7,7 +7,7 @@ export default {
     '404': {
         title: '404',
         display: 'hidden',
-        'theme': {
+        theme: {
             breadcrumb: false,
             toc: false,
             layout: 'full',
@@ -69,7 +69,11 @@ export default {
     examples: {
         title: 'Examples',
         type: 'page',
-        href: 'https://github.com/lmittmann/w3/tree/main/examples',
+    },
+    releases: {
+        title: 'Releases',
+        type: 'page',
+        href: 'https://github.com/lmittmann/w3/releases',
         newWindow: true
     },
     godoc: {
