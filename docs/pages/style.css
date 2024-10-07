@@ -36,6 +36,7 @@ tr._border-gray-300 {
 /* Customize header */
 .nextra-nav-container nav a[target="_blank"]:nth-child(2):after,
 .nextra-nav-container nav a[target="_blank"]:nth-child(3):after,
+.nextra-nav-container nav a[target="_blank"]:nth-child(4):after,
 aside.nextra-sidebar-container li a[target="_blank"]:after {
     content: url('data:image/svg+xml,<svg width="8" height="8" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.33622 2.84025L1.17647 10L0 8.82354L7.15975 1.66378H0.849212V0H10V9.15081H8.33622V2.84025Z" fill="%239195A6"/></svg>');
     @apply pl-2;

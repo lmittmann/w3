@@ -1,7 +1,6 @@
 package w3_test
 
 import (
-	"fmt"
 	"math/big"
 	"strconv"
 	"testing"
@@ -12,33 +11,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
 )
-
-func ExampleEvent_DecodeArgs() {
-	var (
-		eventTransfer = w3.MustNewEvent("Transfer(address indexed from, address indexed to, uint256 value)")
-		log           = &types.Log{
-			Address: w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
-			Topics: []common.Hash{
-				w3.H("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
-				w3.H("0x000000000000000000000000000000000000000000000000000000000000c0fe"),
-				w3.H("0x000000000000000000000000000000000000000000000000000000000000dead"),
-			},
-			Data: w3.B("0x0000000000000000000000000000000000000000000000001111d67bb1bb0000"),
-		}
-
-		from  common.Address
-		to    common.Address
-		value big.Int
-	)
-
-	if err := eventTransfer.DecodeArgs(log, &from, &to, &value); err != nil {
-		fmt.Printf("Failed to decode event log: %v\n", err)
-		return
-	}
-	fmt.Printf("Transferred %s WETH9 from %s to %s", w3.FromWei(&value, 18), from, to)
-	// Output:
-	// Transferred 1.23 WETH9 from 0x000000000000000000000000000000000000c0Fe to 0x000000000000000000000000000000000000dEaD
-}
 
 func TestNewEvent(t *testing.T) {
 	tests := []struct {

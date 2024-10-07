@@ -1,0 +1,34 @@
+# Examples
+
+## `w3.Client` Examples
+
+* **Batch Fetch** 1000 blocks ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-BatchBlocks))
+* **Batch Call** the name, symbol, decimals, and balanceOf functions of the Wrapped Ether in a single batch ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-BatchCallFunc))
+* **Batch Call** the Uniswap V3 Quoter for quotes on swapping 100 WETH for DAI in pools of all fee tiers in a single batch ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-BatchCallFuncUniswapQuoter))
+* **Batch Fetch** the nonce and balance of an EOA in a single batch ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-BatchEOAState))
+* **Batch Fetch** a transaction and its receipt in a single batch ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-BatchTxDetails))
+* **Call** the token balance of an address ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-CallFunc))
+* **Call** the token balance of an address, with state override ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-CallFuncWithStateOverride))
+* **Handle errors** of individual calls in a batch ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-BatchHandleError))
+* **Rate Limit** the number of requests to 300 compute units (CUs) per second, with bursts of up to 300 CUs. An individual CU can be charged per RPC method call ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-RateLimitByComputeUnits))
+* **Rate Limit** the number of requests to 10 per second, with bursts of up to 20 requests ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-RateLimitByRequest))
+* **Send Ether** transfer ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-SendETHTransfer))
+* **Send ERC20 token** transfer (Wrapped Ether) ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-SendTokenTransfer))
+* **Subscribe** to pending transactions ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-SubscribeToPendingTransactions))
+
+**[See all examples ↗](https://pkg.go.dev/github.com/lmittmann/w3#pkg-examples)**
+
+
+## `w3vm.VM` Examples
+
+* **Ether transfer** ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-SimpleTransfer))
+* **ERC20 token transfer** with faked token balance (Wrapped Ether) ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-FakeTokenBalance))
+* **Uniswap V3 swap** ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-UniswapV3Swap))
+
+* **Call ERC20 balanceOf** with raw a `w3types.Message` using the `Message.{Func,Args}` helper ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-Call))
+* **Call ERC20 balanceOf**, using the `VM.CallFunc` helper ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-CallFunc))
+* **Prank** a sender ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-PrankZeroAddress))
+* **Trace** the execution to obtain the access list ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-TraceAccessList))
+* **Trace** the execution of all op's in a block ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-TraceBlock))
+
+**[See all examples ↗](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#pkg-examples)**

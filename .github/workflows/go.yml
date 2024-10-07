@@ -27,9 +27,7 @@ jobs:
       - name: staticcheck
         run: staticcheck ./...
       - name: go mod tidy
-        run: |
-          go mod tidy -diff
-          cd examples/ && go mod tidy -diff
+        run: go mod tidy -diff
 
   test:
     name: Test
