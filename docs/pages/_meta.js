@@ -7,7 +7,7 @@ export default {
     '404': {
         title: '404',
         display: 'hidden',
-        'theme': {
+        theme: {
             breadcrumb: false,
             toc: false,
             layout: 'full',
@@ -68,6 +68,7 @@ export default {
     },
     examples: {
         title: 'Examples',
+        theme: { breadcrumb: false, toc: false, pagination: false },
         type: 'page',
     },
     godoc: {
