@@ -67,8 +67,6 @@ export default {
         theme: { breadcrumb: false },
     },
     examples: {
-        title: 'Examples',
-        theme: { breadcrumb: false, toc: false, pagination: false },
         type: 'page',
     },
     godoc: {
