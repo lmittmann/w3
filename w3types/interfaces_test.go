@@ -19,7 +19,7 @@ func TxBySenderAndNonceFactory(sender common.Address, nonce uint64) w3types.RPCC
 
 // getTransactionBySenderAndNonceFactory implements the w3types.RPCCaller and
 // w3types.RPCCallerFactory interfaces. It stores the method parameters and
-// the the reference to the return value.
+// the reference to the return value.
 type getTransactionBySenderAndNonceFactory struct {
 	// params
 	sender common.Address
