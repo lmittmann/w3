@@ -70,6 +70,12 @@ export default {
         title: 'Examples',
         type: 'page',
     },
+    releases: {
+        title: 'Releases',
+        type: 'page',
+        href: 'https://github.com/lmittmann/w3/releases',
+        newWindow: true
+    },
     godoc: {
         title: 'GoDoc',
         type: 'page',
