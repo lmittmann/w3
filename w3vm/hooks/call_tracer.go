@@ -45,7 +45,6 @@ type CallTracerOptions struct {
 	OpStyler func(op byte) lipgloss.Style
 
 	DecodeABI bool
-	NoColor   bool
 }
 
 func (opts *CallTracerOptions) targetStyler(addr common.Address) lipgloss.Style {
