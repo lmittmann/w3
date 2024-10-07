@@ -279,5 +279,5 @@ func (f *getTransactionBySenderAndNonceFactory) HandleResponse(elem rpc.BatchEle
 <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/public/ef-logo-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="docs/public/ef-logo.svg">
-    <img src="docs/public/ef-logo-dark.svg" alt="ef logo" width="200" height="auto">
+    <img src="docs/public/ef-logo.svg" alt="ef logo" width="256" height="auto">
 </picture>
