@@ -29,6 +29,12 @@ var (
 	stylesDelegatecall = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFA500"))
 )
 
+// TargetAddress can be used to match the target (to) address in the TargetStyler
+// of [CallTracerOptions].
+var TargetAddress = common.BytesToAddress([]byte("target"))
+
+// CallTracerOptions configures the CallTracer hook. A zero CallTracerOptions
+// consists entirely of default values.
 type CallTracerOptions struct {
 	TargetStyler func(addr common.Address) lipgloss.Style
 	targetAddr   common.Address
@@ -67,8 +73,6 @@ func (opts *CallTracerOptions) opStyler(op byte) lipgloss.Style {
 	return opts.OpStyler(op)
 }
 
-var TargetAddress = common.BytesToAddress([]byte("target"))
-
 func defaultTargetStyler(addr common.Address) lipgloss.Style {
 	switch addr {
 	case TargetAddress:
@@ -78,10 +82,11 @@ func defaultTargetStyler(addr common.Address) lipgloss.Style {
 	}
 }
 
-func defaultOpStyler(op byte) lipgloss.Style {
+func defaultOpStyler(byte) lipgloss.Style {
 	return lipgloss.NewStyle()
 }
 
+// NewCallTracer returns a new hook that writes to w and is configured with opts.
 func NewCallTracer(w io.Writer, opts *CallTracerOptions) *tracing.Hooks {
 	if opts == nil {
 		opts = new(CallTracerOptions)
