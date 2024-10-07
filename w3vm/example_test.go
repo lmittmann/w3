@@ -193,6 +193,8 @@ func ExampleVM_uniswapV3Swap() {
 		return path
 	}
 
+	// 1. Create a VM that forks the Mainnet state from the latest block,
+	// disables the base fee, and has a fake WETH balance and approval for the router
 	vm, err := w3vm.New(
 		w3vm.WithFork(client, big.NewInt(20_000_000)),
 		w3vm.WithNoBaseFee(),
@@ -207,6 +209,7 @@ func ExampleVM_uniswapV3Swap() {
 		// ...
 	}
 
+	// 2. Simulate a Uniswap v3 swap
 	receipt, err := vm.Apply(&w3types.Message{
 		From: addrA,
 		To:   &addrRouter,
