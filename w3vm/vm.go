@@ -459,7 +459,7 @@ type Option func(*VM)
 
 // WithChainConfig sets the chain config for the VM.
 //
-// If not explicitly set, the chain config is set to [params.MainnetChainConfig].
+// If not provided, the chain config defaults to [params.MainnetChainConfig].
 func WithChainConfig(cfg *params.ChainConfig) Option {
 	return func(vm *VM) { vm.opts.chainConfig = cfg }
 }

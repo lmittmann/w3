@@ -40,8 +40,8 @@ if err := client.Call(
 </Steps>
 
 <Callout type="info">
-	#### Why send batch requests?
-	Most of the time you need to call multiple RPC methods to get the data you need. When you make separate requests per RPC call you need a single round trip to the server for each call. This can be slow, especially for remote endpoints. Batching multiple RPC calls into a single request only requires a single round trip, and speeds up RPC calls significantly.
+#### Why send batch requests?
+Most of the time you need to call multiple RPC methods to get the data you need. When you make separate requests per RPC call you need a single round trip to the server for each call. This can be slow, especially for remote endpoints. Batching multiple RPC calls into a single request only requires a single round trip, and speeds up RPC calls significantly.
 </Callout>
 
 ## Call
@@ -54,8 +54,48 @@ if err := client.Call(
 
 ## Subscribe
 
-<Callout type="info">Coming soon...</Callout>
+`w3.Client` supports subscriptions through the <DocLink title="Client.Subscribe" id="w3.Client.Subscribe" /> and <DocLink title="Client.SubscribeCtx" id="w3.Client.SubscribeCtx" /> methods. Subscriptions can be used to listen to events, emitted by the Ethereum node.
+
+### Subscriptions
+
+* `eth.NewHeads(ch chan<- *types.Header)`: Subscribe to new block headers.
+* `eth.NewLogs(ch chan<- *types.Log, q ethereum.FilterQuery)`: Subscribe to new logs.
+* `eth.PendingTransactions(ch chan<- *types.Transaction)`: Subscribe to new pending transactions.
+
+#### Example: Subscribe to Pending Transactions
+
+Subscribe to new pending transactions ([Playground](https://pkg.go.dev/github.com/lmittmann/w3##example-Client-SubscribeToPendingTransactions)):
+
+```go
+pendingTxCh := make(chan *types.Transaction)
+sub, err := client.Subscribe(eth.PendingTransactions(pendingTxCh))
+if err != nil {
+    // ...
+}
+
+for {
+    select {
+    case tx := <-pendingTxCh:
+        fmt.Printf("New pending tx: %s\n", tx.Hash())
+    case err := <-sub.Err():
+        fmt.Printf("Subscription error: %v\n", err)
+        return
+    }
+}
+```
 
 ## Error Handling
 
-<Callout type="info">Coming soon...</Callout>
+If one or more calls in a batch request fail, `Client.Call` returns an error of type <DocLink title="w3.CallErrors" />.
+
+#### Example: `w3.CallErrors`
+
+Check which RPC calls failed in a batch request ([Playground](https://pkg.go.dev/github.com/lmittmann/w3##example-Client-BatchHandleError))
+```go
+var batchErr w3.CallErrors
+if err := client.Call(calls...); errors.As(err, &batchErr) {
+    // handle call errors
+} else if err != nil {
+    // handle other errors
+}
+```

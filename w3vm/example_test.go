@@ -3,6 +3,8 @@ package w3vm_test
 import (
 	"fmt"
 	"math/big"
+	"os"
+	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -15,6 +17,7 @@ import (
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 	"github.com/lmittmann/w3/w3vm"
+	"github.com/lmittmann/w3/w3vm/hooks"
 )
 
 var (
@@ -273,6 +276,35 @@ func ExampleVM_prankZeroAddress() {
 	// Received 13365.401185473565028721 ETH from zero address
 }
 
+// Trace calls (and opcodes) of a transaction.
+func ExampleVM_traceCalls() {
+	txHash := w3.H("0xc0679fedfe8d7c376d599cbab03de7b527347a3d135d7d8d698047f34a6611f8")
+
+	var (
+		tx      *types.Transaction
+		receipt *types.Receipt
+	)
+	if err := client.Call(
+		eth.Tx(txHash).Returns(&tx),
+		eth.TxReceipt(txHash).Returns(&receipt),
+	); err != nil {
+		// ...
+	}
+
+	vm, err := w3vm.New(
+		w3vm.WithFork(client, receipt.BlockNumber),
+	)
+	if err != nil {
+		// ...
+	}
+
+	callTracer := hooks.NewCallTracer(os.Stdout, &hooks.CallTracerOptions{
+		ShowStaticcall: true,
+		DecodeABI:      true,
+	})
+	vm.ApplyTx(tx, callTracer)
+}
+
 // Trace a message execution to obtain the access list.
 func ExampleVM_traceAccessList() {
 	txHash := w3.H("0xbb4b3fc2b746877dce70862850602f1d19bd890ab4db47e6b7ee1da1fe578a0d")
@@ -300,10 +332,9 @@ func ExampleVM_traceAccessList() {
 		// ...
 	}
 
-	// setup access list hook
+	// setup access list tracer
 	signer := types.MakeSigner(params.MainnetChainConfig, header.Number, header.Time)
 	from, _ := signer.Sender(tx)
-
 	accessListTracer := logger.NewAccessListTracer(
 		nil,
 		from, *tx.To(),
@@ -332,10 +363,10 @@ func ExampleVM_traceBlock() {
 		// ...
 	}
 
-	var ops [256]uint64
+	var opCount [256]uint64
 	tracer := &tracing.Hooks{
 		OnOpcode: func(pc uint64, op byte, gas, cost uint64, scope tracing.OpContext, rData []byte, depth int, err error) {
-			ops[op]++
+			opCount[op]++
 		},
 	}
 
@@ -343,9 +374,89 @@ func ExampleVM_traceBlock() {
 		vm.ApplyTx(tx, tracer)
 	}
 
-	for op, count := range ops {
+	for op, count := range opCount {
 		if count > 0 {
 			fmt.Printf("0x%02x %-14s %d\n", op, gethVm.OpCode(op), count)
 		}
 	}
+}
+
+func TestWETHDeposit(t *testing.T) {
+	// setup VM
+	vm, _ := w3vm.New(
+		w3vm.WithState(w3types.State{
+			addrWETH: {Code: codeWETH},
+			addrA:    {Balance: w3.I("1 ether")},
+		}),
+	)
+
+	// pre check
+	var wethBalanceBefore *big.Int
+	if err := vm.CallFunc(addrWETH, funcBalanceOf, addrA).Returns(&wethBalanceBefore); err != nil {
+		t.Fatal(err)
+	}
+	if wethBalanceBefore.Sign() != 0 {
+		t.Fatal("Invalid WETH balance: want 0")
+	}
+
+	// deposit (via fallback)
+	if _, err := vm.Apply(&w3types.Message{
+		From:  addrA,
+		To:    &addrWETH,
+		Value: w3.I("1 ether"),
+	}); err != nil {
+		t.Fatalf("Deposit failed: %v", err)
+	}
+
+	// post check
+	var wethBalanceAfter *big.Int
+	if err := vm.CallFunc(addrWETH, funcBalanceOf, addrA).Returns(&wethBalanceAfter); err != nil {
+		t.Fatal(err)
+	}
+	if w3.I("1 ether").Cmp(wethBalanceAfter) != 0 {
+		t.Fatalf("Invalid WETH balance: want 1")
+	}
+}
+
+func FuzzWETHDeposit(f *testing.F) {
+	f.Add([]byte{1})
+	f.Fuzz(func(t *testing.T, amountBytes []byte) {
+		if len(amountBytes) > 32 {
+			t.Skip()
+		}
+		amount := new(big.Int).SetBytes(amountBytes)
+
+		// setup VM
+		vm, _ := w3vm.New(
+			w3vm.WithState(w3types.State{
+				addrWETH: {Code: codeWETH},
+				addrA:    {Balance: w3.BigMaxUint256},
+			}),
+		)
+
+		// Pre-check WETH balance
+		var wethBalanceBefore *big.Int
+		if err := vm.CallFunc(addrWETH, funcBalanceOf, addrA).Returns(&wethBalanceBefore); err != nil {
+			t.Fatal(err)
+		}
+
+		// Attempt deposit
+		vm.Apply(&w3types.Message{
+			From:  addrA,
+			To:    &addrWETH,
+			Value: amount,
+		})
+
+		// Post-check WETH balance
+		var wethBalanceAfter *big.Int
+		if err := vm.CallFunc(addrWETH, funcBalanceOf, addrA).Returns(&wethBalanceAfter); err != nil {
+			t.Fatal(err)
+		}
+
+		// Verify balance increment
+		wantBalance := new(big.Int).Add(wethBalanceBefore, amount)
+		if wethBalanceAfter.Cmp(wantBalance) != 0 {
+			t.Fatalf("Invalid WETH balance: want %s, got %s", wantBalance, wethBalanceAfter)
+		}
+	})
 }

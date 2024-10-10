@@ -1,3 +1,183 @@
-# Test Contracts
+# Contract Testing
 
-<Callout type="info">Coming soon...</Callout>
+`w3vm` can be used to test Smart Contracts in Go utilizing Go's handy testing and fuzzing features.
+
+<Callout type="warning">
+`w3vm` **does not** natively support Smart Contract compilation.
+</Callout>
+
+## Compile Smart Contracts
+
+The first step to testing a Smart Contract is usually to compile it to bytecode. There are a number of third party packages that provide compiler bindings in Go:
+
+* [`go-solc`](https://github.com/lmittmann/go-solc): Go bindings for the Solidity compiler (`solc`)
+* [`go-huffc`](https://github.com/project-blanc/go-huffc): Go Bindings for the Huff Compiler (`huffc`)
+* [`geas`](https://github.com/fjl/geas): The Good Ethereum Assembler
+
+
+## Setup a `w3vm.VM`
+
+Before a Smart Contract can be tested with a `w3vm.VM` instance, its bytecode must be deployed to the VM. This can be done in two ways, depending on whether constructor logic is present.
+
+### Without Constructor Logic
+
+If the Smart Contract does not require constructor logic, its runtime bytecode can be directly set as the bytecode of an address:
+
+
+```go
+contractRuntime = w3.B("0x...")
+contractAddr := w3vm.RandA()
+
+vm, _ := w3vm.New(
+    w3vm.WithState(w3types.State{
+        contractAddr: {Code: runtime},
+    }),
+)
+```
+
+### With Constructor Logic
+
+If the Smart Contract requires constructor logic, the constructor bytecode must be sent in a standard deployment transaction (`w3types.Message`) without recipient:
+
+```go
+contractConstructor := w3.B("0x...")
+deployerAddr := w3vm.RandA()
+
+vm, _ := w3vm.New()
+receipt, err := vm.Apply(&w3types.Message{
+    From:  deployerAddr,
+    Input: contractConstructor,
+})
+if err != nil || receipt.ContractAddress == nil {
+    // ...
+}
+contractAddr := *receipt.ContractAddress
+```
+
+### Custom State
+
+The state of the VM can be fully customized using the `w3vm.WithState` option. This allows, e.g., setting a balance for addresses that interact with the Smart Contract. State can also be modified after the VM is created using the [state write methods](/vm-overview#writing-state).
+
+### State Forking
+
+If the tested Smart Contract interacts with other existing contracts, the VM can be configured to fork the state at a specific block number (or the latest block). This enables testing contracts in a real-world environment.
+
+```go
+client := w3.MustDial("https://rpc.ankr.com/eth")
+defer client.Close()
+
+vm, err := w3vm.New(
+    w3vm.WithFork(client, big.NewInt(20_000_000)),
+    w3vm.WithNoBaseFee(),
+    w3vm.WithTB(t),
+)
+if err != nil {
+    // ...
+}
+```
+
+<Callout>
+`w3vm.WithTB(t)` can be used in tests or benchmarks to **cache state**. The VM persists this cached state in `{package of test}/testdata/w3vm/`. This is particularly useful when working with public RPC providers, as it reduces the number of requests and significantly speeds up test execution.
+</Callout>
+
+
+## Testing
+
+Testing Smart Contracts with `w3vm` follows the standard Go testing patterns using the package `testing`. By integrating `w3vm` into your tests, you can simulate blockchain interactions and validate Smart Contract behaviors within your test cases.
+
+#### Example: Test WETH `deposit` Function
+
+Test of the WETH `deposit` function.
+
+```go
+func TestWETHDeposit(t *testing.T) {
+    // setup VM
+    vm, _ := w3vm.New(
+        w3vm.WithState(w3types.State{
+            addrWETH: {Code: codeWETH},
+            addrA:    {Balance: w3.I("1 ether")},
+        }),
+    )
+
+    // pre check
+    var wethBalanceBefore *big.Int
+    if err := vm.CallFunc(addrWETH, funcBalanceOf, addrA).Returns(&wethBalanceBefore); err != nil {
+        t.Fatal(err)
+    }
+    if wethBalanceBefore.Sign() != 0 {
+        t.Fatal("Invalid WETH balance: want 0")
+    }
+
+    // deposit (via fallback)
+    if _, err := vm.Apply(&w3types.Message{
+        From:  addrA,
+        To:    &addrWETH,
+        Value: w3.I("1 ether"),
+    }); err != nil {
+        t.Fatalf("Deposit failed: %v", err)
+    }
+
+    // post check
+    var wethBalanceAfter *big.Int
+    if err := vm.CallFunc(addrWETH, funcBalanceOf, addrA).Returns(&wethBalanceAfter); err != nil {
+        t.Fatal(err)
+    }
+    if w3.I("1 ether").Cmp(wethBalanceAfter) != 0 {
+        t.Fatalf("Invalid WETH balance: want 1")
+    }
+}
+```
+
+
+## Fuzz Testing
+
+Fuzzing Smart Contracts with `w3vm` leverages Go's fuzz testing capabilities to automatically generate a wide range of inputs for your contracts. By incorporating `w3vm` into your fuzzing tests, you can effectively discover vulnerabilities and unexpected behaviors in your Smart Contracts.
+
+#### Example: Fuzz Test WETH `deposit` Function
+
+Fuzz test of the WETH `deposit` function.
+
+```go
+func FuzzWETHDeposit(f *testing.F) {
+    f.Add([]byte{1})
+    f.Fuzz(func(t *testing.T, amountBytes []byte) {
+        if len(amountBytes) > 32 {
+            t.Skip()
+        }
+        amount := new(big.Int).SetBytes(amountBytes)
+
+        // setup VM
+        vm, _ := w3vm.New(
+            w3vm.WithState(w3types.State{
+                addrWETH: {Code: codeWETH},
+                addrA:    {Balance: w3.BigMaxUint256},
+            }),
+        )
+
+        // Pre-check WETH balance
+        var wethBalanceBefore *big.Int
+        if err := vm.CallFunc(addrWETH, funcBalanceOf, addrA).Returns(&wethBalanceBefore); err != nil {
+            t.Fatal(err)
+        }
+
+        // Attempt deposit
+        vm.Apply(&w3types.Message{
+            From:  addrA,
+            To:    &addrWETH,
+            Value: amount,
+        })
+
+        // Post-check WETH balance
+        var wethBalanceAfter *big.Int
+        if err := vm.CallFunc(addrWETH, funcBalanceOf, addrA).Returns(&wethBalanceAfter); err != nil {
+            t.Fatal(err)
+        }
+
+        // Verify balance increment
+        wantBalance := new(big.Int).Add(wethBalanceBefore, amount)
+        if wethBalanceAfter.Cmp(wantBalance) != 0 {
+            t.Fatalf("Invalid WETH balance: want %s, got %s", wantBalance, wethBalanceAfter)
+        }
+    })
+}
+```
