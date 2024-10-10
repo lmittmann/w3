@@ -1,8 +1,8 @@
 # VM
 
-<DocLink title="w3vm.VM" /> is a super simple to use Ethereum Virtual Machine (EVM), built on top of `go-ethereum/core/vm.EVM`. It supports **tracing**, **state forking** via RPC, and can be used for simulation, debugging EVM execution, or testing Smart Contracts.
+<DocLink title="w3vm.VM" /> is an easy-to-use Ethereum Virtual Machine (EVM), built on top of `go-ethereum`'s `vm.EVM`. It supports **tracing**, **state forking** via RPC, and can be used for simulation, debugging EVM execution, or testing Smart Contracts.
 
-* **State forking** via RPC, or custom state fetchers enable transaction simulations or Smart Contract tests on live, or historic chain state.
+* **State forking** via RPC or custom state fetchers enables transaction simulations or Smart Contract tests on live, or historical chain state.
 * **Tracing** of EVM execution is supported via `go-ethereum/core/tracing.Hooks`.
 
 
@@ -66,17 +66,17 @@ fmt.Printf("Balance: %s ETH\n", w3.FromWei(balance, 18))
 
 ## Setup
 
-A new VM instance is created using the `w3vm.New` function, which accepts various options to customize the VM behavior.
+A new VM instance is created using the `w3vm.New` function, which accepts various options to customize the VM behavior:
 
-* `WithChainConfig(cfg *params.ChainConfig)`: Sets the chain configuration. If not set, the VM falls back to the Mainnet configuration.
+* `WithChainConfig(cfg *params.ChainConfig)`: Sets the chain configuration. If not provided, the VM defaults to the Mainnet configuration.
 * `WithNoBaseFee()`: Forces the EIP-1559 base fee to 0.
 * `WithBlockContext(ctx *vm.BlockContext)`: Sets the block context for the VM.
-* `WithHeader(header *types.Header)`: Sets the block context for the VM based on the given header.
-* `WithState(state w3types.State)`: Sets the pre state of the VM. If used with `WithFork`, the pre state overrides the forked state.
-* `WithStateDB(db *state.StateDB)`: Sets the state database for the VM, that is usually a snapshot obtained from `VM.Snapshot`.
-* `WithFork(client *w3.Client, blockNumber *big.Int)`: Forks state from a live Ethereum client at a specific block number.
-* `WithFetcher(fetcher Fetcher)`: Sets the fetcher for the VM.
-* `WithTB(tb testing.TB)`: Enables persistent state caching when used together with `WithFork`.
+* `WithHeader(header *types.Header)`: Configures the block context for the VM using the provided header.
+* `WithState(state w3types.State)`: Sets the pre-state of the VM. When used with `WithFork`, the pre-state overrides the forked state.
+* `WithStateDB(db *state.StateDB)`: Specifies the state database for the VM, typically a snapshot from `VM.Snapshot`.
+* `WithFork(client *w3.Client, blockNumber *big.Int)`: Forks state from a live Ethereum client at the specified block number.
+* `WithFetcher(fetcher Fetcher)`: Assigns a fetcher to the VM.
+* `WithTB(tb testing.TB)`: Enables persistent state caching when used in conjunction with `WithFork`.
 
 
 ## Execution

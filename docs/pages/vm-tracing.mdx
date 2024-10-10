@@ -1,3 +1,59 @@
 # Tracing
 
-<Callout type="info">Coming soon...</Callout>
+Tracing can give detailed insights into the execution of EVM contracts. `w3vm.VM` supports tracing via `go‑ethereum`'s <DocLink title="tracing.Hooks" />.
+
+## Usage
+
+A `tracing.Hooks` can be passed to <DocLink title="VM.Apply" id="w3vm.VM.Apply" />, <DocLink title="VM.ApplyTx" id="w3vm.VM.ApplyTx" />, and <DocLink title="VM.Call" id="w3vm.VM.Call" />. These methods can also be called with multiple hooks at the same time.
+
+#### Example: Trace Calls and OpCodes of an Execution
+
+`w3vm` contains a powerful call an opcode tracer <DocLink title="hooks.CallTracer" id="hooks.NewCallTracer" /> that can be used gain detailed insights into the execution of EVM contracts ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-Trace)):
+
+```go
+callTracer := hooks.NewCallTracer(os.Stdout, &hooks.CallTracerOptions{
+    ShowStaticcall: true,
+    DecodeABI:      true,
+})
+vm.ApplyTx(tx, callTracer)
+```
+
+![Example Call Trace](/assets/call-trace.png)
+
+#### Example: Generate an Access List
+
+Access list tracing using `go-ethereum`'s <DocLink title="logger.AccessListTracer" /> ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-TraceAccessList)):
+
+```go {2-8}
+// setup access list tracer
+signer := types.MakeSigner(params.MainnetChainConfig, header.Number, header.Time)
+from, _ := signer.Sender(tx)
+accessListTracer := logger.NewAccessListTracer(
+    nil,
+    from, *tx.To(),
+    gethVm.ActivePrecompiles(params.MainnetChainConfig.Rules(header.Number, header.Difficulty.Sign() == 0, header.Time)),
+)
+
+if _, err := vm.ApplyTx(tx, accessListTracer.Hooks()); err != nil {
+    // ...
+}
+fmt.Println("Access List:", accessListTracer.AccessList())
+```
+
+#### Example: Trace the Execution of all OpCodes in a Block
+
+Trace the execution of all op's in a block ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-TraceBlock)):
+
+```go {2-7}
+// setup block op's tracer
+var opCount [256]uint64
+tracer := &tracing.Hooks{
+    OnOpcode: func(pc uint64, op byte, gas, cost uint64, scope tracing.OpContext, rData []byte, depth int, err error) {
+        opCount[op]++
+    },
+}
+
+for _, tx := range block.Transactions() {
+    vm.ApplyTx(tx, tracer)
+}
+```
