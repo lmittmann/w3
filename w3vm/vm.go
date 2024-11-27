@@ -114,6 +114,8 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		NoBaseFee: v.opts.noBaseFee || isCall,
 	})
 
+	evm.SetPrecompiles(v.opts.precompiles)
+
 	snap := v.db.Snapshot()
 
 	// apply the message to the evm
@@ -387,6 +389,8 @@ type options struct {
 	forkBlockNumber *big.Int
 	fetcher         Fetcher
 	tb              testing.TB
+
+	precompiles vm.PrecompiledContracts
 }
 
 func (opt *options) Signer() types.Signer {
@@ -467,6 +471,13 @@ func WithChainConfig(cfg *params.ChainConfig) Option {
 // WithBlockContext sets the block context for the VM.
 func WithBlockContext(ctx *vm.BlockContext) Option {
 	return func(vm *VM) { vm.opts.blockCtx = ctx }
+}
+
+// WithPrecompile actives a precompile in the VM.
+func WithPrecompile(addr common.Address, contract vm.PrecompiledContract) Option {
+	return func(vm *VM) {
+		vm.opts.precompiles[addr] = contract
+	}
 }
 
 // WithState sets the pre state of the VM.
