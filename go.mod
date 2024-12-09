@@ -6,7 +6,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/ethereum/go-ethereum v1.14.8
 	github.com/google/go-cmp v0.6.0
-	github.com/holiman/uint256 v1.3.1
+	github.com/holiman/uint256 v1.3.2
 	golang.org/x/time v0.7.0
 )
 
