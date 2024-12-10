@@ -14,7 +14,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/consensus/misc/eip4844"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
@@ -96,7 +95,6 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	if v.db.Error() != nil {
 		return nil, ErrFetch
 	}
-	v.db.SetLogger(hooks)
 
 	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
 	if err != nil {
@@ -297,7 +295,10 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 	gasFeeCap := nilToZero(msg.GasFeeCap)
 	gasTipCap := nilToZero(msg.GasTipCap)
 	if baseFee := v.opts.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
-		gasPrice = math.BigMin(gasFeeCap, new(big.Int).Add(baseFee, gasTipCap))
+		gasPrice = new(big.Int).Add(baseFee, gasTipCap)
+		if gasPrice.Cmp(gasFeeCap) > 0 {
+			gasPrice.Set(gasFeeCap)
+		}
 	}
 
 	return &core.Message{
