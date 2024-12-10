@@ -28,7 +28,7 @@ go get github.com/lmittmann/w3
 
 [`w3.Client`](https://pkg.go.dev/github.com/lmittmann/w3#Client) is a batch request focused RPC client that can be used to connect to an Ethereum node via HTTP, WebSocket, or IPC. Its modular API allows to create custom RPC method integrations that can be used alongside the common methods implemented by this package.
 
-**Example:** Batch Request ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client))
+**Example:** Batch Request ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-BatchEOAState))
 
 ```go
 // 1. Connect to an RPC endpoint
@@ -57,12 +57,12 @@ if err := client.Call(
 
 #### Error Handling
 
-If one ore more calls in a batch request fail, `Client.Call` returns an error of type [`w3.CallErrors`](https://pkg.go.dev/github.com/lmittmann/w3#CallErrors).
+If one or more calls in a batch request fail, `Client.Call` returns an error of type [`w3.CallErrors`](https://pkg.go.dev/github.com/lmittmann/w3#CallErrors).
 
-**Example:** Check which RPC calls failed in a batch request ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-CallErrors))
+**Example:** Check which RPC calls failed in a batch request ([Playground](https://pkg.go.dev/github.com/lmittmann/w3#example-Client-BatchHandleError))
 ```go
-var errs w3.CallErrors
-if err := client.Call(rpcCalls...); errors.As(err, &errs) {
+var batchErr w3.CallErrors
+if err := client.Call(calls...); errors.As(err, &batchErr) {
     // handle call errors
 } else if err != nil {
     // handle other errors
@@ -77,7 +77,7 @@ if err := client.Call(rpcCalls...); errors.As(err, &errs) {
 
 [`w3vm.VM`](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#VM) is a high-level EVM environment with a simple but powerful API to simulate EVM execution, test Smart Contracts, or trace transactions. It supports Mainnet state forking via RPC and state caching for faster testing.
 
-**Example:** Simulate an Uniswap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM))
+**Example:** Simulate an Uniswap v3 swap ([Playground](https://pkg.go.dev/github.com/lmittmann/w3/w3vm#example-VM-UniswapV3Swap))
 
 ```go
 // 1. Create a VM that forks the Mainnet state from the latest block,
@@ -144,7 +144,7 @@ A [`Func`](https://pkg.go.dev/github.com/lmittmann/w3#Func) can be used to
 
 * encode arguments to the contracts input data ([`Func.EncodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.EncodeArgs)),
 * decode arguments from the contracts input data ([`Func.DecodeArgs`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeArgs)), and
-* decode returns form the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
+* decode returns from the contracts output data ([`Func.DecodeReturns`](https://pkg.go.dev/github.com/lmittmann/w3#Func.DecodeReturns)).
 
 ### Utils
 
@@ -240,7 +240,7 @@ func TxBySenderAndNonceFactory(sender common.Address, nonce uint64) w3types.RPCC
 
 // getTransactionBySenderAndNonceFactory implements the w3types.RPCCaller and
 // w3types.RPCCallerFactory interfaces. It stores the method parameters and
-// the the reference to the return value.
+// the reference to the return value.
 type getTransactionBySenderAndNonceFactory struct {
     // params
     sender common.Address
@@ -273,3 +273,11 @@ func (f *getTransactionBySenderAndNonceFactory) HandleResponse(elem rpc.BatchEle
     return nil
 }
 ```
+
+## Sponsors
+
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/public/assets/ef-logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/public/assets/ef-logo.svg">
+    <img src="docs/public/assets/ef-logo.svg" alt="ef logo" width="256" height="auto">
+</picture>

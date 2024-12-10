@@ -3,7 +3,6 @@ package w3_test
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"math/big"
 	"strconv"
 	"testing"
@@ -15,106 +14,6 @@ import (
 	"github.com/lmittmann/w3/internal"
 	"github.com/lmittmann/w3/w3types"
 )
-
-func ExampleNewFunc_balanceOf() {
-	// ABI binding to the balanceOf function of an ERC20 Token.
-	funcBalanceOf, _ := w3.NewFunc("balanceOf(address)", "uint256")
-
-	// Optionally names can be specified for function arguments. This is
-	// especially useful for more complex functions with many arguments.
-	funcBalanceOf, _ = w3.NewFunc("balanceOf(address who)", "uint256 amount")
-
-	// ABI-encode the functions args.
-	input, _ := funcBalanceOf.EncodeArgs(w3.A("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"))
-	fmt.Printf("balanceOf input: 0x%x\n", input)
-
-	// ABI-decode the functions args from a given input.
-	var (
-		who common.Address
-	)
-	funcBalanceOf.DecodeArgs(input, &who)
-	fmt.Printf("balanceOf args: %v\n", who)
-
-	// ABI-decode the functions output.
-	var (
-		output = w3.B("0x000000000000000000000000000000000000000000000000000000000000c0fe")
-		amount *big.Int
-	)
-	funcBalanceOf.DecodeReturns(output, &amount)
-	fmt.Printf("balanceOf returns: %v\n", amount)
-	// Output:
-	// balanceOf input: 0x70a08231000000000000000000000000ab5801a7d398351b8be11c439e05c5b3259aec9b
-	// balanceOf args: 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B
-	// balanceOf returns: 49406
-}
-
-func ExampleNewFunc_uniswapV4Swap() {
-	// ABI binding for the Uniswap v4 swap function.
-	funcSwap, _ := w3.NewFunc(`swap(
-		(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key,
-		(bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params,
-		bytes hookData
-	)`, "int256 delta")
-
-	// ABI binding for the PoolKey struct.
-	type PoolKey struct {
-		Currency0   common.Address
-		Currency1   common.Address
-		Fee         *big.Int
-		TickSpacing *big.Int
-		Hooks       common.Address
-	}
-
-	// ABI binding for the SwapParams struct.
-	type SwapParams struct {
-		ZeroForOne        bool
-		AmountSpecified   *big.Int
-		SqrtPriceLimitX96 *big.Int
-	}
-
-	// ABI-encode the functions args.
-	input, _ := funcSwap.EncodeArgs(
-		&PoolKey{
-			Currency0:   w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
-			Currency1:   w3.A("0x6B175474E89094C44Da98b954EedeAC495271d0F"),
-			Fee:         big.NewInt(0),
-			TickSpacing: big.NewInt(0),
-		},
-		&SwapParams{
-			ZeroForOne:        false,
-			AmountSpecified:   big.NewInt(0),
-			SqrtPriceLimitX96: big.NewInt(0),
-		},
-		[]byte{},
-	)
-	fmt.Printf("swap input: 0x%x\n", input)
-	// Output:
-	// swap input: 0xf3cd914c000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20000000000000000000000006b175474e89094c44da98b954eedeac495271d0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000000
-}
-
-func ExampleFunc_DecodeReturns_getReserves() {
-	funcGetReserves := w3.MustNewFunc("getReserves()", "uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast")
-	output := w3.B(
-		"0x00000000000000000000000000000000000000000000003635c9adc5dea00000",
-		"0x0000000000000000000000000000000000000000000000a2a15d09519be00000",
-		"0x0000000000000000000000000000000000000000000000000000000064373057",
-	)
-
-	var (
-		reserve0, reserve1 *big.Int
-		blockTimestampLast uint32
-	)
-	if err := funcGetReserves.DecodeReturns(output, &reserve0, &reserve1, &blockTimestampLast); err != nil {
-		// ...
-	}
-	fmt.Println("Reserve0:", reserve0)
-	fmt.Println("Reserve1:", reserve1)
-	fmt.Println("BlockTimestampLast:", blockTimestampLast)
-	// Output:
-	// Reserve0: 1000000000000000000000
-	// Reserve1: 3000000000000000000000
-	// BlockTimestampLast: 1681338455
-}
 
 func TestNewFunc(t *testing.T) {
 	tests := []struct {
