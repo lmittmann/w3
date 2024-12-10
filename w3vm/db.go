@@ -34,7 +34,14 @@ func newDB(fetcher Fetcher) *db {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (db *db) Account(addr common.Address) (*types.StateAccount, error) {
-	return db.GetAccount(addr)
+	if db.fetcher == nil {
+		return &types.StateAccount{
+			Balance:  new(uint256.Int),
+			CodeHash: types.EmptyCodeHash[:],
+		}, nil
+	}
+
+	return db.fetcher.Account(addr)
 }
 
 func (db *db) Storage(addr common.Address, slot common.Hash) (common.Hash, error) {
@@ -45,8 +52,28 @@ func (db *db) Storage(addr common.Address, slot common.Hash) (common.Hash, error
 	return common.BytesToHash(val), nil
 }
 
+func (db *db) Code(addr common.Address, codeHash common.Hash) ([]byte, error) {
+	if db.fetcher == nil {
+		return []byte{}, nil
+	}
+
+	code, err := db.fetcher.Code(codeHash)
+	if err != nil {
+		return nil, errors.New("not found")
+	}
+	return code, nil
+}
+
+func (db *db) CodeSize(addr common.Address, codeHash common.Hash) (int, error) {
+	code, err := db.Code(addr, codeHash)
+	if err != nil {
+		return 0, err
+	}
+	return len(code), nil
+}
+
 // Copy returns a deep-copied state reader.
-func (*db) Copy() state.Reader { panic("not implemented") }
+// func (*db) Copy() state.Reader { panic("not implemented") }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // state.Database methods //////////////////////////////////////////////////////////////////////////
@@ -60,38 +87,9 @@ func (db *db) OpenStorageTrie(stateRoot common.Hash, addr common.Address, root c
 	return db, nil
 }
 
-func (*db) CopyTrie(trie state.Trie) state.Trie {
-	if db, ok := trie.(*db); ok {
-		return db
-	}
-	panic("not implemented")
-}
-
-func (db *db) ContractCode(addr common.Address, codeHash common.Hash) ([]byte, error) {
-	if db.fetcher == nil {
-		return []byte{}, nil
-	}
-
-	code, err := db.fetcher.Code(codeHash)
-	if err != nil {
-		return nil, errors.New("not found")
-	}
-	return code, nil
-}
-
-func (db *db) ContractCodeSize(addr common.Address, codeHash common.Hash) (int, error) {
-	code, err := db.ContractCode(addr, codeHash)
-	if err != nil {
-		return 0, err
-	}
-	return len(code), nil
-}
-
-func (*db) DiskDB() ethdb.KeyValueStore { panic("not implemented") }
+func (*db) PointCache() *utils.PointCache { panic("not implemented") }
 
 func (db *db) TrieDB() *triedb.Database { return fakeTrieDB }
-
-func (*db) PointCache() *utils.PointCache { panic("not implemented") }
 
 func (*db) Snapshot() *snapshot.Tree { panic("not implemented") }
 
@@ -100,6 +98,10 @@ func (*db) Snapshot() *snapshot.Tree { panic("not implemented") }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (*db) GetKey([]byte) []byte { panic("not implemented") }
+
+func (db *db) GetAccount(addr common.Address) (*types.StateAccount, error) {
+	return db.Account(addr)
+}
 
 func (db *db) GetStorage(addr common.Address, key []byte) ([]byte, error) {
 	if db.fetcher == nil {
@@ -114,30 +116,19 @@ func (db *db) GetStorage(addr common.Address, key []byte) ([]byte, error) {
 	return storageVal.Bytes(), nil
 }
 
-func (db *db) GetAccount(addr common.Address) (*types.StateAccount, error) {
-	if db.fetcher == nil {
-		return &types.StateAccount{
-			Balance:  new(uint256.Int),
-			CodeHash: types.EmptyCodeHash[:],
-		}, nil
-	}
-
-	return db.fetcher.Account(addr)
-}
-
-func (*db) UpdateStorage(addr common.Address, key, value []byte) error { panic("not implemented") }
-
 func (*db) UpdateAccount(addr common.Address, acc *types.StateAccount, codeLen int) error {
 	panic("not implemented")
 }
 
-func (*db) UpdateContractCode(addr common.Address, codeHash common.Hash, code []byte) error {
-	panic("not implemented")
-}
+func (*db) UpdateStorage(addr common.Address, key, value []byte) error { panic("not implemented") }
+
+func (*db) DeleteAccount(addr common.Address) error { panic("not implemented") }
 
 func (*db) DeleteStorage(addr common.Address, key []byte) error { panic("not implemented") }
 
-func (*db) DeleteAccount(addr common.Address) error { panic("not implemented") }
+func (*db) UpdateContractCode(addr common.Address, codeHash common.Hash, code []byte) error {
+	panic("not implemented")
+}
 
 func (*db) Hash() common.Hash { panic("not implemented") }
 

@@ -96,7 +96,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		return nil, ErrFetch
 	}
 
-	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
+	coreMsg, err := v.buildMessage(msg, isCall)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	v.txIndex++
 
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
-	evm := vm.NewEVM(*v.opts.blockCtx, *txCtx, v.db, v.opts.chainConfig, vm.Config{
+	evm := vm.NewEVM(*v.opts.blockCtx, v.db, v.opts.chainConfig, vm.Config{
 		Tracer:    hooks,
 		NoBaseFee: v.opts.noBaseFee || isCall,
 	})
@@ -263,13 +263,13 @@ func (vm *VM) Rollback(snapshot *state.StateDB) {
 	vm.txIndex = uint64(snapshot.TxIndex()) + 1
 }
 
-func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
+func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, error) {
 	nonce := msg.Nonce
 	if !skipAccChecks && nonce == 0 {
 		var err error
 		nonce, err = v.Nonce(msg.From)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
@@ -285,7 +285,7 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		var err error
 		input, err = msg.Func.EncodeArgs(msg.Args...)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	} else {
 		input = msg.Input
@@ -316,12 +316,6 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 			BlobHashes:       msg.BlobHashes,
 			SkipNonceChecks:  skipAccChecks,
 			SkipFromEOACheck: skipAccChecks,
-		},
-		&vm.TxContext{
-			Origin:     msg.From,
-			GasPrice:   gasPrice,
-			BlobHashes: msg.BlobHashes,
-			BlobFeeCap: msg.BlobGasFeeCap,
 		},
 		nil
 }
