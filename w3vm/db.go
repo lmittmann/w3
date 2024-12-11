@@ -8,15 +8,15 @@ import (
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/state/snapshot"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/trie"
-	"github.com/ethereum/go-ethereum/trie/trienode"
 	"github.com/ethereum/go-ethereum/trie/utils"
 	"github.com/ethereum/go-ethereum/triedb"
 	"github.com/holiman/uint256"
 )
 
 var fakeTrieDB = triedb.NewDatabase(rawdb.NewMemoryDatabase(), &triedb.Config{})
+
+var fakeTrie, _ = trie.NewStateTrie(&trie.ID{}, triedb.NewDatabase(rawdb.NewMemoryDatabase(), nil))
 
 // db implements the [state.Reader], [state.Database], and [state.Trie] interfaces.
 type db struct {
@@ -76,16 +76,26 @@ func (db *db) CodeSize(addr common.Address, codeHash common.Hash) (int, error) {
 	return len(code), nil
 }
 
+func (db *db) Copy() state.Reader { return db }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // state.Database methods //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (db *db) Reader(common.Hash) (state.Reader, error) { return db, nil }
 
-func (db *db) OpenTrie(common.Hash) (state.Trie, error) { return db, nil }
+func (db *db) OpenTrie(common.Hash) (state.Trie, error) { return fakeTrie, nil }
 
 func (db *db) OpenStorageTrie(common.Hash, common.Address, common.Hash, state.Trie) (state.Trie, error) {
-	return db, nil
+	panic("not implemented")
+}
+
+func (db *db) ContractCode(addr common.Address, codeHash common.Hash) ([]byte, error) {
+	return db.Code(addr, codeHash)
+}
+
+func (db *db) ContractCodeSize(addr common.Address, codeHash common.Hash) (int, error) {
+	return db.CodeSize(addr, codeHash)
 }
 
 func (*db) PointCache() *utils.PointCache { panic("not implemented") }
@@ -93,22 +103,3 @@ func (*db) PointCache() *utils.PointCache { panic("not implemented") }
 func (*db) TrieDB() *triedb.Database { return fakeTrieDB }
 
 func (*db) Snapshot() *snapshot.Tree { panic("not implemented") }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// state.Trie methods //////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-func (*db) GetKey([]byte) []byte                                         { panic("not implemented") }
-func (*db) GetAccount(common.Address) (*types.StateAccount, error)       { panic("not implemented") }
-func (*db) GetStorage(common.Address, []byte) ([]byte, error)            { panic("not implemented") }
-func (*db) UpdateAccount(common.Address, *types.StateAccount, int) error { panic("not implemented") }
-func (*db) UpdateStorage(common.Address, []byte, []byte) error           { panic("not implemented") }
-func (*db) DeleteAccount(common.Address) error                           { panic("not implemented") }
-func (*db) DeleteStorage(common.Address, []byte) error                   { panic("not implemented") }
-func (*db) UpdateContractCode(common.Address, common.Hash, []byte) error { panic("not implemented") }
-func (*db) Hash() common.Hash                                            { panic("not implemented") }
-func (*db) Commit(bool) (common.Hash, *trienode.NodeSet)                 { panic("not implemented") }
-func (*db) Witness() map[string]struct{}                                 { panic("not implemented") }
-func (*db) NodeIterator([]byte) (trie.NodeIterator, error)               { panic("not implemented") }
-func (*db) Prove([]byte, ethdb.KeyValueWriter) error                     { panic("not implemented") }
-func (*db) IsVerkle() bool                                               { panic("not implemented") }
