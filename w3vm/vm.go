@@ -112,7 +112,9 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		NoBaseFee: v.opts.noBaseFee || isCall,
 	})
 
-	evm.SetPrecompiles(v.opts.precompiles)
+	if len(v.opts.precompiles) > 0 {
+		evm.SetPrecompiles(v.opts.precompiles)
+	}
 
 	snap := v.db.Snapshot()
 
@@ -450,6 +452,19 @@ func (opts *options) Init() error {
 			opts.blockCtx = defaultBlockContext()
 		}
 	}
+
+	// set precompiles
+	if len(opts.precompiles) > 0 {
+		rules := opts.chainConfig.Rules(opts.blockCtx.BlockNumber, opts.blockCtx.Random != nil, opts.blockCtx.Time)
+
+		// overwrite default precompiles
+		precompiles := vm.ActivePrecompiledContracts(rules)
+		for addr, contract := range opts.precompiles {
+			precompiles[addr] = contract
+		}
+		opts.precompiles = precompiles
+	}
+
 	return nil
 }
 
