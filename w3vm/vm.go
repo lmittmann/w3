@@ -14,7 +14,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/consensus/misc/eip4844"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
@@ -60,7 +59,7 @@ func New(opts ...Option) (*VM, error) {
 	// set DB
 	db := newDB(vm.opts.fetcher)
 	if vm.db == nil {
-		vm.db, _ = state.New(w3.Hash0, db, nil)
+		vm.db, _ = state.New(w3.Hash0, db)
 	}
 	for addr, acc := range vm.opts.preState {
 		vm.db.SetNonce(addr, acc.Nonce)
@@ -96,7 +95,6 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	if v.db.Error() != nil {
 		return nil, ErrFetch
 	}
-	v.db.SetLogger(hooks)
 
 	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
 	if err != nil {
@@ -299,23 +297,27 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 	gasFeeCap := nilToZero(msg.GasFeeCap)
 	gasTipCap := nilToZero(msg.GasTipCap)
 	if baseFee := v.opts.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
-		gasPrice = math.BigMin(gasFeeCap, new(big.Int).Add(baseFee, gasTipCap))
+		gasPrice = new(big.Int).Add(baseFee, gasTipCap)
+		if gasPrice.Cmp(gasFeeCap) > 0 {
+			gasPrice.Set(gasFeeCap)
+		}
 	}
 
 	return &core.Message{
-			To:                msg.To,
-			From:              msg.From,
-			Nonce:             nonce,
-			Value:             nilToZero(msg.Value),
-			GasLimit:          gasLimit,
-			GasPrice:          gasPrice,
-			GasFeeCap:         gasFeeCap,
-			GasTipCap:         gasFeeCap,
-			Data:              input,
-			AccessList:        msg.AccessList,
-			BlobGasFeeCap:     msg.BlobGasFeeCap,
-			BlobHashes:        msg.BlobHashes,
-			SkipAccountChecks: skipAccChecks,
+			To:               msg.To,
+			From:             msg.From,
+			Nonce:            nonce,
+			Value:            nilToZero(msg.Value),
+			GasLimit:         gasLimit,
+			GasPrice:         gasPrice,
+			GasFeeCap:        gasFeeCap,
+			GasTipCap:        gasFeeCap,
+			Data:             input,
+			AccessList:       msg.AccessList,
+			BlobGasFeeCap:    msg.BlobGasFeeCap,
+			BlobHashes:       msg.BlobHashes,
+			SkipNonceChecks:  skipAccChecks,
+			SkipFromEOACheck: skipAccChecks,
 		},
 		&vm.TxContext{
 			Origin:     msg.From,
