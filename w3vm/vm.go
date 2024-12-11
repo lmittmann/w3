@@ -475,7 +475,7 @@ func WithBlockContext(ctx *vm.BlockContext) Option {
 	return func(vm *VM) { vm.opts.blockCtx = ctx }
 }
 
-// WithPrecompile actives a precompile in the VM.
+// WithPrecompile registers a precompile contract at the given address in the VM.
 func WithPrecompile(addr common.Address, contract vm.PrecompiledContract) Option {
 	return func(vm *VM) {
 		vm.opts.precompiles[addr] = contract
