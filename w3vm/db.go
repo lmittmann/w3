@@ -18,7 +18,7 @@ var fakeTrieDB = triedb.NewDatabase(rawdb.NewMemoryDatabase(), &triedb.Config{})
 
 var fakeTrie, _ = trie.NewStateTrie(&trie.ID{}, triedb.NewDatabase(rawdb.NewMemoryDatabase(), nil))
 
-// db implements the [state.Reader], [state.Database], and [state.Trie] interfaces.
+// db implements the [state.Reader] and [state.Database] interface.
 type db struct {
 	fetcher Fetcher
 }
