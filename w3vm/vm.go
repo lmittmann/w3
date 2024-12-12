@@ -112,6 +112,10 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		NoBaseFee: v.opts.noBaseFee || isCall,
 	})
 
+	if len(v.opts.precompiles) > 0 {
+		evm.SetPrecompiles(v.opts.precompiles)
+	}
+
 	snap := v.db.Snapshot()
 
 	// apply the message to the evm
@@ -389,6 +393,8 @@ type options struct {
 	forkBlockNumber *big.Int
 	fetcher         Fetcher
 	tb              testing.TB
+
+	precompiles vm.PrecompiledContracts
 }
 
 func (opt *options) Signer() types.Signer {
@@ -446,6 +452,19 @@ func (opts *options) Init() error {
 			opts.blockCtx = defaultBlockContext()
 		}
 	}
+
+	// set precompiles
+	if len(opts.precompiles) > 0 {
+		rules := opts.chainConfig.Rules(opts.blockCtx.BlockNumber, opts.blockCtx.Random != nil, opts.blockCtx.Time)
+
+		// overwrite default precompiles
+		precompiles := vm.ActivePrecompiledContracts(rules)
+		for addr, contract := range opts.precompiles {
+			precompiles[addr] = contract
+		}
+		opts.precompiles = precompiles
+	}
+
 	return nil
 }
 
@@ -469,6 +488,13 @@ func WithChainConfig(cfg *params.ChainConfig) Option {
 // WithBlockContext sets the block context for the VM.
 func WithBlockContext(ctx *vm.BlockContext) Option {
 	return func(vm *VM) { vm.opts.blockCtx = ctx }
+}
+
+// WithPrecompile registers a precompile contract at the given address in the VM.
+func WithPrecompile(addr common.Address, contract vm.PrecompiledContract) Option {
+	return func(vm *VM) {
+		vm.opts.precompiles[addr] = contract
+	}
 }
 
 // WithState sets the pre state of the VM.

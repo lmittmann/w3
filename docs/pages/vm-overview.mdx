@@ -71,6 +71,7 @@ A new VM instance is created using the `w3vm.New` function, which accepts variou
 * `WithChainConfig(cfg *params.ChainConfig)`: Sets the chain configuration. If not provided, the VM defaults to the Mainnet configuration.
 * `WithNoBaseFee()`: Forces the EIP-1559 base fee to 0.
 * `WithBlockContext(ctx *vm.BlockContext)`: Sets the block context for the VM.
+* `WithPrecompile(addr common.Address, contract vm.PrecompiledContract)`: Registers a precompile contract at the given address in the VM.
 * `WithHeader(header *types.Header)`: Configures the block context for the VM using the provided header.
 * `WithState(state w3types.State)`: Sets the pre-state of the VM. When used with `WithFork`, the pre-state overrides the forked state.
 * `WithStateDB(db *state.StateDB)`: Specifies the state database for the VM, typically a snapshot from `VM.Snapshot`.
