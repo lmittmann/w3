@@ -231,3 +231,19 @@ func FromWei(wei *big.Int, decimals uint8) string {
 func has0xPrefix(hexStr string) bool {
 	return len(hexStr) >= 2 && hexStr[0] == '0' && (hexStr[1] == 'x' || hexStr[1] == 'X')
 }
+
+// BigMin returns the smaller of the two big integers.
+func BigMin(a, b *big.Int) *big.Int {
+	if a.Cmp(b) < 0 {
+		return a
+	}
+	return b
+}
+
+// BigMax returns the larger of the two big integers.
+func BigMax(a, b *big.Int) *big.Int {
+	if a.Cmp(b) > 0 {
+		return a
+	}
+	return b
+}
