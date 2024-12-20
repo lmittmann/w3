@@ -255,6 +255,7 @@ func TestFromWei(t *testing.T) {
 		Want     string
 	}{
 		{nil, 0, "<nil>"},
+		{nil, 0, fmt.Sprint(nil)},
 		{big.NewInt(0), 0, "0"},
 		{big.NewInt(1), 0, "1"},
 		{big.NewInt(0), 18, "0"},

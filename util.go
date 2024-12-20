@@ -14,6 +14,7 @@ var (
 	Big0     = new(big.Int)
 	Big1     = big.NewInt(1)
 	Big2     = big.NewInt(2)
+	Big10    = big.NewInt(10)
 	BigGwei  = big.NewInt(1_000000000)
 	BigEther = big.NewInt(1_000000000_000000000)
 
@@ -211,7 +212,7 @@ func FromWei(wei *big.Int, decimals uint8) string {
 		return fmt.Sprint(nil)
 	}
 
-	d := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
+	d := new(big.Int).Exp(Big10, big.NewInt(int64(decimals)), nil)
 
 	sign := ""
 	if wei.Sign() < 0 {
