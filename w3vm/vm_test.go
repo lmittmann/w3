@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -282,6 +283,48 @@ func TestVMApply(t *testing.T) {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestVMApply_Hook(t *testing.T) {
+	vm, err := w3vm.New(
+		w3vm.WithNoBaseFee(),
+		w3vm.WithFork(client, big.NewInt(20_000_000)),
+		w3vm.WithTB(t),
+	)
+	if err != nil {
+		t.Fatalf("Failed to create VM: %v", err)
+	}
+
+	// setup hook
+	var hookCount [10]uint
+	hook := &tracing.Hooks{
+		// vm event hooks
+		OnEnter:     func(int, byte, common.Address, common.Address, []byte, uint64, *big.Int) { hookCount[0]++ },
+		OnExit:      func(int, []byte, uint64, error, bool) { hookCount[1]++ },
+		OnOpcode:    func(uint64, byte, uint64, uint64, tracing.OpContext, []byte, int, error) { hookCount[2]++ },
+		OnFault:     func(uint64, byte, uint64, uint64, tracing.OpContext, int, error) { hookCount[3]++ },
+		OnGasChange: func(uint64, uint64, tracing.GasChangeReason) { hookCount[4]++ },
+		// state hooks
+		OnBalanceChange: func(common.Address, *big.Int, *big.Int, tracing.BalanceChangeReason) { hookCount[5]++ },
+		OnNonceChange:   func(addr common.Address, prev, new uint64) { hookCount[6]++ },
+		OnCodeChange:    func(common.Address, common.Hash, []byte, common.Hash, []byte) { hookCount[7]++ },
+		OnStorageChange: func(addr common.Address, slot, prev, new common.Hash) { hookCount[8]++ },
+		OnLog:           func(*types.Log) { hookCount[9]++ },
+	}
+
+	vm.Apply(&w3types.Message{To: &addrWETH, Value: w3.Big1}, hook)
+	vm.Apply(&w3types.Message{To: nil, Input: w3.B("0xfe")}, hook)     // fault
+	vm.Apply(&w3types.Message{To: nil, Input: w3.B("0x5f5ff3")}, hook) // deploy empty contract
+
+	for i, field := range []string{
+		"OnEnter", "OnExit", "OnOpcode", "OnFault", "OnGasChange", // vm event hooks
+		"OnBalanceChange", "OnNonceChange", "OnCodeChange", "OnStorageChange", "OnLog", // state hooks
+	} {
+		if hookCount[i] > 0 {
+			continue
+		}
+		t.Fatalf("Hook %q was not triggered", field)
 	}
 }
 

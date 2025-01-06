@@ -96,6 +96,13 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		return nil, ErrFetch
 	}
 
+	var db vm.StateDB
+	if hooks != nil {
+		db = state.NewHookedState(v.db, hooks)
+	} else {
+		db = v.db
+	}
+
 	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
 	if err != nil {
 		return nil, err
@@ -107,7 +114,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	v.txIndex++
 
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
-	evm := vm.NewEVM(*v.opts.blockCtx, *txCtx, v.db, v.opts.chainConfig, vm.Config{
+	evm := vm.NewEVM(*v.opts.blockCtx, *txCtx, db, v.opts.chainConfig, vm.Config{
 		Tracer:    hooks,
 		NoBaseFee: v.opts.noBaseFee || isCall,
 	})
