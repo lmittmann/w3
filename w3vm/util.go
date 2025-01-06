@@ -128,8 +128,6 @@ func joinHooks(hooks []*tracing.Hooks) *tracing.Hooks {
 	}
 
 	// vm hooks
-	var onTxStarts []tracing.TxStartHook
-	var onTxEnds []tracing.TxEndHook
 	var onEnters []tracing.EnterHook
 	var onExits []tracing.ExitHook
 	var onOpcodes []tracing.OpcodeHook
@@ -147,12 +145,6 @@ func joinHooks(hooks []*tracing.Hooks) *tracing.Hooks {
 			continue
 		}
 		// vm hooks
-		if h.OnTxStart != nil {
-			onTxStarts = append(onTxStarts, h.OnTxStart)
-		}
-		if h.OnTxEnd != nil {
-			onTxEnds = append(onTxEnds, h.OnTxEnd)
-		}
 		if h.OnEnter != nil {
 			onEnters = append(onEnters, h.OnEnter)
 		}
@@ -188,20 +180,6 @@ func joinHooks(hooks []*tracing.Hooks) *tracing.Hooks {
 
 	hook := new(tracing.Hooks)
 	// vm hooks
-	if len(onTxStarts) > 0 {
-		hook.OnTxStart = func(vm *tracing.VMContext, tx *types.Transaction, from common.Address) {
-			for _, h := range onTxStarts {
-				h(vm, tx, from)
-			}
-		}
-	}
-	if len(onTxEnds) > 0 {
-		hook.OnTxEnd = func(receipt *types.Receipt, err error) {
-			for _, h := range onTxEnds {
-				h(receipt, err)
-			}
-		}
-	}
 	if len(onEnters) > 0 {
 		hook.OnEnter = func(depth int, typ byte, from, to common.Address, input []byte, gas uint64, value *big.Int) {
 			for _, h := range onEnters {
