@@ -334,7 +334,9 @@ func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
 			continue
 		}
 
-		if s.Accounts[storageKey.addr].Storage == nil {
+		if acc, ok := s.Accounts[storageKey.addr]; !ok {
+			s.Accounts[storageKey.addr] = &account{Storage: map[w3hexutil.Hash]w3hexutil.Hash{}}
+		} else if acc.Storage == nil {
 			s.Accounts[storageKey.addr].Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
 		}
 		s.Accounts[storageKey.addr].Storage[w3hexutil.Hash(storageKey.slot)] = w3hexutil.Hash(storageVal)
