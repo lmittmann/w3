@@ -712,6 +712,7 @@ func TestVMApply_Integration(t *testing.T) {
 				t.Run(blockNumber.String(), func(t *testing.T) {
 					t.Parallel()
 
+					// fetch block
 					var (
 						block    *types.Block
 						receipts types.Receipts
@@ -757,6 +758,28 @@ func TestVMApply_Integration(t *testing.T) {
 						); diff != "" {
 							t.Fatalf("[%v,%d,%s] (-want +got)\n%s", block.Number(), j, tx.Hash(), diff)
 						}
+					}
+
+					// check coinbase balance at the end of the block
+					if !params.MainnetChainConfig.IsShanghai(block.Number(), block.Time()) {
+						return // only check postmerge blocks for correct coinbase balance
+					}
+
+					var wantCoinbaseBal *big.Int
+					if err := client.Call(
+						eth.Balance(block.Coinbase(), block.Number()).Returns(&wantCoinbaseBal),
+					); err != nil {
+						t.Fatalf("Failed to fetch coinbase balance: %v", err)
+					}
+
+					// actual coinbase balance after all txs were applied
+					gotCoinbaseBal, _ := vm.Balance(block.Coinbase())
+					if wantCoinbaseBal.Cmp(gotCoinbaseBal) != 0 {
+						t.Fatalf("Coinbase balance: want: %s, got: %s (%s)",
+							w3.FromWei(wantCoinbaseBal, 18),
+							w3.FromWei(gotCoinbaseBal, 18),
+							block.Coinbase(),
+						)
 					}
 				})
 			}

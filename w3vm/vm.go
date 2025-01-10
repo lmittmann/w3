@@ -320,7 +320,7 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 			GasLimit:         gasLimit,
 			GasPrice:         gasPrice,
 			GasFeeCap:        gasFeeCap,
-			GasTipCap:        gasFeeCap,
+			GasTipCap:        gasTipCap,
 			Data:             input,
 			AccessList:       msg.AccessList,
 			BlobGasFeeCap:    msg.BlobGasFeeCap,
