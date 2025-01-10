@@ -328,81 +328,6 @@ func TestVMApply_Hook(t *testing.T) {
 	}
 }
 
-func TestVMApply_BlobTx(t *testing.T) {
-	var (
-		txHash     = w3.H("0x2ed7251947716105db438049a4b1bddcc273b117681b8f807d89293067f13003")
-		wantTxFee  = w3.I("0.000735044301185608 ether")
-		wantTxBurn = w3.I("0.000079607152317 ether")
-		wantTxTip  = new(big.Int).Sub(wantTxFee, wantTxBurn)
-	)
-
-	// fetch tx, receipt and block
-	var (
-		tx      *types.Transaction
-		receipt *types.Receipt
-	)
-	if err := client.Call(
-		eth.Tx(txHash).Returns(&tx),
-		eth.TxReceipt(txHash).Returns(&receipt),
-	); err != nil {
-		t.Fatalf("Failed to fetch tx and receipt: %v", err)
-	}
-
-	var block *types.Block
-	if err := client.Call(
-		eth.BlockByNumber(receipt.BlockNumber).Returns(&block),
-	); err != nil {
-		t.Fatalf("Failed to fetch block: %v", err)
-	}
-
-	// calc tx fee
-	effectiveGasTip, _ := tx.EffectiveGasTip(block.BaseFee())
-	gasFee := new(big.Int).Mul(
-		effectiveGasTip,
-		new(big.Int).SetUint64(receipt.GasUsed),
-	)
-	blobFee := new(big.Int).Mul(
-		receipt.BlobGasPrice,
-		new(big.Int).SetUint64(tx.BlobGas()),
-	)
-	txTip := new(big.Int).Add(gasFee, blobFee)
-	t.Logf("Tx tip: %v (tx: %v, blob: %v)", txTip, gasFee, blobFee)
-
-	// setup VM
-	fetcher := w3vm.NewRPCFetcher(client, new(big.Int).Sub(block.Number(), w3.Big1))
-	vm, _ := w3vm.New(
-		w3vm.WithFetcher(fetcher),
-		w3vm.WithHeader(block.Header()),
-	)
-
-	signer := types.MakeSigner(params.MainnetChainConfig, block.Number(), block.Time())
-	eoa, _ := signer.Sender(tx)
-
-	// apply tx
-	eoaBalBefore, _ := vm.Balance(eoa)
-	coinbaseBalBefore, _ := vm.Balance(block.Coinbase())
-
-	_, err := vm.ApplyTx(tx)
-	if err != nil {
-		t.Fatalf("Failed to apply tx: %v", err)
-	}
-
-	eoaBalAfter, _ := vm.Balance(eoa)
-	coinbaseBalAfter, _ := vm.Balance(block.Coinbase())
-
-	// check tx fee (for EOA)
-	simTxFee := new(big.Int).Sub(eoaBalBefore, eoaBalAfter)
-	if wantTxFee.Cmp(simTxFee) != 0 {
-		t.Fatalf("Tx fee mismatch: want %v, got %v", w3.FromWei(wantTxFee, 18), w3.FromWei(simTxFee, 18))
-	}
-
-	// check validator profit (coinbase)
-	simTxTip := new(big.Int).Sub(coinbaseBalAfter, coinbaseBalBefore)
-	if wantTxTip.Cmp(simTxTip) != 0 {
-		t.Fatalf("Tx tip mismatch: want %v, got %v", w3.FromWei(txTip, 18), w3.FromWei(simTxTip, 18))
-	}
-}
-
 func TestVMSnapshot(t *testing.T) {
 	vm, _ := w3vm.New(
 		w3vm.WithState(w3types.State{
@@ -787,6 +712,7 @@ func TestVMApply_Integration(t *testing.T) {
 				t.Run(blockNumber.String(), func(t *testing.T) {
 					t.Parallel()
 
+					// fetch block
 					var (
 						block    *types.Block
 						receipts types.Receipts
@@ -832,6 +758,28 @@ func TestVMApply_Integration(t *testing.T) {
 						); diff != "" {
 							t.Fatalf("[%v,%d,%s] (-want +got)\n%s", block.Number(), j, tx.Hash(), diff)
 						}
+					}
+
+					// check coinbase balance at the end of the block
+					if !params.MainnetChainConfig.IsShanghai(block.Number(), block.Time()) {
+						return // only check postmerge blocks for correct coinbase balance
+					}
+
+					var wantCoinbaseBal *big.Int
+					if err := client.Call(
+						eth.Balance(block.Coinbase(), block.Number()).Returns(&wantCoinbaseBal),
+					); err != nil {
+						t.Fatalf("Failed to fetch coinbase balance: %v", err)
+					}
+
+					// actual coinbase balance after all txs were applied
+					gotCoinbaseBal, _ := vm.Balance(block.Coinbase())
+					if wantCoinbaseBal.Cmp(gotCoinbaseBal) != 0 {
+						t.Fatalf("Coinbase balance: want: %s, got: %s (%s)",
+							w3.FromWei(wantCoinbaseBal, 18),
+							w3.FromWei(gotCoinbaseBal, 18),
+							block.Coinbase(),
+						)
 					}
 				})
 			}
