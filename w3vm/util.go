@@ -15,7 +15,6 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/internal/crypto"
-	w3hexutil "github.com/lmittmann/w3/internal/hexutil"
 	"github.com/lmittmann/w3/internal/mod"
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
@@ -89,15 +88,6 @@ func ethBalance(addr common.Address, blockNumber *big.Int) w3types.RPCCallerFact
 		"eth_getBalance",
 		[]any{addr, module.BlockNumberArg(blockNumber)},
 		module.WithRetWrapper(func(ret *uint256.Int) any { return (*hexutil.U256)(ret) }),
-	)
-}
-
-// ethStorageAt is like [eth.StorageAt], but returns the storage value as [uint256.Int].
-func ethStorageAt(addr common.Address, slot common.Hash, blockNumber *big.Int) w3types.RPCCallerFactory[common.Hash] {
-	return module.NewFactory(
-		"eth_getStorageAt",
-		[]any{addr, slot, module.BlockNumberArg(blockNumber)},
-		module.WithRetWrapper(func(ret *common.Hash) any { return (*w3hexutil.Hash)(ret) }),
 	)
 }
 
