@@ -148,7 +148,7 @@ func (f *rpcFetcher) StorageAt(addr common.Address, slot common.Hash) (common.Ha
 		storageValCh = make(chan func() (common.Hash, error), 1)
 	)
 	go func() {
-		err := f.call(ethStorageAt(addr, slot, f.blockNumber).Returns(&storageVal))
+		err := f.call(eth.StorageAt(addr, slot, f.blockNumber).Returns(&storageVal))
 		storageValCh <- func() (common.Hash, error) { return storageVal, err }
 	}()
 
