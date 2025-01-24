@@ -302,21 +302,36 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		input = msg.Input
 	}
 
-	gasPrice := nilToZero(msg.GasPrice)
-	gasFeeCap := nilToZero(msg.GasFeeCap)
-	gasTipCap := nilToZero(msg.GasTipCap)
+	gasPrice := msg.GasPrice
+	if gasPrice == nil {
+		gasPrice = new(big.Int)
+	}
+	gasFeeCap := msg.GasFeeCap
+	if gasFeeCap == nil {
+		gasFeeCap = new(big.Int)
+	}
+	gasTipCap := msg.GasTipCap
+	if gasTipCap == nil {
+		gasTipCap = new(big.Int)
+	}
+
 	if baseFee := v.opts.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
-		gasPrice = new(big.Int).Add(baseFee, gasTipCap)
+		gasPrice.Add(baseFee, gasTipCap)
 		if gasPrice.Cmp(gasFeeCap) > 0 {
-			gasPrice.Set(gasFeeCap)
+			gasPrice = gasFeeCap
 		}
+	}
+
+	value := msg.Value
+	if value == nil {
+		value = new(big.Int)
 	}
 
 	return &core.Message{
 		To:               msg.To,
 		From:             msg.From,
 		Nonce:            nonce,
-		Value:            nilToZero(msg.Value),
+		Value:            value,
 		GasLimit:         gasLimit,
 		GasPrice:         gasPrice,
 		GasFeeCap:        gasFeeCap,
