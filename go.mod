@@ -1,10 +1,12 @@
 module github.com/lmittmann/w3
 
-go 1.22
+go 1.22.0
+
+toolchain go1.23.4
 
 require (
 	github.com/charmbracelet/lipgloss v1.0.0
-	github.com/ethereum/go-ethereum v1.14.6-0.20250114152624-8dfad579e961
+	github.com/ethereum/go-ethereum v1.14.6-0.20250125235314-f0e8a3e9c8a5
 	github.com/google/go-cmp v0.6.0
 	github.com/holiman/uint256 v1.3.2
 	golang.org/x/time v0.9.0
@@ -42,9 +44,9 @@ require (
 	github.com/supranational/blst v0.3.13 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
