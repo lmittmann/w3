@@ -103,7 +103,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		db = v.db
 	}
 
-	coreMsg, txCtx, err := v.buildMessage(msg, isCall)
+	coreMsg, err := v.buildMessage(msg, isCall)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 	v.txIndex++
 
 	gp := new(core.GasPool).AddGas(coreMsg.GasLimit)
-	evm := vm.NewEVM(*v.opts.blockCtx, *txCtx, db, v.opts.chainConfig, vm.Config{
+	evm := vm.NewEVM(*v.opts.blockCtx, db, v.opts.chainConfig, vm.Config{
 		Tracer:    hooks,
 		NoBaseFee: v.opts.noBaseFee || isCall,
 	})
@@ -274,13 +274,13 @@ func (vm *VM) Rollback(snapshot *state.StateDB) {
 	vm.txIndex = uint64(snapshot.TxIndex()) + 1
 }
 
-func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, *vm.TxContext, error) {
+func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Message, error) {
 	nonce := msg.Nonce
 	if !skipAccChecks && nonce == 0 {
 		var err error
 		nonce, err = v.Nonce(msg.From)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
@@ -296,45 +296,53 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		var err error
 		input, err = msg.Func.EncodeArgs(msg.Args...)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	} else {
 		input = msg.Input
 	}
 
-	gasPrice := nilToZero(msg.GasPrice)
-	gasFeeCap := nilToZero(msg.GasFeeCap)
-	gasTipCap := nilToZero(msg.GasTipCap)
+	gasPrice := msg.GasPrice
+	if gasPrice == nil {
+		gasPrice = new(big.Int)
+	}
+	gasFeeCap := msg.GasFeeCap
+	if gasFeeCap == nil {
+		gasFeeCap = new(big.Int)
+	}
+	gasTipCap := msg.GasTipCap
+	if gasTipCap == nil {
+		gasTipCap = new(big.Int)
+	}
+
 	if baseFee := v.opts.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
-		gasPrice = new(big.Int).Add(baseFee, gasTipCap)
+		gasPrice.Add(baseFee, gasTipCap)
 		if gasPrice.Cmp(gasFeeCap) > 0 {
-			gasPrice.Set(gasFeeCap)
+			gasPrice = gasFeeCap
 		}
 	}
 
+	value := msg.Value
+	if value == nil {
+		value = new(big.Int)
+	}
+
 	return &core.Message{
-			To:               msg.To,
-			From:             msg.From,
-			Nonce:            nonce,
-			Value:            nilToZero(msg.Value),
-			GasLimit:         gasLimit,
-			GasPrice:         gasPrice,
-			GasFeeCap:        gasFeeCap,
-			GasTipCap:        gasTipCap,
-			Data:             input,
-			AccessList:       msg.AccessList,
-			BlobGasFeeCap:    msg.BlobGasFeeCap,
-			BlobHashes:       msg.BlobHashes,
-			SkipNonceChecks:  skipAccChecks,
-			SkipFromEOACheck: skipAccChecks,
-		},
-		&vm.TxContext{
-			Origin:     msg.From,
-			GasPrice:   gasPrice,
-			BlobHashes: msg.BlobHashes,
-			BlobFeeCap: msg.BlobGasFeeCap,
-		},
-		nil
+		To:               msg.To,
+		From:             msg.From,
+		Nonce:            nonce,
+		Value:            value,
+		GasLimit:         gasLimit,
+		GasPrice:         gasPrice,
+		GasFeeCap:        gasFeeCap,
+		GasTipCap:        gasTipCap,
+		Data:             input,
+		AccessList:       msg.AccessList,
+		BlobGasFeeCap:    msg.BlobGasFeeCap,
+		BlobHashes:       msg.BlobHashes,
+		SkipNonceChecks:  skipAccChecks,
+		SkipFromEOACheck: skipAccChecks,
+	}, nil
 }
 
 func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
