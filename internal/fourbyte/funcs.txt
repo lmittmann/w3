@@ -171,6 +171,7 @@ swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] path, ad
 swapExactTokensForETHSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)
 swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)	uint256[] amounts
 swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)
+swapTargets(address)	bool
 swapTokensForExactETH(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)	uint256[] amounts
 swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)	uint256[] amounts
 symbol()	string
@@ -192,6 +193,7 @@ transferTokens((address from, address receiver, address[] tokens, uint256[] amou
 uniswapV3Swap(uint256 amount, uint256 minReturn, uint256[] pools)	uint256 returnAmount
 uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
 updatedAt()	uint256
+updateSwapTargets(address target, bool add)
 version()	uint256
 wad_exp(int256 power)	uint256
 WETH()	address
