@@ -56,6 +56,11 @@ factory()	address
 fee()	uint24
 feeGrowthGlobal0X128()	uint256
 feeGrowthGlobal1X128()	uint256
+fillQuoteEthToToken(address buyTokenAddress, address target, bytes swapCallData, uint256 feeAmount)
+fillQuoteTokenToEth(address sellTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feePercentageBasisPoints)
+fillQuoteTokenToEthWithPermit(address sellTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feePercentageBasisPoints, (uint256 value, uint256 nonce, uint256 deadline, bool isDaiStylePermit, uint8 v, bytes32 r, bytes32 s) permitData)
+fillQuoteTokenToToken(address sellTokenAddress, address buyTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feeAmount)
+fillQuoteTokenToTokenWithPermit(address sellTokenAddress, address buyTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feeAmount, (uint256 value, uint256 nonce, uint256 deadline, bool isDaiStylePermit, uint8 v, bytes32 r, bytes32 s) permitData)
 flash(address recipient, uint256 amount0, uint256 amount1, bytes data)
 geometric_mean(uint256[3] x)	uint256
 get_address(uint256 idx)	address
@@ -93,7 +98,7 @@ increaseAllowance(address spender, uint256 addedValue)	bool success
 initialize(address token0, address token1)
 isApprovedForAll(address owner, address operator)	bool
 isSolver(address)	bool
-isValidSignature(bytes32 hash, bytes data)	magic bytes4
+isValidSignature(bytes32 hash, bytes data)	bytes4 magic
 kLast()	uint256
 latestRoundData()	uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
 liquidity()	uint128
@@ -191,4 +196,6 @@ version()	uint256
 wad_exp(int256 power)	uint256
 WETH()	address
 withdraw(uint256)
+withdrawEth(address to, uint256 amount)
+withdrawToken(address token, address to, uint256 amount)
 wrapAll()
