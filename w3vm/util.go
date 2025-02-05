@@ -65,6 +65,22 @@ func Slot2(pos, key, key2 common.Hash) common.Hash {
 	)
 }
 
+// Slot3 returns the storage slot of a triple mapping with the given position
+// and keys.
+//
+// Slot3 follows the Solidity storage layout for:
+//
+//	mapping(bytes32 => mapping(bytes32 => mapping(bytes32 => bytes32)))
+func Slot3(pos, key0, key1, key2 common.Hash) common.Hash {
+	return crypto.Keccak256Hash(
+		key2[:],
+		crypto.Keccak256(
+			key1[:],
+			crypto.Keccak256(key0[:], pos[:]),
+		),
+	)
+}
+
 // nilToZero converts sets a pointer to the zero value if it is nil.
 func nilToZero[T any](ptr *T) *T {
 	if ptr == nil {
