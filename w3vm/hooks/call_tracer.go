@@ -244,7 +244,7 @@ func renderRevert(revertErr error, output []byte, decodeABI bool) string {
 		sig := ([4]byte)(output[:4])
 		fn, isPrecompile := fourbyte.Function(sig, w3.Addr0)
 		if fn != nil && !isPrecompile {
-			args, err := fn.Args.Unpack(output)
+			args, err := fn.Args.Unpack(output[4:])
 			if err == nil {
 				funcName := strings.Split(fn.Signature, "(")[0]
 				return fmt.Sprintf("%s: %s(%s)", revertErr, funcName, renderAbiArgs(fn.Args, args, nil))
