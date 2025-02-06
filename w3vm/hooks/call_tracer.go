@@ -466,9 +466,9 @@ type call struct {
 // index i, otherwise false.
 func opAccessesStackElem(op byte, i int) bool {
 	switch {
-	case vm.SWAP1 <= op && op <= vm.SWAP16:
+	case byte(vm.SWAP1) <= op && op <= byte(vm.SWAP16):
 		return i == 0 || i == int(op)-int(vm.SWAP1)+1
-	case vm.DUP1 <= op && op <= vm.DUP16:
+	case byte(vm.DUP1) <= op && op <= byte(vm.DUP16):
 		return i == int(op)-int(vm.DUP1)
 	default:
 		return i < pops[op]

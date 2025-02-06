@@ -81,14 +81,6 @@ func Slot3(pos, key0, key1, key2 common.Hash) common.Hash {
 	)
 }
 
-// nilToZero converts sets a pointer to the zero value if it is nil.
-func nilToZero[T any](ptr *T) *T {
-	if ptr == nil {
-		return new(T)
-	}
-	return ptr
-}
-
 // zeroHashFunc implements a [vm.GetHashFunc] that always returns the zero hash.
 func zeroHashFunc(uint64) common.Hash {
 	return w3.Hash0
