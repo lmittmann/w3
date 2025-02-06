@@ -62,7 +62,7 @@ func New(opts ...Option) (*VM, error) {
 		vm.db, _ = state.New(w3.Hash0, db)
 	}
 	for addr, acc := range vm.opts.preState {
-		vm.db.SetNonce(addr, acc.Nonce)
+		vm.db.SetNonce(addr, acc.Nonce, tracing.NonceChangeGenesis)
 		if acc.Balance != nil {
 			vm.db.SetBalance(addr, uint256.MustFromBig(acc.Balance), tracing.BalanceIncreaseGenesisBalance)
 		}
@@ -219,7 +219,7 @@ func (vm *VM) Nonce(addr common.Address) (uint64, error) {
 
 // SetNonce sets the nonce of the given address.
 func (vm *VM) SetNonce(addr common.Address, nonce uint64) {
-	vm.db.SetNonce(addr, nonce)
+	vm.db.SetNonce(addr, nonce, tracing.NonceChangeUnspecified)
 }
 
 // Balance returns the balance of the given address.
@@ -345,15 +345,27 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 	}, nil
 }
 
-func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
+func newBlockContext(config *params.ChainConfig, h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
 	var random *common.Hash
 	if h.Difficulty == nil || h.Difficulty.Sign() == 0 {
 		random = &h.MixDigest
 	}
 
+	blockNumber := h.Number
+	if blockNumber == nil {
+		blockNumber = new(big.Int)
+	}
+	difficulty := h.Difficulty
+	if difficulty == nil {
+		difficulty = new(big.Int)
+	}
+	baseFee := h.BaseFee
+	if baseFee == nil {
+		baseFee = new(big.Int)
+	}
 	var blobBaseFee *big.Int
 	if h.ExcessBlobGas != nil {
-		blobBaseFee = eip4844.CalcBlobFee(*h.ExcessBlobGas)
+		blobBaseFee = eip4844.CalcBlobFee(config, h)
 	}
 
 	return &vm.BlockContext{
@@ -361,10 +373,10 @@ func newBlockContext(h *types.Header, getHash vm.GetHashFunc) *vm.BlockContext {
 		Transfer:    core.Transfer,
 		GetHash:     getHash,
 		Coinbase:    h.Coinbase,
-		BlockNumber: nilToZero(h.Number),
+		BlockNumber: blockNumber,
 		Time:        h.Time,
-		Difficulty:  nilToZero(h.Difficulty),
-		BaseFee:     nilToZero(h.BaseFee),
+		Difficulty:  difficulty,
+		BaseFee:     baseFee,
 		BlobBaseFee: blobBaseFee,
 		GasLimit:    h.GasLimit,
 		Random:      random,
@@ -462,7 +474,7 @@ func (opts *options) Init() error {
 
 	if opts.blockCtx == nil {
 		if opts.header != nil {
-			opts.blockCtx = newBlockContext(opts.header, fetcherHashFunc(opts.fetcher))
+			opts.blockCtx = newBlockContext(opts.chainConfig, opts.header, fetcherHashFunc(opts.fetcher))
 		} else {
 			opts.blockCtx = defaultBlockContext()
 		}
