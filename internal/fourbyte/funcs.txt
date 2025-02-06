@@ -56,6 +56,11 @@ factory()	address
 fee()	uint24
 feeGrowthGlobal0X128()	uint256
 feeGrowthGlobal1X128()	uint256
+fillQuoteEthToToken(address buyTokenAddress, address target, bytes swapCallData, uint256 feeAmount)
+fillQuoteTokenToEth(address sellTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feePercentageBasisPoints)
+fillQuoteTokenToEthWithPermit(address sellTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feePercentageBasisPoints, (uint256 value, uint256 nonce, uint256 deadline, bool isDaiStylePermit, uint8 v, bytes32 r, bytes32 s) permitData)
+fillQuoteTokenToToken(address sellTokenAddress, address buyTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feeAmount)
+fillQuoteTokenToTokenWithPermit(address sellTokenAddress, address buyTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feeAmount, (uint256 value, uint256 nonce, uint256 deadline, bool isDaiStylePermit, uint8 v, bytes32 r, bytes32 s) permitData)
 flash(address recipient, uint256 amount0, uint256 amount1, bytes data)
 geometric_mean(uint256[3] x)	uint256
 get_address(uint256 idx)	address
@@ -93,7 +98,7 @@ increaseAllowance(address spender, uint256 addedValue)	bool success
 initialize(address token0, address token1)
 isApprovedForAll(address owner, address operator)	bool
 isSolver(address)	bool
-isValidSignature(bytes32 hash, bytes data)	magic bytes4
+isValidSignature(bytes32 hash, bytes data)	bytes4 magic
 kLast()	uint256
 latestRoundData()	uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
 liquidity()	uint128
@@ -166,6 +171,7 @@ swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] path, ad
 swapExactTokensForETHSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)
 swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)	uint256[] amounts
 swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)
+swapTargets(address)	bool
 swapTokensForExactETH(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)	uint256[] amounts
 swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)	uint256[] amounts
 symbol()	string
@@ -187,8 +193,11 @@ transferTokens((address from, address receiver, address[] tokens, uint256[] amou
 uniswapV3Swap(uint256 amount, uint256 minReturn, uint256[] pools)	uint256 returnAmount
 uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
 updatedAt()	uint256
+updateSwapTargets(address target, bool add)
 version()	uint256
 wad_exp(int256 power)	uint256
 WETH()	address
 withdraw(uint256)
+withdrawEth(address to, uint256 amount)
+withdrawToken(address token, address to, uint256 amount)
 wrapAll()

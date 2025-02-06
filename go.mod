@@ -6,10 +6,10 @@ toolchain go1.23.4
 
 require (
 	github.com/charmbracelet/lipgloss v1.0.0
-	github.com/ethereum/go-ethereum v1.14.6-0.20250125235314-f0e8a3e9c8a5
+	github.com/ethereum/go-ethereum v1.15.0
 	github.com/google/go-cmp v0.6.0
 	github.com/holiman/uint256 v1.3.2
-	golang.org/x/time v0.9.0
+	golang.org/x/time v0.10.0
 )
 
 require (
