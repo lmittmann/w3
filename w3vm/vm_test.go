@@ -863,8 +863,7 @@ func BenchmarkTransferWETH9(b *testing.B) {
 				SkipNonceChecks:  false,
 				SkipFromEOACheck: false,
 			}
-			txCtx := core.NewEVMTxContext(msg)
-			evm := vm.NewEVM(blockCtx, txCtx, stateDB, params.AllEthashProtocolChanges, vm.Config{NoBaseFee: true})
+			evm := vm.NewEVM(blockCtx, stateDB, params.AllEthashProtocolChanges, vm.Config{NoBaseFee: true})
 			gp := new(core.GasPool).AddGas(math.MaxUint64)
 			_, err := core.ApplyMessage(evm, msg, gp)
 			if err != nil {
