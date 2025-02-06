@@ -239,7 +239,7 @@ func renderOutput(fn *w3.Func, output []byte, styler func(addr common.Address) l
 	return renderRawOutput(output, styler)
 }
 
-func renderRevert(err error, output []byte, decodeABI bool) string {
+func renderRevert(revertErr error, output []byte, decodeABI bool) string {
 	if decodeABI && len(output) >= 4 {
 		sig := ([4]byte)(output[:4])
 		fn, isPrecompile := fourbyte.Function(sig, w3.Addr0)
@@ -247,11 +247,11 @@ func renderRevert(err error, output []byte, decodeABI bool) string {
 			args, err := fn.Args.Unpack(output)
 			if err == nil {
 				funcName := strings.Split(fn.Signature, "(")[0]
-				return fmt.Sprintf("%s: %s(%s)", err, funcName, renderAbiArgs(fn.Args, args, nil))
+				return fmt.Sprintf("%s: %s(%s)", revertErr, funcName, renderAbiArgs(fn.Args, args, nil))
 			}
 		}
 	}
-	return fmt.Sprintf("%s: %x", err, output)
+	return fmt.Sprintf("%s: %x", revertErr, output)
 }
 
 func renderRawInput(input []byte, styler func(addr common.Address) lipgloss.Style) (s string) {
