@@ -2,8 +2,6 @@ module github.com/lmittmann/w3
 
 go 1.22.0
 
-toolchain go1.23.4
-
 require (
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/ethereum/go-ethereum v1.15.0
