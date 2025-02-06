@@ -21,6 +21,7 @@ claimMintReward()
 claimMintRewardAndShare(address other, uint256 pct)
 claimMintRewardAndStake(uint256 pct, uint256 term)
 coins(uint256 i)	address
+ContractLocked()
 createPair(address tokenA, address tokenB)	address pair
 crossLmTick(int24 tick, bool zeroForOne)
 cumulativeSum()	uint256
@@ -44,6 +45,7 @@ ERC721InvalidReceiver(address receiver)
 ERC721InvalidSender(address sender)
 ERC721NonexistentToken(uint256 tokenId)
 Error(string)
+ETHNotAccepted()
 exchange(int128 i, int128 j, uint256 dx, uint256 min_dy)
 exchange(int128 i, int128 j, uint256 dx, uint256 min_dy, address receiver)
 exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy)
@@ -52,6 +54,7 @@ exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth, address
 exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy)
 execute(bytes commands, bytes[] inputs)
 execute(bytes commands, bytes[] inputs, uint256 deadline)
+ExecutionFailed(uint256 commandIndex, bytes message)
 factory()	address
 fee()	uint24
 feeGrowthGlobal0X128()	uint256
@@ -62,6 +65,7 @@ fillQuoteTokenToEthWithPermit(address sellTokenAddress, address target, bytes sw
 fillQuoteTokenToToken(address sellTokenAddress, address buyTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feeAmount)
 fillQuoteTokenToTokenWithPermit(address sellTokenAddress, address buyTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feeAmount, (uint256 value, uint256 nonce, uint256 deadline, bool isDaiStylePermit, uint8 v, bytes32 r, bytes32 s) permitData)
 flash(address recipient, uint256 amount0, uint256 amount1, bytes data)
+FromAddressIsNotOwner()
 geometric_mean(uint256[3] x)	uint256
 get_address(uint256 idx)	address
 get_dy(int128 i, int128 j, uint256 amount)	uint256
@@ -96,6 +100,14 @@ hasRole(bytes32 role, address account)	bool
 implementation()	address
 increaseAllowance(address spender, uint256 addedValue)	bool success
 initialize(address token0, address token1)
+InsufficientETH()
+InsufficientToken()
+InvalidBips()
+InvalidCommandType(uint256 commandType)
+InvalidOwnerERC1155()
+InvalidOwnerERC721()
+InvalidPath()
+InvalidReserves()
 isApprovedForAll(address owner, address operator)	bool
 isSolver(address)	bool
 isValidSignature(bytes32 hash, bytes data)	bytes4 magic
@@ -112,10 +124,12 @@ mint(uint256)
 mint_relative(address to, uint256 frac)	uint256
 name()	string
 newton_D(uint256 ANN, uint256 gamma, uint256[3] x_unsorted, uint256 K0_prev)	uint256
+NoSlice()
 onERC721Received(address operator, address from, uint256 tokenId, bytes data)	bytes4
 owner()	address
 ownerOf(uint256 tokenId)	address
 pancakeV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
+Panic(uint256)
 paused()	bool
 permit(address owner, ((address token, uint160 amount, uint48 expiration, uint48 nonce)[] details, address spender, uint256 sigDeadline) permitBatch, bytes signature)
 permit(address owner, address spender, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
@@ -151,6 +165,8 @@ settleInternal((address taker, address receiver, uint256 expiry, uint256 nonce, 
 settleInternalWithPermitsSignatures((address taker, address receiver, uint256 expiry, uint256 nonce, address executor, uint16 minFillPercent, bytes32 hooksHash, address[] sellTokens, address[] buyTokens, uint256[] sellAmounts, uint256[] buyAmounts, uint256[] sellNFTIds, uint256[] buyNFTIds, bytes sellTokenTransfers, bytes buyTokenTransfers) order, (uint8 type, bytes signatureBytes) signature, (bytes[] permitSignatures, bytes signatureBytesPermit2, uint48[] noncesPermit2, uint48 deadline) takerPermitsInfo, ((bool result, address to, uint256 value, bytes data)[] beforeSettle, (bool result, address to, uint256 value, bytes data)[] afterSettle) hooks, (uint256[] increasedBuyAmounts, uint16 curFillPercent) makerData)
 settleWithPermitsSignatures((address taker, address receiver, uint256 expiry, uint256 nonce, address executor, uint16 minFillPercent, bytes32 hooksHash, address[] sellTokens, address[] buyTokens, uint256[] sellAmounts, uint256[] buyAmounts, uint256[] sellNFTIds, uint256[] buyNFTIds, bytes sellTokenTransfers, bytes buyTokenTransfers) order, (uint8 type, bytes signatureBytes) signature, (bytes[] permitSignatures, bytes signatureBytesPermit2, uint48[] noncesPermit2, uint48 deadline) takerPermitsInfo, (bool result, address to, uint256 value, bytes data)[] interactions, ((bool result, address to, uint256 value, bytes data)[] beforeSettle, (bool result, address to, uint256 value, bytes data)[] afterSettle) hooks, (address balanceRecipient, uint16 curFillPercent) solverData)
 skim(address to)
+SliceOutOfBounds()
+SliceOverflow()
 slot0()	(uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)
 stake(uint256 amount, uint256 term)
 supportsInterface(bytes4)	bool
@@ -177,12 +193,17 @@ swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path,
 symbol()	string
 sync()
 tickSpacing()	int24
+ToAddressOutOfBounds()
+ToAddressOverflow()
 token()	address
 token0()	address
 token1()	address
 tokenURI(uint256 tokenId)	string
 totalShares()	uint256
 totalSupply()	uint256
+ToUint24OutOfBounds()
+ToUint24Overflow()
+TransactionDeadlinePassed()
 transfer(address to, uint256 amount)	bool success
 transferFrom((address from, address to, uint160 amount, address token)[] transferDetails)
 transferFrom(address from, address to, uint160 amount, address token)
@@ -190,10 +211,20 @@ transferFrom(address from, address to, uint256 amount)	bool success
 transferFromAccounts((address account, address token, uint256 amount, bytes32 balance)[])
 transferOwnership(address newOwner)
 transferTokens((address from, address receiver, address[] tokens, uint256[] amounts, uint256[] nftIds, bytes tokenTransferTypes, uint16 fillPercent) transferData)
+UnableToClaim()
 uniswapV3Swap(uint256 amount, uint256 minReturn, uint256[] pools)	uint256 returnAmount
 uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
+UnsafeCast()
 updatedAt()	uint256
 updateSwapTargets(address target, bool add)
+V2InvalidPath()
+V2TooLittleReceived()
+V2TooMuchRequested()
+V3InvalidAmountOut()
+V3InvalidCaller()
+V3InvalidSwap()
+V3TooLittleReceived()
+V3TooMuchRequested()
 version()	uint256
 wad_exp(int256 power)	uint256
 WETH()	address
