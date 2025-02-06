@@ -150,11 +150,7 @@ func (c *callTracer) ExitHook(depth int, output []byte, gasUsed uint64, err erro
 	}
 
 	if reverted {
-		reason, unpackErr := abi.UnpackRevert(output)
-		if unpackErr != nil {
-			reason = hex.EncodeToString(output)
-		}
-		fmt.Fprintf(c.w, "%s%s\n", renderIdent(c.callStack, c.opts.targetStyler, -1), styleRevert.Render(fmt.Sprintf("[%d]", gasUsed), err.Error()+":", reason))
+		fmt.Fprintf(c.w, "%s%s\n", renderIdent(c.callStack, c.opts.targetStyler, -1), styleRevert.Render(fmt.Sprintf("[%d]", gasUsed), renderRevert(err, output, c.opts.DecodeABI)))
 	} else {
 		fmt.Fprintf(c.w, "%s[%d] %s\n", renderIdent(c.callStack, c.opts.targetStyler, -1), gasUsed, renderOutput(call.Func, output, c.opts.targetStyler))
 	}
@@ -243,6 +239,21 @@ func renderOutput(fn *w3.Func, output []byte, styler func(addr common.Address) l
 	return renderRawOutput(output, styler)
 }
 
+func renderRevert(err error, output []byte, decodeABI bool) string {
+	if decodeABI && len(output) >= 4 {
+		sig := ([4]byte)(output[:4])
+		fn, isPrecompile := fourbyte.Function(sig, w3.Addr0)
+		if fn != nil && !isPrecompile {
+			args, err := fn.Args.Unpack(output)
+			if err == nil {
+				funcName := strings.Split(fn.Signature, "(")[0]
+				return fmt.Sprintf("%s: %s(%s)", err, funcName, renderAbiArgs(fn.Args, args, nil))
+			}
+		}
+	}
+	return fmt.Sprintf("%s: %x", err, output)
+}
+
 func renderRawInput(input []byte, styler func(addr common.Address) lipgloss.Style) (s string) {
 	s = "0x"
 	if len(input)%32 == 4 {
@@ -314,6 +325,10 @@ func renderAbiArgs(args abi.Arguments, vals []any, styler func(addr common.Addre
 func renderAbiTyp(typ *abi.Type, name string, val any, styler func(addr common.Address) lipgloss.Style) (s string) {
 	if name != "" {
 		s += styleDim.Render(name+":") + " "
+	}
+
+	if styler == nil {
+		styler = func(addr common.Address) lipgloss.Style { return lipgloss.NewStyle() }
 	}
 
 	switch val := val.(type) {
