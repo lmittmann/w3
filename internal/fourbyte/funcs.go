@@ -115,6 +115,7 @@ var functions = map[[4]byte]*w3.Func{
 	{0x7f, 0xf3, 0x6a, 0xb5}: w3.MustNewFunc("swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline)", "uint256[] amounts"),
 	{0x81, 0xd1, 0x8d, 0x87}: w3.MustNewFunc("wad_exp(int256 power)", "uint256"),
 	{0x83, 0xc4, 0xa1, 0x9d}: w3.MustNewFunc("swapTargets(address)", "bool"),
+	{0x84, 0x9e, 0xaf, 0x98}: w3.MustNewFunc("V2TooLittleReceived()", ""),
 	{0x85, 0xf8, 0xc2, 0x59}: w3.MustNewFunc("getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)", "uint256 amountIn"),
 	{0x87, 0x52, 0x8f, 0x13}: w3.MustNewFunc("settle((address taker, address receiver, uint256 expiry, uint256 nonce, address executor, uint16 minFillPercent, bytes32 hooksHash, address[] sellTokens, address[] buyTokens, uint256[] sellAmounts, uint256[] buyAmounts, uint256[] sellNFTIds, uint256[] buyNFTIds, bytes sellTokenTransfers, bytes buyTokenTransfers) order, (uint8 type, bytes signatureBytes) signature, (bool result, address to, uint256 value, bytes data)[] interactions, ((bool result, address to, uint256 value, bytes data)[] beforeSettle, (bool result, address to, uint256 value, bytes data)[] afterSettle) hooks, (address balanceRecipient, uint16 curFillPercent) solverData)", ""),
 	{0x88, 0x03, 0xdb, 0xee}: w3.MustNewFunc("swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)", "uint256[] amounts"),

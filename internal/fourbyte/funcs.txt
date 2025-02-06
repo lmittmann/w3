@@ -194,6 +194,7 @@ uniswapV3Swap(uint256 amount, uint256 minReturn, uint256[] pools)	uint256 return
 uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
 updatedAt()	uint256
 updateSwapTargets(address target, bool add)
+V2TooLittleReceived()
 version()	uint256
 wad_exp(int256 power)	uint256
 WETH()	address
