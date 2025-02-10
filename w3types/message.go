@@ -139,7 +139,7 @@ func (msg *Message) MarshalJSON() ([]byte, error) {
 		enc.Value = (*hexutil.Big)(msg.Value)
 	}
 	if len(msg.Input) > 0 {
-		enc.Input = msg.Input
+		enc.Data = msg.Input
 	}
 	if len(msg.AccessList) > 0 {
 		enc.AccessList = msg.AccessList
