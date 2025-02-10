@@ -108,7 +108,8 @@ type message struct {
 	GasTipCap     *hexutil.Big     `json:"maxPriorityFeePerGas,omitempty"`
 	Gas           hexutil.Uint64   `json:"gas,omitempty"`
 	Value         *hexutil.Big     `json:"value,omitempty"`
-	Input         hexutil.Bytes    `json:"data,omitempty"`
+	Input         hexutil.Bytes    `json:"input,omitempty"`
+	Data          hexutil.Bytes    `json:"data,omitempty"`
 	AccessList    types.AccessList `json:"accessList,omitempty"`
 	BlobGasFeeCap *hexutil.Big     `json:"maxFeePerBlobGas,omitempty"`
 	BlobHashes    []common.Hash    `json:"blobVersionedHashes,omitempty"`
@@ -138,7 +139,7 @@ func (msg *Message) MarshalJSON() ([]byte, error) {
 		enc.Value = (*hexutil.Big)(msg.Value)
 	}
 	if len(msg.Input) > 0 {
-		enc.Input = msg.Input
+		enc.Data = msg.Input
 	}
 	if len(msg.AccessList) > 0 {
 		enc.AccessList = msg.AccessList
@@ -179,6 +180,8 @@ func (msg *Message) UnmarshalJSON(data []byte) error {
 	}
 	if len(dec.Input) > 0 {
 		msg.Input = dec.Input
+	} else if len(dec.Data) > 0 {
+		msg.Input = dec.Data
 	}
 	if len(dec.AccessList) > 0 {
 		msg.AccessList = dec.AccessList
