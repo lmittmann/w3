@@ -196,7 +196,7 @@ func (f *rpcFetcher) call(calls ...w3types.RPCCaller) error {
 // the fetched state on disk in the testdata directory of the tests package.
 func NewTestingRPCFetcher(tb testing.TB, chainID uint64, client *w3.Client, blockNumber *big.Int) Fetcher {
 	if ok := isTbInMod(getTbFilepath(tb)); !ok {
-		panic("must be called from a test in a module")
+		panic("NewTestingRPCFetcher: must be called from a test in a module")
 	}
 
 	fetcher := newRPCFetcher(client, blockNumber)
