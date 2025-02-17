@@ -328,20 +328,21 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 	}
 
 	return &core.Message{
-		To:               msg.To,
-		From:             msg.From,
-		Nonce:            nonce,
-		Value:            value,
-		GasLimit:         gasLimit,
-		GasPrice:         gasPrice,
-		GasFeeCap:        gasFeeCap,
-		GasTipCap:        gasTipCap,
-		Data:             input,
-		AccessList:       msg.AccessList,
-		BlobGasFeeCap:    msg.BlobGasFeeCap,
-		BlobHashes:       msg.BlobHashes,
-		SkipNonceChecks:  skipAccChecks,
-		SkipFromEOACheck: skipAccChecks,
+		To:                    msg.To,
+		From:                  msg.From,
+		Nonce:                 nonce,
+		Value:                 value,
+		GasLimit:              gasLimit,
+		GasPrice:              gasPrice,
+		GasFeeCap:             gasFeeCap,
+		GasTipCap:             gasTipCap,
+		Data:                  input,
+		AccessList:            msg.AccessList,
+		BlobGasFeeCap:         msg.BlobGasFeeCap,
+		BlobHashes:            msg.BlobHashes,
+		SetCodeAuthorizations: msg.SetCodeAuthorizations,
+		SkipNonceChecks:       skipAccChecks,
+		SkipFromEOACheck:      skipAccChecks,
 	}, nil
 }
 
