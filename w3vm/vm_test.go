@@ -661,6 +661,96 @@ func TestVM_Fetcher(t *testing.T) {
 	}
 }
 
+func TestVM_BaseFee(t *testing.T) {
+	// contract that returns GASPRICE
+	code := w3.B("3a", "5f", "52", "6020", "5f", "f3")
+	codeAddr := common.Address{0xc0, 0xde}
+
+	preState := w3types.State{
+		codeAddr: {Code: code},
+		w3.Addr0: {Balance: w3.I("1000 ether")},
+	}
+
+	tests := []struct {
+		Name         string
+		Msg          *w3types.Message
+		Opts         []w3vm.Option
+		WantGasPrice *big.Int
+		WantErr      error
+	}{
+		{
+			Name:         "BaseFee0_GasPrice",
+			Msg:          &w3types.Message{To: &codeAddr, GasPrice: big.NewInt(10)},
+			Opts:         []w3vm.Option{},
+			WantGasPrice: big.NewInt(10),
+		},
+		{
+			Name:         "BasFee1_GasPrice",
+			Msg:          &w3types.Message{To: &codeAddr, GasPrice: big.NewInt(10)},
+			Opts:         []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(1)})},
+			WantGasPrice: big.NewInt(10),
+		},
+		{
+			Name:    "BasFee100_GasPrice",
+			Msg:     &w3types.Message{To: &codeAddr, GasPrice: big.NewInt(10)},
+			Opts:    []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(100)})},
+			WantErr: core.ErrFeeCapTooLow,
+		},
+		{
+			Name:         "NoBasFee100_GasPrice",
+			Msg:          &w3types.Message{To: &codeAddr, GasPrice: big.NewInt(10)},
+			Opts:         []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(100)}), w3vm.WithNoBaseFee()},
+			WantGasPrice: big.NewInt(0),
+		},
+
+		{
+			Name:         "BaseFee0_GasFeeCap",
+			Msg:          &w3types.Message{To: &codeAddr, GasFeeCap: big.NewInt(10)},
+			Opts:         []w3vm.Option{},
+			WantGasPrice: big.NewInt(0),
+		},
+		{
+			Name:         "BaseFee0_GasFeeCap_GasTipCap",
+			Msg:          &w3types.Message{To: &codeAddr, GasFeeCap: big.NewInt(10), GasTipCap: big.NewInt(5)},
+			Opts:         []w3vm.Option{},
+			WantGasPrice: big.NewInt(5),
+		},
+		{
+			Name:         "BaseFee1_GasFeeCap",
+			Msg:          &w3types.Message{To: &codeAddr, GasFeeCap: big.NewInt(10)},
+			Opts:         []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(1)})},
+			WantGasPrice: big.NewInt(1),
+		},
+		{
+			Name:    "BaseFee100_GasFeeCap",
+			Msg:     &w3types.Message{To: &codeAddr, GasFeeCap: big.NewInt(10)},
+			Opts:    []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(100)})},
+			WantErr: core.ErrFeeCapTooLow,
+		},
+		{
+			Name:         "NoBasFee100_GasFeeCap",
+			Msg:          &w3types.Message{To: &codeAddr, GasFeeCap: big.NewInt(10)},
+			Opts:         []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(100)}), w3vm.WithNoBaseFee()},
+			WantGasPrice: big.NewInt(0),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			vm, _ := w3vm.New(append(test.Opts, w3vm.WithState(preState))...)
+			receipt, gotErr := vm.Apply(test.Msg)
+			if !errors.Is(gotErr, test.WantErr) {
+				t.Fatalf("Error: want %v, got %v", test.WantErr, gotErr)
+			} else if receipt == nil {
+				return
+			}
+			if gotGasPrice := new(big.Int).SetBytes(receipt.Output); test.WantGasPrice.Cmp(gotGasPrice) != 0 {
+				t.Fatalf("GasPrice: want %v, got %v", test.WantGasPrice, gotGasPrice)
+			}
+		})
+	}
+}
+
 type testFetcher struct{}
 
 func (f *testFetcher) Account(addr common.Address) (*types.StateAccount, error) {
