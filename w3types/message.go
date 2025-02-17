@@ -165,14 +165,17 @@ func (msg *Message) UnmarshalJSON(data []byte) error {
 	}
 	msg.To = dec.To
 	msg.Nonce = uint64(dec.Nonce)
-	if dec.GasPrice != nil {
-		msg.GasPrice = (*big.Int)(dec.GasPrice)
-	}
 	if dec.GasFeeCap != nil {
 		msg.GasFeeCap = (*big.Int)(dec.GasFeeCap)
 	}
 	if dec.GasTipCap != nil {
 		msg.GasTipCap = (*big.Int)(dec.GasTipCap)
+	}
+	if dec.GasPrice != nil {
+		msg.GasPrice = (*big.Int)(dec.GasPrice)
+		if msg.GasFeeCap == nil {
+			msg.GasFeeCap = msg.GasPrice
+		}
 	}
 	msg.Gas = uint64(dec.Gas)
 	if dec.Value != nil {
