@@ -44,7 +44,7 @@ type VM struct {
 
 // New creates a new VM, that is configured with the given options.
 func New(opts ...Option) (*VM, error) {
-	vm := &VM{opts: newOptions()}
+	vm := &VM{opts: new(options)}
 	for _, opt := range opts {
 		if opt == nil {
 			continue
@@ -425,10 +425,6 @@ type options struct {
 	precompiles vm.PrecompiledContracts
 }
 
-func newOptions() *options {
-	return &options{precompiles: make(vm.PrecompiledContracts)}
-}
-
 func (opt *options) Signer() types.Signer {
 	if opt.fetcher == nil {
 		return types.LatestSigner(opt.chainConfig)
@@ -524,8 +520,11 @@ func WithBlockContext(ctx *vm.BlockContext) Option {
 
 // WithPrecompile registers a precompile contract at the given address in the VM.
 func WithPrecompile(addr common.Address, contract vm.PrecompiledContract) Option {
-	return func(vm *VM) {
-		vm.opts.precompiles[addr] = contract
+	return func(v *VM) {
+		if v.opts.precompiles == nil {
+			v.opts.precompiles = make(vm.PrecompiledContracts)
+		}
+		v.opts.precompiles[addr] = contract
 	}
 }
 
