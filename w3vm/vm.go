@@ -44,7 +44,7 @@ type VM struct {
 
 // New creates a new VM, that is configured with the given options.
 func New(opts ...Option) (*VM, error) {
-	vm := &VM{opts: new(options)}
+	vm := &VM{opts: newOptions()}
 	for _, opt := range opts {
 		if opt == nil {
 			continue
@@ -423,6 +423,10 @@ type options struct {
 	tb              testing.TB
 
 	precompiles vm.PrecompiledContracts
+}
+
+func newOptions() *options {
+	return &options{precompiles: make(vm.PrecompiledContracts)}
 }
 
 func (opt *options) Signer() types.Signer {
