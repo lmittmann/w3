@@ -16,7 +16,7 @@ import (
 func TestAddPeer(t *testing.T) {
 	rpctest.RunTestCases(t, []rpctest.TestCase[bool]{
 		{
-			Golden:  "addPeer",
+			Golden:  "add_peer",
 			Call:    admin.AddPeer(enode.MustParse("enode://a979fb575495b8d6db44f750317d0f4622bf4c2aa3365d6af7c284339968eef29b69ad0dce72a4d8db5ebb4968de0e3bec910127f134779fbcb0cb6d3331163c@52.16.188.185:30303")),
 			WantRet: true,
 		},
@@ -26,7 +26,7 @@ func TestAddPeer(t *testing.T) {
 func TestRemovePeer(t *testing.T) {
 	rpctest.RunTestCases(t, []rpctest.TestCase[bool]{
 		{
-			Golden:  "removePeer",
+			Golden:  "remove_peer",
 			Call:    admin.RemovePeer(enode.MustParse("enode://a979fb575495b8d6db44f750317d0f4622bf4c2aa3365d6af7c284339968eef29b69ad0dce72a4d8db5ebb4968de0e3bec910127f134779fbcb0cb6d3331163c@52.16.188.185:30303")),
 			WantRet: true,
 		},
@@ -36,7 +36,7 @@ func TestRemovePeer(t *testing.T) {
 func TestAddTrustedPeer(t *testing.T) {
 	rpctest.RunTestCases(t, []rpctest.TestCase[bool]{
 		{
-			Golden:  "addTrustedPeer",
+			Golden:  "add_trusted_peer",
 			Call:    admin.AddTrustedPeer(enode.MustParse("enode://a979fb575495b8d6db44f750317d0f4622bf4c2aa3365d6af7c284339968eef29b69ad0dce72a4d8db5ebb4968de0e3bec910127f134779fbcb0cb6d3331163c@52.16.188.185:30303")),
 			WantRet: true,
 		},
@@ -46,7 +46,7 @@ func TestAddTrustedPeer(t *testing.T) {
 func TestRemoveTrustedPeer(t *testing.T) {
 	rpctest.RunTestCases(t, []rpctest.TestCase[bool]{
 		{
-			Golden:  "removeTrustedPeer",
+			Golden:  "remove_trusted_peer",
 			Call:    admin.RemoveTrustedPeer(enode.MustParse("enode://a979fb575495b8d6db44f750317d0f4622bf4c2aa3365d6af7c284339968eef29b69ad0dce72a4d8db5ebb4968de0e3bec910127f134779fbcb0cb6d3331163c@52.16.188.185:30303")),
 			WantRet: true,
 		},
@@ -56,7 +56,7 @@ func TestRemoveTrustedPeer(t *testing.T) {
 func TestNodeInfo(t *testing.T) {
 	rpctest.RunTestCases(t, []rpctest.TestCase[*admin.NodeInfoResponse]{
 		{
-			Golden: "nodeInfo",
+			Golden: "node_info",
 			Call:   admin.NodeInfo(),
 			WantRet: &admin.NodeInfoResponse{
 				Enode:      enode.MustParse("enode://44826a5d6a55f88a18298bca4773fca5749cdc3a5c9f308aa7d810e9b31123f3e7c5fba0b1d70aac5308426f47df2a128a6747040a3815cc7dd7167d03be320d@[::]:30303"),
