@@ -1,0 +1,48 @@
+# `admin`-Namespace
+
+List of supported RPC methods for `w3.Client` in the `admin`-namespace.
+
+## `admin_addPeer`
+`AddPeer` adds a new peer to the node's peer set and returns a bool indicating success.
+```go {3}
+var success bool
+client.Call(
+    admin.AddPeer(url).Returns(&success),
+)
+```
+
+## `admin_removePeer`
+`RemovePeer` removes a peer from the node's peer set and returns a bool indicating success.
+```go {3}
+var success bool
+client.Call(
+    admin.RemovePeer(url).Returns(&success),
+)
+```
+
+## `admin_addTrustedPeer`
+`AddTrustedPeer` adds a new trusted peer to the node's trusted peer set and returns a bool indicating success.
+```go {3}
+var success bool
+client.Call(
+    admin.AddTrustedPeer(url).Returns(&success),
+)
+```
+
+## `admin_removeTrustedPeer`
+`RemoveTrustedPeer` removes a trusted peer from the node's trusted peer set and returns a bool indicating success.
+```go {3}
+var success bool
+client.Call(
+    admin.RemoveTrustedPeer(url).Returns(&success),
+)
+```
+
+## `admin_nodeInfo`
+`NodeInfo` returns information about the running node.
+```go {3}
+var nodeInfo *admin.NodeInfoResponse
+client.Call(
+    admin.NodeInfo().Returns(&nodeInfo),
+)
+```

@@ -210,6 +210,16 @@ List of supported RPC methods for [`w3.Client`](https://pkg.go.dev/github.com/lm
 | `txpool_contentFrom` | `txpool.ContentFrom(addr common.Address).Returns(resp **txpool.ContentFromResponse)`
 | `txpool_status`      | `txpool.Status().Returns(resp **txpool.StatusResponse)`
 
+### [`admin`](https://pkg.go.dev/github.com/lmittmann/w3/module/admin)
+
+| Method                    | Go Code
+| :------------------------ | :-------
+| `admin_addPeer`           | `admin.AddPeer(url *enode.Node).Returns(resp *bool)`
+| `admin_removePeer`        | `admin.RemovePeer(url *enode.Node).Returns(resp *bool)`
+| `admin_addTrustedPeer`    | `admin.AddTrustedPeer(url *enode.Node).Returns(resp *bool)`
+| `admin_removeTrustedPeer` | `admin.RemoveTrustedPeer(url *enode.Node).Returns(resp *bool)`
+| `admin_nodeInfo`          | `admin.NodeInfo().Returns(resp **admin.NodeInfoResponse)`
+
 ### [`web3`](https://pkg.go.dev/github.com/lmittmann/w3/module/web3)
 
 | Method               | Go Code
