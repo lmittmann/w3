@@ -4,6 +4,7 @@ Package w3vm provides a VM for executing EVM messages.
 package w3vm
 
 import (
+	"cmp"
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
@@ -290,6 +291,9 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 	} else if gasLimit > maxGasLimit {
 		gasLimit = maxGasLimit
 	}
+	if gasLimit == 0 {
+		gasLimit = 15_000_000
+	}
 
 	var input []byte
 	if msg.Input == nil && msg.Func != nil {
@@ -302,30 +306,30 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		input = msg.Input
 	}
 
-	gasPrice := msg.GasPrice
-	if gasPrice == nil {
-		gasPrice = new(big.Int)
-	}
-	gasFeeCap := msg.GasFeeCap
-	if gasFeeCap == nil {
-		gasFeeCap = new(big.Int)
-	}
-	gasTipCap := msg.GasTipCap
-	if gasTipCap == nil {
-		gasTipCap = new(big.Int)
-	}
-
-	if baseFee := v.opts.blockCtx.BaseFee; baseFee != nil && baseFee.Sign() > 0 {
-		gasPrice.Add(baseFee, gasTipCap)
-		if gasPrice.Cmp(gasFeeCap) > 0 {
-			gasPrice = gasFeeCap
+	var gasPrice, gasFeeCap, gasTipCap *big.Int
+	if baseFee := v.opts.blockCtx.BaseFee; baseFee == nil {
+		gasPrice = cmp.Or(msg.GasPrice, w3.Big0)
+		gasFeeCap, gasTipCap = gasPrice, gasPrice
+	} else {
+		if msg.GasPrice != nil && msg.GasFeeCap == nil && msg.GasTipCap == nil {
+			gasPrice = msg.GasPrice
+			gasFeeCap, gasTipCap = gasPrice, gasPrice
+		} else {
+			gasFeeCap = cmp.Or(msg.GasFeeCap, w3.Big0)
+			gasTipCap = cmp.Or(msg.GasTipCap, w3.Big0)
+			gasPrice = new(big.Int).Add(baseFee, gasTipCap)
+			if gasPrice.Cmp(gasFeeCap) > 0 {
+				gasPrice = gasFeeCap
+			}
 		}
 	}
 
-	value := msg.Value
-	if value == nil {
-		value = new(big.Int)
+	if v.opts.noBaseFee {
+		gasFeeCap.SetInt64(0)
+		gasTipCap.SetInt64(0)
 	}
+
+	value := cmp.Or(msg.Value, w3.Big0)
 
 	return &core.Message{
 		To:                    msg.To,

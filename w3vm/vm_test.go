@@ -685,19 +685,19 @@ func TestVM_BaseFee(t *testing.T) {
 			WantGasPrice: big.NewInt(10),
 		},
 		{
-			Name:         "BasFee1_GasPrice",
+			Name:         "BaseFee1_GasPrice",
 			Msg:          &w3types.Message{To: &codeAddr, GasPrice: big.NewInt(10)},
 			Opts:         []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(1)})},
 			WantGasPrice: big.NewInt(10),
 		},
 		{
-			Name:    "BasFee100_GasPrice",
+			Name:    "BaseFee100_GasPrice",
 			Msg:     &w3types.Message{To: &codeAddr, GasPrice: big.NewInt(10)},
 			Opts:    []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(100)})},
 			WantErr: core.ErrFeeCapTooLow,
 		},
 		{
-			Name:         "NoBasFee100_GasPrice",
+			Name:         "NoBaseFee100_GasPrice",
 			Msg:          &w3types.Message{To: &codeAddr, GasPrice: big.NewInt(10)},
 			Opts:         []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(100)}), w3vm.WithNoBaseFee()},
 			WantGasPrice: big.NewInt(0),
@@ -728,7 +728,7 @@ func TestVM_BaseFee(t *testing.T) {
 			WantErr: core.ErrFeeCapTooLow,
 		},
 		{
-			Name:         "NoBasFee100_GasFeeCap",
+			Name:         "NoBaseFee100_GasFeeCap",
 			Msg:          &w3types.Message{To: &codeAddr, GasFeeCap: big.NewInt(10)},
 			Opts:         []w3vm.Option{w3vm.WithHeader(&types.Header{BaseFee: big.NewInt(100)}), w3vm.WithNoBaseFee()},
 			WantGasPrice: big.NewInt(0),
