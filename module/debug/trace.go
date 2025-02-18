@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
+	"github.com/lmittmann/w3/internal/hexutil"
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
 )
@@ -73,6 +74,26 @@ type Trace struct {
 	Failed     bool         `json:"failed"`
 	Output     []byte       `json:"returnValue"`
 	StructLogs []*StructLog `json:"structLogs"`
+}
+
+func (t *Trace) UnmarshalJSON(data []byte) error {
+	type trace struct {
+		Gas        uint64        `json:"gas"`
+		Failed     bool          `json:"failed"`
+		Output     hexutil.Bytes `json:"returnValue"`
+		StructLogs []*StructLog  `json:"structLogs"`
+	}
+
+	var dec trace
+	if err := json.Unmarshal(data, &dec); err != nil {
+		return err
+	}
+
+	t.Gas = dec.Gas
+	t.Failed = dec.Failed
+	t.Output = dec.Output
+	t.StructLogs = dec.StructLogs
+	return nil
 }
 
 type StructLog struct {
