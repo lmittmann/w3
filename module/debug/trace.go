@@ -37,26 +37,29 @@ func TraceTx(txHash common.Hash, config *TraceConfig) w3types.RPCCallerFactory[*
 }
 
 type TraceConfig struct {
-	Overrides     w3types.State // Override account state
-	EnableStack   bool          // Enable stack capture
-	EnableMemory  bool          // Enable memory capture
-	EnableStorage bool          // Enable storage capture
-	Limit         uint64        // Maximum number of StructLog's to capture (all if zero)
+	Overrides      w3types.State           // Override account state
+	BlockOverrides *w3types.BlockOverrides // Override block state
+	EnableStack    bool                    // Enable stack capture
+	EnableMemory   bool                    // Enable memory capture
+	EnableStorage  bool                    // Enable storage capture
+	Limit          uint64                  // Maximum number of StructLog's to capture (all if zero)
 }
 
 // MarshalJSON implements the [json.Marshaler].
 func (c *TraceConfig) MarshalJSON() ([]byte, error) {
 	type config struct {
-		Overrides        w3types.State `json:"stateOverrides,omitempty"`
-		DisableStorage   bool          `json:"disableStorage,omitempty"`
-		DisableStack     bool          `json:"disableStack,omitempty"`
-		EnableMemory     bool          `json:"enableMemory,omitempty"`
-		EnableReturnData bool          `json:"enableReturnData,omitempty"`
-		Limit            uint64        `json:"limit,omitempty"`
+		Overrides        w3types.State           `json:"stateOverrides,omitempty"`
+		BlockOverrides   *w3types.BlockOverrides `json:"blockOverrides,omitempty"`
+		DisableStorage   bool                    `json:"disableStorage,omitempty"`
+		DisableStack     bool                    `json:"disableStack,omitempty"`
+		EnableMemory     bool                    `json:"enableMemory,omitempty"`
+		EnableReturnData bool                    `json:"enableReturnData,omitempty"`
+		Limit            uint64                  `json:"limit,omitempty"`
 	}
 
 	return json.Marshal(config{
 		Overrides:        c.Overrides,
+		BlockOverrides:   c.BlockOverrides,
 		DisableStorage:   !c.EnableStorage,
 		DisableStack:     !c.EnableStack,
 		EnableMemory:     c.EnableMemory,
