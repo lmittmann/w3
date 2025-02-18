@@ -1,10 +1,8 @@
 package net_test
 
 import (
-	"math/big"
 	"testing"
 
-	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/net"
 	"github.com/lmittmann/w3/rpctest"
 )
@@ -20,11 +18,11 @@ func TestListening(t *testing.T) {
 }
 
 func TestPeerCount(t *testing.T) {
-	rpctest.RunTestCases(t, []rpctest.TestCase[*big.Int]{
+	rpctest.RunTestCases(t, []rpctest.TestCase[int]{
 		{
 			Golden:  "peerCount",
 			Call:    net.PeerCount(),
-			WantRet: w3.I("10"),
+			WantRet: 10,
 		},
 	})
 }

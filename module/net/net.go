@@ -4,8 +4,6 @@ Package net implements RPC API bindings for methods in the "net" namespace.
 package net
 
 import (
-	"math/big"
-
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
 )
@@ -19,8 +17,8 @@ func Listening() w3types.RPCCallerFactory[bool] {
 }
 
 // PeerCount returns the number of peers connected to the node.
-func PeerCount() w3types.RPCCallerFactory[*big.Int] {
-	return module.NewFactory[*big.Int](
+func PeerCount() w3types.RPCCallerFactory[int] {
+	return module.NewFactory[int](
 		"net_peerCount",
 		[]any{},
 	)
