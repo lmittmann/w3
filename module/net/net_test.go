@@ -20,7 +20,7 @@ func TestListening(t *testing.T) {
 func TestPeerCount(t *testing.T) {
 	rpctest.RunTestCases(t, []rpctest.TestCase[int]{
 		{
-			Golden:  "peerCount",
+			Golden:  "peer_count",
 			Call:    net.PeerCount(),
 			WantRet: 10,
 		},
