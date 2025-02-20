@@ -241,3 +241,12 @@ client.Call(
     eth.UncleCountByBlockNumber(number).Returns(&count),
 )
 ```
+
+## `eth_syncing`
+`Syncing` requests the syncing status of the node.
+```go {3}
+var syncing bool
+client.Call(
+    eth.Syncing().Returns(&syncing),
+)
+```
