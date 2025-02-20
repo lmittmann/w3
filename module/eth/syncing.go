@@ -5,6 +5,7 @@ import (
 	"github.com/lmittmann/w3/w3types"
 )
 
+// Syncing requests the syncing status of the node.
 func Syncing() w3types.RPCCallerFactory[bool] {
 	return module.NewFactory(
 		"eth_syncing",

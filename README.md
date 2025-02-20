@@ -194,6 +194,7 @@ List of supported RPC methods for [`w3.Client`](https://pkg.go.dev/github.com/lm
 | `eth_getUncleByBlockNumberAndIndex`       | `eth.UncleByBlockNumberAndIndex(number *big.Int, index uint).Returns(uncle **types.Header)`
 | `eth_getUncleCountByBlockHash`            | `eth.UncleCountByBlockHash(hash common.Hash).Returns(count *uint)`
 | `eth_getUncleCountByBlockNumber`          | `eth.UncleCountByBlockNumber(number *big.Int).Returns(count *uint)`
+| `eth_syncing`                             | `eth.Syncing().Returns(syncing *bool)`
 
 ### [`debug`](https://pkg.go.dev/github.com/lmittmann/w3/module/debug)
 
