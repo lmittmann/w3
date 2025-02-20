@@ -3,5 +3,6 @@ export default {
     debug: 'debug',
     txpool: 'txpool',
     admin: 'admin',
+    net: 'net',
     web3: 'web3',
 }

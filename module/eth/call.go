@@ -115,6 +115,11 @@ func (f *CallFuncFactory) Returns(returns ...any) w3types.RPCCaller {
 	return f
 }
 
+func (f *CallFuncFactory) From(from common.Address) *CallFuncFactory {
+	f.msg.From = from
+	return f
+}
+
 func (f *CallFuncFactory) Value(value *big.Int) *CallFuncFactory {
 	f.msg.Value = value
 	return f

@@ -220,6 +220,14 @@ List of supported RPC methods for [`w3.Client`](https://pkg.go.dev/github.com/lm
 | `admin_removeTrustedPeer` | `admin.RemoveTrustedPeer(url *enode.Node).Returns(resp *bool)`
 | `admin_nodeInfo`          | `admin.NodeInfo().Returns(resp **admin.NodeInfoResponse)`
 
+### [`net`](https://pkg.go.dev/github.com/lmittmann/w3/module/net)
+
+| Method               | Go Code
+| :------------------- | :-------
+| `net_listening`     | `net.Listening().Returns(resp *bool)`
+| `net_peerCount`     | `net.PeerCount().Returns(resp *int)`
+| `net_version`       | `net.Version().Returns(resp *int)`
+
 ### [`web3`](https://pkg.go.dev/github.com/lmittmann/w3/module/web3)
 
 | Method               | Go Code

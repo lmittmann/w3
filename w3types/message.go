@@ -180,7 +180,7 @@ func (msg *Message) UnmarshalJSON(data []byte) error {
 	}
 	if dec.GasPrice != nil {
 		msg.GasPrice = (*big.Int)(dec.GasPrice)
-		if msg.GasFeeCap == nil {
+		if msg.GasFeeCap == nil { // TODO: drop this logic here
 			msg.GasFeeCap = msg.GasPrice
 		}
 	}

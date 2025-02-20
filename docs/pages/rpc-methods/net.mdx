@@ -1,0 +1,30 @@
+# `net`-Namespace
+
+List of supported RPC methods for `w3.Client` in the `net`-namespace.
+
+## `net_listening`
+`Listening` returns whether the client is actively listening for network connections.
+```go {3}
+var listening bool
+client.Call(
+    net.Listening().Returns(&listening),
+)
+```
+
+## `net_peerCount`
+`PeerCount` returns the number of peers connected to the node.
+```go {3}
+var peerCount int
+client.Call(
+    net.PeerCount().Returns(&peerCount),
+)
+```
+
+## `net_version`
+`Version` returns the network ID (e.g. 1 for mainnet).
+```go {3}
+var version int
+client.Call(
+    net.Version().Returns(&version),
+)
+```
