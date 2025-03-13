@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/charmbracelet/lipgloss v1.0.0
-	github.com/ethereum/go-ethereum v1.15.3
+	github.com/ethereum/go-ethereum v1.15.5
 	github.com/google/go-cmp v0.7.0
 	github.com/holiman/uint256 v1.3.2
 	golang.org/x/time v0.10.0
