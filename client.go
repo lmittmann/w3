@@ -209,7 +209,7 @@ type Option func(*Client)
 
 // WithRateLimiter sets the rate limiter for the client. Set the optional argument
 // costFunc to nil to limit the number of requests. Supply a costFunc to limit
-// the the number of requests based on individual RPC calls for advanced rate
+// the number of requests based on individual RPC calls for advanced rate
 // limiting by e.g. Compute Units (CUs). Note that only if len(methods) > 1, the
 // calls are sent in a batch request.
 func WithRateLimiter(rl *rate.Limiter, costFunc func(methods []string) (cost int)) Option {
