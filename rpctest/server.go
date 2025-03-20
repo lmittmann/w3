@@ -13,7 +13,7 @@ import (
 )
 
 // Server is a fake RPC endpoint that responds only to a single requests that
-// is definded in a golden-file.
+// is defined in a golden-file.
 //
 // Request golden-files have the following format to define a single request
 // and the corresponding response:
