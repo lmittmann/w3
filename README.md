@@ -32,7 +32,7 @@ go get github.com/lmittmann/w3
 
 ```go
 // 1. Connect to an RPC endpoint
-client, err := w3.Dial("https://rpc.ankr.com/eth")
+client, err := w3.Dial("https://eth.llamarpc.com")
 if err != nil {
     // handle error
 }

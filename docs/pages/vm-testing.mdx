@@ -63,7 +63,7 @@ The state of the VM can be fully customized using the `w3vm.WithState` option. T
 If the tested Smart Contract interacts with other existing contracts, the VM can be configured to fork the state at a specific block number (or the latest block). This enables testing contracts in a real-world environment.
 
 ```go
-client := w3.MustDial("https://rpc.ankr.com/eth")
+client := w3.MustDial("https://eth.llamarpc.com")
 defer client.Close()
 
 vm, err := w3vm.New(
