@@ -252,15 +252,10 @@ func ExampleVM_prankZeroAddress() {
 		// ...
 	}
 
-	balZero, err := vm.Balance(w3.Addr0)
-	if err != nil {
-		// ...
-	}
-
 	_, err = vm.Apply(&w3types.Message{
 		From:  w3.Addr0,
 		To:    &addrA,
-		Value: balZero,
+		Value: w3.I("1.234 ether"),
 	})
 	if err != nil {
 		// ...
@@ -273,7 +268,7 @@ func ExampleVM_prankZeroAddress() {
 
 	fmt.Printf("Received %s ETH from zero address\n", w3.FromWei(balance, 18))
 	// Output:
-	// Received 13382.469642242461146443 ETH from zero address
+	// Received 1.234 ETH from zero address
 }
 
 // Trace calls (and opcodes) of a transaction.
