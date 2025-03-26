@@ -273,7 +273,7 @@ func ExampleVM_prankZeroAddress() {
 
 	fmt.Printf("Received %s ETH from zero address\n", w3.FromWei(balance, 18))
 	// Output:
-	// Received 13365.401185473565028721 ETH from zero address
+	// Received 13382.469642242461146443 ETH from zero address
 }
 
 // Trace calls (and opcodes) of a transaction.
