@@ -252,15 +252,10 @@ func ExampleVM_prankZeroAddress() {
 		// ...
 	}
 
-	balZero, err := vm.Balance(w3.Addr0)
-	if err != nil {
-		// ...
-	}
-
 	_, err = vm.Apply(&w3types.Message{
 		From:  w3.Addr0,
 		To:    &addrA,
-		Value: balZero,
+		Value: w3.I("1.234 ether"),
 	})
 	if err != nil {
 		// ...
@@ -273,7 +268,7 @@ func ExampleVM_prankZeroAddress() {
 
 	fmt.Printf("Received %s ETH from zero address\n", w3.FromWei(balance, 18))
 	// Output:
-	// Received 13365.401185473565028721 ETH from zero address
+	// Received 1.234 ETH from zero address
 }
 
 // Trace calls (and opcodes) of a transaction.
@@ -459,4 +454,33 @@ func FuzzWETHDeposit(f *testing.F) {
 			t.Fatalf("Invalid WETH balance: want %s, got %s", wantBalance, wethBalanceAfter)
 		}
 	})
+}
+
+func ExampleWETHBalanceSlot() {
+	addrC0fe := w3.A("0x000000000000000000000000000000000000c0Fe")
+	addrWETH := w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+	funcBalanceOf := w3.MustNewFunc("balanceOf(address)", "uint256")
+
+	vm, err := w3vm.New(
+		w3vm.WithFork(client, nil),
+		w3vm.WithState(w3types.State{
+			addrWETH: {
+				Storage: w3types.Storage{
+					w3vm.WETHBalanceSlot(addrC0fe): common.BigToHash(w3.I("100 ether")),
+				},
+			},
+		}),
+	)
+	if err != nil {
+		// ...
+	}
+
+	var balance *big.Int
+	err = vm.CallFunc(addrWETH, funcBalanceOf, addrC0fe).Returns(&balance)
+	if err != nil {
+		// ...
+	}
+	fmt.Printf("%s: %s WETH", addrC0fe, w3.FromWei(balance, 18))
+	// Output:
+	// 0x000000000000000000000000000000000000c0Fe: 100 WETH
 }
