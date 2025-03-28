@@ -12,7 +12,7 @@ import (
 var ErrSyntax = errors.New("syntax error")
 
 // Parse parses the given Solidity args and returns its arguments.
-func Parse(s string) (a Arguments, err error) {
+func Parse(s string, tuples ...any) (a Arguments, err error) {
 	l := newLexer(s)
 	p := newParser(l)
 
@@ -24,7 +24,7 @@ func Parse(s string) (a Arguments, err error) {
 
 // ParseWithName parses the given Solidity function/event signature and returns
 // its name and arguments.
-func ParseWithName(s string) (name string, a Arguments, err error) {
+func ParseWithName(s string, tuples ...any) (name string, a Arguments, err error) {
 	l := newLexer(s)
 	p := newParser(l)
 
