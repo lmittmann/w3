@@ -261,3 +261,46 @@ func TestParseArgsWithName(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkParseArgsWithName(b *testing.B) {
+	benchmarks := []struct {
+		Name  string
+		Input string
+	}{
+		{Name: "symbol", Input: "symbol()"},
+		{Name: "transfer", Input: "transfer(address,uint256)"},
+		{Name: "exactInputSingle", Input: "exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params)"},
+		{Name: "swap", Input: `swap(
+			(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key,
+			(bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params,
+			bytes hookData
+		)`},
+		{Name: "settle", Input: `settle(
+			address[] tokens,
+			uint256[] clearingPrices,
+			(
+				uint256 sellTokenIndex,
+				uint256 buyTokenIndex,
+				address receiver,
+				uint256 sellAmount,
+				uint256 buyAmount,
+				uint32 validTo,
+				bytes32 appData,
+				uint256 feeAmount,
+				uint256 flags,
+				uint256 executedAmount,
+				bytes signature
+			)[] trades,
+			(address target, uint256 value, bytes callData)[][3] interactions
+		)`},
+	}
+
+	for _, bench := range benchmarks {
+		b.Run(bench.Name, func(b *testing.B) {
+			b.ReportAllocs()
+			for range b.N {
+				ParseWithName(bench.Input)
+			}
+		})
+	}
+}
