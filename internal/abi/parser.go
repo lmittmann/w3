@@ -14,7 +14,7 @@ var ErrSyntax = errors.New("syntax error")
 // Parse parses the given Solidity args and returns its arguments.
 func Parse(s string, tuples ...any) (a Arguments, err error) {
 	l := newLexer(s)
-	p := newParser(l)
+	p := newParser(l, tuples)
 
 	if err := p.parseArgs(); err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrSyntax, err)
@@ -26,7 +26,7 @@ func Parse(s string, tuples ...any) (a Arguments, err error) {
 // its name and arguments.
 func ParseWithName(s string, tuples ...any) (name string, a Arguments, err error) {
 	l := newLexer(s)
-	p := newParser(l)
+	p := newParser(l, tuples)
 
 	if err := p.parseArgsWithName(); err != nil {
 		return "", nil, fmt.Errorf("%w: %v", ErrSyntax, err)
@@ -39,17 +39,21 @@ type parser struct {
 	items []*item
 	i     int
 
+	tuples   []any
+	tupleMap map[string]reflect.Type
+
 	name string
 	args abi.Arguments
 
 	err error
 }
 
-func newParser(lexer *lexer) *parser {
+func newParser(lexer *lexer, tuples []any) *parser {
 	return &parser{
-		lexer: lexer,
-		items: make([]*item, 0),
-		i:     -1,
+		lexer:  lexer,
+		items:  make([]*item, 0),
+		i:      -1,
+		tuples: tuples,
 	}
 }
 
@@ -110,6 +114,13 @@ func (p *parser) parseArgsWithName() error {
 }
 
 func (p *parser) parseArgs() error {
+	// parse tuples
+	tupleMap, err := tupleMap(p.tuples...)
+	if err != nil {
+		return err
+	}
+	p.tupleMap = tupleMap
+
 	if peek := p.peek(); (peek.Typ == itemTypeEOF && p.name == "") ||
 		(peek.Typ == itemTypePunct && peek.Val == ")" && p.name != "") {
 		return nil
