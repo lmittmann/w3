@@ -64,7 +64,6 @@ func BenchmarkVM(b *testing.B) {
 		blockI  int // block index
 		txI     int // tx index
 		block   = blocks[blockI]
-		tx      = block.Transactions()[txI]
 		vm, err = w3vm.New(
 			w3vm.WithFetcher(fetchers[blockI]),
 			w3vm.WithHeader(block.Header()),
@@ -88,7 +87,7 @@ func BenchmarkVM(b *testing.B) {
 				b.Fatalf("Failed to build VM for block %s: %v", block.Number(), err)
 			}
 		}
-		tx = block.Transactions()[txI]
+		tx := block.Transactions()[txI]
 
 		r, err := vm.ApplyTx(tx)
 		if r == nil {
