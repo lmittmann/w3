@@ -184,7 +184,7 @@ func prettyPrint(w io.Writer, cf *CallFrame, callStack []call, opts *PrintOption
 
 	// print call start
 	fmt.Fprint(w,
-		renderIdent(callStack, opts.targetStyler, 0),
+		renderIdent(callStack, opts.targetStyler, 1),
 		renderAddr(cf.To, opts.targetStyler),
 		" ",
 		renderCallType(byte(cf.Type)),
