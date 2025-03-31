@@ -197,6 +197,9 @@ func prettyPrint(w io.Writer, cf *CallFrame, callStack []call, opts *PrintOption
 	callStack = append(callStack, call{cf.Type, cf.To, fn})
 
 	for _, call := range cf.Calls {
+		if call.Type == vm.STATICCALL && !opts.ShowStaticcall {
+			continue
+		}
 		prettyPrint(w, call, callStack, opts)
 	}
 
