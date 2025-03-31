@@ -139,7 +139,7 @@ func (t *CallFrameTracer) onLog(log *types.Log) {
 	peek.Logs = append(peek.Logs, log)
 }
 
-type PrintConfig struct {
+type PrintOptions struct {
 	TargetStyler func(addr common.Address) lipgloss.Style
 	targetAddr   common.Address
 
@@ -149,36 +149,47 @@ type PrintConfig struct {
 	DecodeABI bool
 }
 
-func Print(cf *CallFrame, config *PrintConfig) {
-	Fprint(os.Stdout, cf, config)
+func (opts *PrintOptions) targetStyler(addr common.Address) lipgloss.Style {
+	if addr == opts.targetAddr {
+		addr = TargetAddress
+	}
+
+	if opts.TargetStyler == nil {
+		return defaultTargetStyler(addr)
+	}
+	return opts.TargetStyler(addr)
 }
 
-func Fprint(w io.Writer, cf *CallFrame, config *PrintConfig) {
-	config.targetAddr = cf.To
+func Print(cf *CallFrame, ops *PrintOptions) {
+	Fprint(os.Stdout, cf, ops)
+}
+
+func Fprint(w io.Writer, cf *CallFrame, opts *PrintOptions) {
+	opts.targetAddr = cf.To
 
 	callStack := make([]call, 0)
-	prettyPrint(w, cf, callStack, config)
+	prettyPrint(w, cf, callStack, opts)
 }
 
-func prettyPrint(w io.Writer, cf *CallFrame, callStack []call, config *PrintConfig) {
+func prettyPrint(w io.Writer, cf *CallFrame, callStack []call, opts *PrintOptions) {
 	var (
 		fn           *w3.Func
 		isPrecompile bool
 	)
 
-	if config.DecodeABI && len(cf.Input) >= 4 {
+	if opts.DecodeABI && len(cf.Input) >= 4 {
 		sig := ([4]byte)(cf.Input[:4])
 		fn, isPrecompile = fourbyte.Function(sig, cf.To)
 	}
 
 	// print call start
 	fmt.Fprint(w,
-		renderIdent(callStack, config.TargetStyler, 0),
-		renderAddr(cf.To, config.TargetStyler),
+		renderIdent(callStack, opts.targetStyler, 0),
+		renderAddr(cf.To, opts.targetStyler),
 		" ",
 		renderCallType(byte(cf.Type)),
-		renderValue(config.DecodeABI, cf.Value),
-		renderInput(fn, isPrecompile, cf.Input, config.TargetStyler),
+		renderValue(opts.DecodeABI, cf.Value),
+		renderInput(fn, isPrecompile, cf.Input, opts.targetStyler),
 		"\n",
 	)
 
@@ -186,23 +197,23 @@ func prettyPrint(w io.Writer, cf *CallFrame, callStack []call, config *PrintConf
 	callStack = append(callStack, call{cf.Type, cf.To, fn})
 
 	for _, call := range cf.Calls {
-		prettyPrint(w, call, callStack, config)
+		prettyPrint(w, call, callStack, opts)
 	}
 
 	// print call end
-	fmt.Fprint(w, renderIdent(callStack, config.TargetStyler, -1))
+	fmt.Fprint(w, renderIdent(callStack, opts.targetStyler, -1))
 	gasUsed := fmt.Sprintf("[%d]", cf.GasUsed)
 	if cf.Reverted {
 		fmt.Fprint(w,
 			styleRevert.Render(gasUsed),
 			" ",
-			renderRevert(cf.Err, cf.Output, config.DecodeABI),
+			renderRevert(cf.Err, cf.Output, opts.DecodeABI),
 		)
 	} else {
 		fmt.Fprint(w,
 			gasUsed,
 			" ",
-			renderOutput(fn, cf.Output, config.TargetStyler),
+			renderOutput(fn, cf.Output, opts.targetStyler),
 		)
 	}
 	fmt.Fprintln(w)
