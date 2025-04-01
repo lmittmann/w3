@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"math/big"
+
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -19,4 +21,14 @@ func compareErrors(x, y interface{}) bool {
 	xe := x.(error)
 	ye := y.(error)
 	return xe == nil && ye == nil || xe != nil && ye != nil && xe.Error() == ye.Error()
+}
+
+func OrCopy(vals ...*big.Int) *big.Int {
+	var zero *big.Int
+	for _, val := range vals {
+		if val != zero {
+			return new(big.Int).Set(val)
+		}
+	}
+	return zero
 }
