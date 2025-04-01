@@ -330,12 +330,13 @@ func ExampleVM_traceAccessList() {
 	// setup access list tracer
 	signer := types.MakeSigner(params.MainnetChainConfig, header.Number, header.Time)
 	from, _ := signer.Sender(tx)
-	accessListTracer := logger.NewAccessListTracer(
-		nil,
-		from, *tx.To(),
-		gethVm.ActivePrecompiles(params.MainnetChainConfig.Rules(header.Number, header.Difficulty.Sign() == 0, header.Time)),
-	)
+	addressesToExclude := map[common.Address]struct{}{from: {}, *tx.To(): {}}
+	activePrecompiles := gethVm.ActivePrecompiles(params.MainnetChainConfig.Rules(header.Number, header.Difficulty.Sign() == 0, header.Time))
+	for _, addr := range activePrecompiles {
+		addressesToExclude[addr] = struct{}{}
+	}
 
+	accessListTracer := logger.NewAccessListTracer(nil, addressesToExclude)
 	if _, err := vm.ApplyTx(tx, accessListTracer.Hooks()); err != nil {
 		// ...
 	}
