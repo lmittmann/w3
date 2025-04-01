@@ -3,34 +3,53 @@ acl()	address
 addLiquidity(address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline)	uint256 amountA, uint256 amountB, uint256 liquidity
 addLiquidityETH(address token, uint256 amountTokenDesired, uint256 amountTokenMin, uint256 amountETHMin, address to, uint256 deadline)	uint256 amountToken, uint256 amountETH, uint256 liquidity
 admin()	address
+afterAddLiquidity(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (int24 tickLower, int24 tickUpper, int256 liquidityDelta, bytes32 salt) params, int256 delta, int256 feesAccrued, bytes hookData)	bytes4, int256
+afterDonate(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, uint256 amount0, uint256 amount1, bytes hookData)	bytes4
+afterInitialize(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, uint160 sqrtPriceX96, int24 tick)	bytes4
+afterRemoveLiquidity(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (int24 tickLower, int24 tickUpper, int256 liquidityDelta, bytes32 salt) params, int256 delta, int256 feesAccrued, bytes hookData)	bytes4, int256
+afterSwap(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params, int256 delta, bytes hookData)	bytes4, int128
 allowance(address owner, address spender)	uint256
 allowance(address user, address token, address spender)	uint160 amount, uint48 expiration, uint48 nonce
 allPairsLength()	uint256
 approve(address spender, uint256 amount)	bool success
 balanceOf(address)	uint256
 batchSwap(uint8 swapKind, (bytes32 poolId, uint256 assetInIndex, uint256 assetOutIndex, uint256 amount, bytes data)[] swaps, address[] assets, (address sender, bool fromInternalBalance, address recipient, bool toInternalBalance) funds, int256[] limits, uint256 deadline)	int256[]
+beforeAddLiquidity(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (int24 tickLower, int24 tickUpper, int256 liquidityDelta, bytes32 salt) params, bytes hookData)	bytes4
+beforeDonate(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, uint256 amount0, uint256 amount1, bytes hookData)	bytes4
+beforeInitialize(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, uint160 sqrtPriceX96)	bytes4
+beforeRemoveLiquidity(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (int24 tickLower, int24 tickUpper, int256 liquidityDelta, bytes32 salt) params, bytes hookData)	bytes4
+beforeSwap(address sender, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params, bytes hookData)	bytes4, int256, uint24
+burn(address from, uint256 id, uint256 amount)
 burn(address user, uint256 amount)
 burn(uint256)
 burnAfterSeize(uint256 amount)	uint256
 burnFrom(address to, uint256 value)	bool
 buyAsset(uint256 minAmount, address receiver)	uint256, uint256
 buyAssetWithSig(address originator, uint256 minAmount, address receiver, uint256 deadline, bytes signature)	uint256, uint256
+buyGem(address usr, uint256 gemAmt)	uint256 daiInWad
+buyGemNoFee(address usr, uint256 gemAmt)	uint256 daiInWad
 cancelOrderRFQ(uint256 orderInfo)
 canPerform(bytes32 actionId, address account, address where)	bool
 cbrt(uint256 x)	uint256
+chug()	uint256 wad
 claimMintReward()
 claimMintRewardAndShare(address other, uint256 pct)
 claimMintRewardAndStake(uint256 pct, uint256 term)
+clear(address currency, uint256 amount)
 coins(uint256 i)	address
+collectProtocolFees(address recipient, address currency, uint256 amount)	uint256 amountCollected
 ContractLocked()
 createPair(address tokenA, address tokenB)	address pair
 crossLmTick(int24 tick, bool zeroForOne)
 cumulativeSum()	uint256
+cut()	uint256 wad
+dec()	uint256
 decimals()	uint8
 decreaseAllowance(address spender, uint256 subtractedValue)	bool success
 deposit()
 description()	string
 DOMAIN_SEPARATOR()	bytes32
+donate((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, uint256 amount0, uint256 amount1, bytes hookData)	int256 delta
 ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed)
 ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed)
 ERC20InvalidApprover(address approver)
@@ -56,10 +75,16 @@ exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy)
 execute(bytes commands, bytes[] inputs)
 execute(bytes commands, bytes[] inputs, uint256 deadline)
 ExecutionFailed(uint256 commandIndex, bytes message)
+extsload(bytes32 slot)	bytes32 value
+extsload(bytes32 startSlot, uint256 nSlots)	bytes32[] values
+extsload(bytes32[] slots)	bytes32[] values
+exttload(bytes32 slot)	bytes32 value
+exttload(bytes32[] slots)	bytes32[] values
 factory()	address
 fee()	uint24
 feeGrowthGlobal0X128()	uint256
 feeGrowthGlobal1X128()	uint256
+fill()	uint256 wad
 fillOrderRFQ((uint256 info, address makerAsset, address takerAsset, address maker, address allowedSender, uint256 makingAmount, uint256 takingAmount) order, bytes signature, uint256 makingAmount, uint256 takingAmount)
 fillOrderRFQTo((uint256 info, address makerAsset, address takerAsset, address maker, address allowedSender, uint256 makingAmount, uint256 takingAmount) order, bytes signature, uint256 makingAmount, uint256 takingAmount, address target)
 fillQuoteEthToToken(address buyTokenAddress, address target, bytes swapCallData, uint256 feeAmount)
@@ -69,6 +94,7 @@ fillQuoteTokenToToken(address sellTokenAddress, address buyTokenAddress, address
 fillQuoteTokenToTokenWithPermit(address sellTokenAddress, address buyTokenAddress, address target, bytes swapCallData, uint256 sellAmount, uint256 feeAmount, (uint256 value, uint256 nonce, uint256 deadline, bool isDaiStylePermit, uint8 v, bytes32 r, bytes32 s) permitData)
 flash(address recipient, uint256 amount0, uint256 amount1, bytes data)
 FromAddressIsNotOwner()
+gemJoin()	address
 geometric_mean(uint256[3] x)	uint256
 get_address(uint256 idx)	address
 get_dy(int128 i, int128 j, uint256 amount)	uint256
@@ -97,11 +123,13 @@ getRoleMemberCount(bytes32 role)	uint256
 getRoundData(uint80 roundId)	uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
 getSellFee(uint256 grossAmount)	uint256
 grantRole(bytes32 role, address account)
+gush()	uint256 wad
 hasApprovedRelayer(address user, address relayer)	bool
 hasPermission(address who, address where, bytes32 what, bytes how)	bool
 hasRole(bytes32 role, address account)	bool
 implementation()	address
 increaseAllowance(address spender, uint256 addedValue)	bool success
+initialize((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, uint160 sqrtPriceX96)	int24 tick
 initialize(address token0, address token1)
 InsufficientETH()
 InsufficientToken()
@@ -117,14 +145,17 @@ isValidSignature(bytes32 hash, bytes data)	bytes4 magic
 kLast()	uint256
 latestRoundData()	uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
 liquidity()	uint128
+live()	uint256
 lmPool()	address
 max(uint256, uint256)	uint256
 min(uint256, uint256)	uint256
 MINIMUM_LIQUIDITY()	uint256
 mint()
 mint(address to, uint256 amount)
+mint(address to, uint256 id, uint256 amount)
 mint(uint256)
 mint_relative(address to, uint256 frac)	uint256
+modifyLiquidity((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (int24 tickLower, int24 tickUpper, int256 liquidityDelta, bytes32 salt) params, bytes hookData)	int256 callerDelta, int256 feesAccrued
 name()	string
 newton_D(uint256 ANN, uint256 gamma, uint256[3] x_unsorted, uint256 K0_prev)	uint256
 NoSlice()
@@ -139,6 +170,8 @@ permit(address owner, ((address token, uint160 amount, uint48 expiration, uint48
 permit(address owner, address spender, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
 price0CumulativeLast()	uint256
 price1CumulativeLast()	uint256
+protocolFeeController()	address
+protocolFeesAccrued(address currency)	uint256 amount
 quote(uint256 amountA, uint256 reserveA, uint256 reserveB)	uint256 amountB
 reduction_coefficient(uint256[3] x, uint256 fee_gamma)	uint256
 removeLiquidity(address tokenA, address tokenB, uint256 liquidity, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline)	uint256 amountA, uint256 amountB
@@ -151,6 +184,7 @@ renounceOwnership()
 renounceRole(bytes32 role, address account)
 rescueTokens(address token, address to, uint256 amount)
 revokeRole(bytes32 role, address account)
+rush()	uint256 wad
 safeTransferFrom(address from, address to, uint256 tokenId)
 safeTransferFrom(address from, address to, uint256 tokenId, bytes data)
 seize()	uint256
@@ -159,15 +193,19 @@ sellAssetWithSig(address originator, uint256 maxAmount, address receiver, uint25
 setApp(bytes32 namespace, bytes32 appId, address app)
 setApprovalForAll(address operator, bool approved)
 setAuthorizer(address newAuthorizer)
+setProtocolFee((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, uint24 newProtocolFee)
+setProtocolFeeController(address controller)
 setRelayerApproval(address sender, address relayer, bool approved)
 setSwapFeePercentage(uint256)
 setSwapFreeze(bool enable)
 settle((address taker, address receiver, uint256 expiry, uint256 nonce, address executor, uint16 minFillPercent, bytes32 hooksHash, address[] sellTokens, address[] buyTokens, uint256[] sellAmounts, uint256[] buyAmounts, uint256[] sellNFTIds, uint256[] buyNFTIds, bytes sellTokenTransfers, bytes buyTokenTransfers) order, (uint8 type, bytes signatureBytes) signature, (bool result, address to, uint256 value, bytes data)[] interactions, ((bool result, address to, uint256 value, bytes data)[] beforeSettle, (bool result, address to, uint256 value, bytes data)[] afterSettle) hooks, (address balanceRecipient, uint16 curFillPercent) solverData)
+settle()	uint256 paid
 settle(address[] tokens, uint256[] clearingPrices, (uint256 sellTokenIndex, uint256 buyTokenIndex, address receiver, uint256 sellAmount, uint256 buyAmount, uint32 validTo, bytes32 appData, uint256 feeAmount, uint256 flags, uint256 executedAmount, bytes signature)[] trades, (address target, uint256 value, bytes callData)[][3] interactions)
 settleAggregate((uint256 expiry, address takerAddress, address[] makerAddresses, uint256[] makerNonces, address[][] takerTokens, address[][] makerTokens, uint256[][] takerAmounts, uint256[][] makerAmounts, address receiver, bytes commands, uint256 flags) order, (bytes signatureBytes, uint256 flags)[] makersSignatures, uint256 filledTakerAmount, (bool useOldAmount, uint256[][] makerAmounts, uint256[] makerNonces) takerQuoteInfo, bytes takerSignature)
 settleAggregateAndSignPermit((uint256 expiry, address takerAddress, address[] makerAddresses, uint256[] makerNonces, address[][] takerTokens, address[][] makerTokens, uint256[][] takerAmounts, uint256[][] makerAmounts, address receiver, bytes commands, uint256 flags) order, (bytes signatureBytes, uint256 flags)[] makersSignatures, uint256 filledTakerAmount, (bool useOldAmount, uint256[][] makerAmounts, uint256[] makerNonces) takerQuoteInfo, bytes takerSignature, (bytes signatureBytes, uint256 deadline) takerPermitSignature)
 settleAggregateAndSignPermit2((uint256 expiry, address takerAddress, address[] makerAddresses, uint256[] makerNonces, address[][] takerTokens, address[][] makerTokens, uint256[][] takerAmounts, uint256[][] makerAmounts, address receiver, bytes commands, uint256 flags) order, (bytes signatureBytes, uint256 flags)[] makersSignatures, uint256 filledTakerAmount, (bool useOldAmount, uint256[][] makerAmounts, uint256[] makerNonces) takerQuoteInfo, bytes takerSignature, (bytes signatureBytes, uint48 deadline, uint48[] nonces) infoPermit2)
 settleBatch((address taker, address receiver, uint256 expiry, uint256 nonce, address executor, uint16 minFillPercent, bytes32 hooksHash, address[] sellTokens, address[] buyTokens, uint256[] sellAmounts, uint256[] buyAmounts, uint256[] sellNFTIds, uint256[] buyNFTIds, bytes sellTokenTransfers, bytes buyTokenTransfers)[] orders, (uint8 type, bytes signatureBytes)[] signatures, (bytes[] permitSignatures, bytes signatureBytesPermit2, uint48[] noncesPermit2, uint48 deadline)[] takersPermitsInfo, (bool result, address to, uint256 value, bytes data)[] interactions, ((bool result, address to, uint256 value, bytes data)[] beforeSettle, (bool result, address to, uint256 value, bytes data)[] afterSettle)[] hooks, (address balanceRecipient, uint16[] curFillPercents, bool[] takersPermitsUsage, bool transferExactAmounts) solverData)
+settleFor(address recipient)	uint256 paid
 settleInternal((address taker, address receiver, uint256 expiry, uint256 nonce, address executor, uint16 minFillPercent, bytes32 hooksHash, address[] sellTokens, address[] buyTokens, uint256[] sellAmounts, uint256[] buyAmounts, uint256[] sellNFTIds, uint256[] buyNFTIds, bytes sellTokenTransfers, bytes buyTokenTransfers) order, (uint8 type, bytes signatureBytes) signature, ((bool result, address to, uint256 value, bytes data)[] beforeSettle, (bool result, address to, uint256 value, bytes data)[] afterSettle) hooks, (uint256[] increasedBuyAmounts, uint16 curFillPercent) makerData)
 settleInternalWithPermitsSignatures((address taker, address receiver, uint256 expiry, uint256 nonce, address executor, uint16 minFillPercent, bytes32 hooksHash, address[] sellTokens, address[] buyTokens, uint256[] sellAmounts, uint256[] buyAmounts, uint256[] sellNFTIds, uint256[] buyNFTIds, bytes sellTokenTransfers, bytes buyTokenTransfers) order, (uint8 type, bytes signatureBytes) signature, (bytes[] permitSignatures, bytes signatureBytesPermit2, uint48[] noncesPermit2, uint48 deadline) takerPermitsInfo, ((bool result, address to, uint256 value, bytes data)[] beforeSettle, (bool result, address to, uint256 value, bytes data)[] afterSettle) hooks, (uint256[] increasedBuyAmounts, uint16 curFillPercent) makerData)
 settleMulti((uint256 expiry, address takerAddress, address makerAddress, uint256 makerNonce, address[] takerTokens, address[] makerTokens, uint256[] takerAmounts, uint256[] makerAmounts, address receiver, bytes commands, uint256 flags) order, (bytes signatureBytes, uint256 flags) makerSignature, uint256 filledTakerAmount, (bool useOldAmount, uint256[] makerAmounts, uint256 makerNonce) takerQuoteInfo, bytes takerSignature)
@@ -209,6 +247,8 @@ swapTokensForExactETH(uint256 amountOut, uint256 amountInMax, address[] path, ad
 swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)	uint256[] amounts
 symbol()	string
 sync()
+sync(address currency)
+take(address currency, address to, uint256 amount)
 tickSpacing()	int24
 ToAddressOutOfBounds()
 ToAddressOverflow()
@@ -228,11 +268,14 @@ transferFrom(address from, address to, uint256 amount)	bool success
 transferFromAccounts((address account, address token, uint256 amount, bytes32 balance)[])
 transferOwnership(address newOwner)
 transferTokens((address from, address receiver, address[] tokens, uint256[] amounts, uint256[] nftIds, bytes tokenTransferTypes, uint16 fillPercent) transferData)
+trim()	uint256 wad
 UnableToClaim()
 uniswapV3Swap(uint256 amount, uint256 minReturn, uint256[] pools)	uint256 returnAmount
 uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
+unlock(bytes data)	bytes
 UnsafeCast()
 updatedAt()	uint256
+updateDynamicLPFee((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, uint24 newDynamicLPFee)
 updateSwapTargets(address target, bool add)
 V2InvalidPath()
 V2TooLittleReceived()
