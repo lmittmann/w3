@@ -104,10 +104,16 @@ ERC721InvalidSender(address sender)
 ERC721NonexistentToken(uint256 tokenId)
 Error(string)
 ETHNotAccepted()
+exactInput((bytes path, address recipient, uint256 amountIn, uint256 amountOutMinimum) params)	uint256 amountOut
 exactInput((bytes path, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum) params)	uint256 amountOut
+exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params)	uint256 amountOut
 exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params)	uint256 amountOut
+exactInputStableSwap(address[] path, uint256[] flag, uint256 amountIn, uint256 amountOutMin, address to)	uint256 amountOut
+exactOutput((bytes path, address recipient, uint256 amountOut, uint256 amountInMaximum) params)	uint256 amountIn
 exactOutput((bytes path, address recipient, uint256 deadline, uint256 amountOut, uint256 amountInMaximum) params)	uint256 amountIn
+exactOutputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 amountOut, uint256 amountInMaximum, uint160 sqrtPriceLimitX96) params)	uint256 amountIn
 exactOutputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountOut, uint256 amountInMaximum, uint160 sqrtPriceLimitX96) params)	uint256 amountIn
+exactOutputStableSwap(address[] path, uint256[] flag, uint256 amountOut, uint256 amountInMax, address to)	uint256 amountIn
 exchange(int128 i, int128 j, uint256 dx, uint256 min_dy)
 exchange(int128 i, int128 j, uint256 dx, uint256 min_dy, address receiver)
 exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy)
@@ -249,7 +255,9 @@ mint(uint256 shares, address receiver)	uint256 assets
 mint(uint256)
 mint_relative(address to, uint256 frac)	uint256
 modifyLiquidity((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (int24 tickLower, int24 tickUpper, int256 liquidityDelta, bytes32 salt) params, bytes hookData)	int256 callerDelta, int256 feesAccrued
+multicall(bytes32 previousBlockhash, bytes[] data)	bytes[] results
 multicall(bytes[] data)	bytes[] results
+multicall(uint256 deadline, bytes[] data)	bytes[] results
 N_COINS()	uint256
 name()	string
 newton_D(uint256 ANN, uint256 gamma, uint256[3] x_unsorted, uint256 K0_prev)	uint256
@@ -261,6 +269,7 @@ onERC721Received(address operator, address from, uint256 tokenId, bytes data)	by
 onSwap((uint8 kind, address tokenIn, address tokenOut, uint256 amount, bytes32 poolId, uint256 lastChangeBlock, address from, address to, bytes userData) swapRequest, uint256[] balances, uint256 indexIn, uint256 indexOut)	uint256 amount
 owner()	address
 ownerOf(uint256 tokenId)	address
+pairLength()	uint256
 pancakeV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
 Panic(uint256)
 paused()	bool
@@ -401,6 +410,7 @@ swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 
 swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline)
 swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)	uint256[] amounts
 swapExactTokensForETHSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)
+swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to)	uint256 amountOut
 swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)	uint256[] amounts
 swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)
 swapMulti((uint256 expiry, address takerAddress, address makerAddress, uint256 makerNonce, address[] takerTokens, address[] makerTokens, uint256[] takerAmounts, uint256[] makerAmounts, address receiver, bytes commands, uint256 flags) order, (bytes signatureBytes, uint256 flags) makerSignature, uint256 filledTakerAmount)
@@ -408,6 +418,7 @@ swapSingle((uint256 expiry, address takerAddress, address makerAddress, uint256 
 swapSingleFromContract((uint256 expiry, address takerAddress, address makerAddress, uint256 makerNonce, address takerToken, address makerToken, uint256 takerAmount, uint256 makerAmount, address receiver, uint256 packedCommands, uint256 flags) order, (bytes signatureBytes, uint256 flags) makerSignature)
 swapTargets(address)	bool
 swapTokensForExactETH(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)	uint256[] amounts
+swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to)	uint256 amountIn
 swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline)	uint256[] amounts
 sweepToken(address token, uint256 amountMinimum, address recipient)
 sweepTokenAmount(address token, uint256 amount, address recipient)
