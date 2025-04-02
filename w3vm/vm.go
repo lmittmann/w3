@@ -4,6 +4,7 @@ Package w3vm provides a VM for executing EVM messages.
 package w3vm
 
 import (
+	"cmp"
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
@@ -24,7 +25,6 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3"
-	"github.com/lmittmann/w3/internal"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 )
@@ -308,15 +308,15 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 
 	var gasPrice, gasFeeCap, gasTipCap *big.Int
 	if baseFee := v.opts.blockCtx.BaseFee; baseFee == nil {
-		gasPrice = internal.OrCopy(msg.GasPrice, w3.Big0)
+		gasPrice = new(big.Int).Set(cmp.Or(msg.GasPrice, w3.Big0))
 		gasFeeCap, gasTipCap = gasPrice, gasPrice
 	} else {
 		if msg.GasPrice != nil && msg.GasFeeCap == nil && msg.GasTipCap == nil {
 			gasPrice = msg.GasPrice
 			gasFeeCap, gasTipCap = gasPrice, gasPrice
 		} else {
-			gasFeeCap = internal.OrCopy(msg.GasFeeCap, w3.Big0)
-			gasTipCap = internal.OrCopy(msg.GasTipCap, w3.Big0)
+			gasFeeCap = new(big.Int).Set(cmp.Or(msg.GasFeeCap, w3.Big0))
+			gasTipCap = new(big.Int).Set(cmp.Or(msg.GasTipCap, w3.Big0))
 			gasPrice = new(big.Int).Add(baseFee, gasTipCap)
 			if gasPrice.Cmp(gasFeeCap) > 0 {
 				gasPrice = gasFeeCap
@@ -329,7 +329,7 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		gasTipCap.SetInt64(0)
 	}
 
-	value := internal.OrCopy(msg.Value, w3.Big0)
+	value := new(big.Int).Set(cmp.Or(msg.Value, w3.Big0))
 
 	return &core.Message{
 		To:                    msg.To,
