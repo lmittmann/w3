@@ -59,6 +59,7 @@ claimProtocolFeeForPool(address pool, bool isTokenA)
 clear(address currency, uint256 amount)
 coins(uint256 i)	address
 collectProtocolFees(address recipient, address currency, uint256 amount)	uint256 amountCollected
+computeAddress(address deployer, (address token0, address token1, uint24 fee) key)	address pool
 ConfusedDeputy()
 ContractLocked()
 convertToAssets(uint256 shares)	uint256 assets
@@ -167,6 +168,7 @@ get_y(uint256 ANN, uint256 gamma, uint256[3] x, uint256 D, uint256 i)	uint256[2]
 getAdmin()	address
 getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)	uint256 amountIn
 getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)	uint256 amountOut
+getAmountsIn(address factory, uint256 amountOut, address[] path)	uint256[] amounts
 getAmountsIn(uint256 amountOut, address[] path)	uint256[] amounts
 getAmountsOut(uint256 amountIn, address[] path)	uint256[] amounts
 getApp(bytes32 namespace, bytes32 appId)	address
@@ -183,13 +185,18 @@ getGrossAmountFromTotalSold(uint256 totalAmount)	uint256
 getImplementationSigs(address impl)	bytes4[]
 getInternalBalance(address user, address[] tokens)	uint256[]
 getPair(address tokenA, address tokenB)	address pair
+getPool(address deployer, address tokenA, address tokenB, uint24 fee)	address
+getPoolKey(address tokenA, address tokenB, uint24 fee)	(address token0, address token1, uint24 fee)
 getReserves()	uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast
+getReserves(address factory, address tokenA, address tokenB)	uint256 reserveA, uint256 reserveB
 getRoleAdmin(bytes32 role)	bytes32
 getRoleMember(bytes32 role, uint256 index)	address
 getRoleMemberCount(bytes32 role)	uint256
 getRoundData(uint80 roundId)	uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound
 getSellFee(uint256 grossAmount)	uint256
 getSigsImplementation(bytes4 sig)	address
+getStableAmountsIn(address stableSwapFactory, address stableSwapInfo, address[] path, uint256[] flag, uint256 amountOut)	uint256[] amounts
+getStableInfo(address stableSwapFactory, address input, address output, uint256 flag)	uint256 i, uint256 j, address swapContract
 getState()	(uint128 reserveA, uint128 reserveB, int64 lastTwaD8, int64 lastLogPriceD8, uint40 lastTimestamp, int32 activeTick, bool isLocked, uint32 binCounter, uint8 protocolFeeRatioD3)
 getTick(int32 tick)	(uint128 reserveA, uint128 reserveB, uint128 totalSupply, uint32[4] binIdsByTick) tickState
 grantRole(bytes32 role, address account)
@@ -269,6 +276,7 @@ onERC721Received(address operator, address from, uint256 tokenId, bytes data)	by
 onSwap((uint8 kind, address tokenIn, address tokenOut, uint256 amount, bytes32 poolId, uint256 lastChangeBlock, address from, address to, bytes userData) swapRequest, uint256[] balances, uint256 indexIn, uint256 indexOut)	uint256 amount
 owner()	address
 ownerOf(uint256 tokenId)	address
+pairFor(address factory, address tokenA, address tokenB)	address pair
 pairLength()	uint256
 pancakeV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
 Panic(uint256)
@@ -389,6 +397,7 @@ skim(address to)
 SliceOutOfBounds()
 SliceOverflow()
 slot0()	(uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)
+sortTokens(address tokenA, address tokenB)	address token0, address token1
 stake(uint256 amount, uint256 term)
 stop_ramp_A()
 stored_rates()	uint256[]
@@ -478,6 +487,8 @@ V3InvalidCaller()
 V3InvalidSwap()
 V3TooLittleReceived()
 V3TooMuchRequested()
+verifyCallback(address deployer, (address token0, address token1, uint24 fee) poolKey)	address pool
+verifyCallback(address deployer, address tokenA, address tokenB, uint24 fee)	address pool
 version()	uint256
 wad_exp(int256 power)	uint256
 weth()	address
