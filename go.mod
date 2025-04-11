@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/ethereum/go-ethereum v1.15.7
+	github.com/ethereum/go-ethereum v1.15.8
 	github.com/google/go-cmp v0.7.0
 	github.com/holiman/uint256 v1.3.2
 	golang.org/x/time v0.11.0
