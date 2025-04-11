@@ -22,6 +22,7 @@ var (
 func TestParseArgs(t *testing.T) {
 	tests := []struct {
 		Input    string
+		Tuples   []any
 		WantArgs Arguments
 		WantErr  error
 	}{
@@ -158,7 +159,7 @@ func TestParseArgs(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotArgs, gotErr := Parse(test.Input)
+			gotArgs, gotErr := Parse(test.Input, test.Tuples...)
 			if diff := cmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
@@ -177,6 +178,7 @@ func TestParseArgs(t *testing.T) {
 func TestParseArgsWithName(t *testing.T) {
 	tests := []struct {
 		Input    string
+		Tuples   []any
 		WantArgs Arguments
 		WantName string
 		WantErr  error
@@ -243,7 +245,7 @@ func TestParseArgsWithName(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotName, gotArgs, gotErr := ParseWithName(test.Input)
+			gotName, gotArgs, gotErr := ParseWithName(test.Input, test.Tuples...)
 			if diff := cmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
