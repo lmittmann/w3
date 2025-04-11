@@ -71,6 +71,7 @@ func (a Arguments) Decode(data []byte, args ...any) error {
 			continue
 		}
 
+		fmt.Printf("arg: %T, values[i]: %T\n", arg, values[i])
 		if err := Copy(arg, values[i]); err != nil {
 			return err
 		}
