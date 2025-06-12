@@ -40,7 +40,7 @@ type parser struct {
 	i     int
 
 	tuples   []any
-	tupleMap map[string]reflect.Type
+	tupleMap map[string]abi.Argument
 
 	name string
 	args abi.Arguments
@@ -115,7 +115,7 @@ func (p *parser) parseArgsWithName() error {
 
 func (p *parser) parseArgs() error {
 	// parse tuples
-	tupleMap, err := tupleMap(p.tuples...)
+	tupleMap, err := buildTuples(p.tuples...)
 	if err != nil {
 		return err
 	}
@@ -179,8 +179,15 @@ func (p *parser) parseType() (*abi.Type, error) {
 		err error
 	)
 	if peek := p.peek(); peek.Typ == itemTypeID {
-		// non-tuple type
+		// check built-in types first
 		typ, ok = peek.IsType()
+		if !ok {
+			// check named tuples
+			if tupleArg, exists := p.tupleMap[peek.Val]; exists {
+				typ = &tupleArg.Type
+				ok = true
+			}
+		}
 		if !ok {
 			return nil, fmt.Errorf(`unexpected %s, expecting type`, peek)
 		}

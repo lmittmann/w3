@@ -175,7 +175,7 @@ func TestParseArgs(t *testing.T) {
 			WantArgs: Arguments{{
 				Type: abi.Type{
 					T:             abi.TupleTy,
-					TupleRawName:  "simpleStruct",
+					TupleRawName:  "simpleStructWithoutTags",
 					TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
 					TupleRawNames: []string{"amount", "token"},
 				},

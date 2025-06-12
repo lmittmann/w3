@@ -256,3 +256,27 @@ func TestTypeOfField(t *testing.T) {
 		})
 	}
 }
+
+func TestToCamelCase(t *testing.T) {
+	tests := []struct {
+		Input string
+		Want  string
+	}{
+		{"test", "test"},
+		{"TEST", "test"},
+		{"Test", "test"},
+		{"testCase", "testCase"},
+		{"TestCase", "testCase"},
+		{"testID", "testId"},
+		{"TestID", "testId"},
+	}
+
+	for i, test := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			got := toCamelCase(test.Input)
+			if test.Want != got {
+				t.Fatalf("want %q, got %q", test.Want, got)
+			}
+		})
+	}
+}

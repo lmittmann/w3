@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
-	"strings"
+	"unicode"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -41,28 +41,14 @@ func buildTuples(tuples ...any) (map[string]abi.Argument, error) {
 			return nil, fmt.Errorf("%w: %s", errDuplicateTuple, typ.Name())
 		}
 
-		rawNames := make([]string, typ.NumField())
-		elems := make([]*abi.Type, typ.NumField())
-		for i := range typ.NumField() {
-			field := typ.Field(i)
-			// Use lowercase field name to match ABI convention
-			rawNames[i] = strings.ToLower(field.Name)
-			elem, err := typeOfField(field)
-			if err != nil {
-				return nil, err
-			}
-			elems[i] = elem
+		abiTyp, err := typeOf(typ, "")
+		if err != nil {
+			return nil, err
 		}
 
 		arg := abi.Argument{
 			Name: typ.Name(),
-			Type: abi.Type{
-				T:             abi.TupleTy,
-				TupleRawName:  typ.Name(),
-				TupleElems:    elems,
-				TupleRawNames: rawNames,
-				TupleType:     typ,
-			},
+			Type: *abiTyp,
 		}
 		types[typ.Name()] = arg
 	}
@@ -80,7 +66,8 @@ func typeOfField(field reflect.StructField) (*abi.Type, error) {
 func typeOf(typ reflect.Type, abiType string) (*abi.Type, error) {
 	abiT, isBasicT := basicTypes[typ]
 	if !isBasicT {
-		if typ.Kind() == reflect.Slice {
+		switch typ.Kind() {
+		case reflect.Slice:
 			elemAibT, err := typeOf(typ.Elem(), abiType)
 			if err != nil {
 				return nil, err
@@ -89,8 +76,7 @@ func typeOf(typ reflect.Type, abiType string) (*abi.Type, error) {
 				T:    abi.SliceTy,
 				Elem: elemAibT,
 			}, nil
-		}
-		if typ.Kind() == reflect.Array {
+		case reflect.Array:
 			elemAibT, err := typeOf(typ.Elem(), abiType)
 			if err != nil {
 				return nil, err
@@ -100,9 +86,26 @@ func typeOf(typ reflect.Type, abiType string) (*abi.Type, error) {
 				Elem: elemAibT,
 				Size: typ.Len(),
 			}, nil
-		}
-		if typ.Kind() == reflect.Struct {
-			// todo
+		case reflect.Struct:
+			num := typ.NumField()
+			elems := make([]*abi.Type, num)
+			rawNames := make([]string, num)
+			for i := range num {
+				f := typ.Field(i)
+				elemType, err := typeOfField(f)
+				if err != nil {
+					return nil, err
+				}
+				elems[i] = elemType
+				rawNames[i] = toCamelCase(f.Name)
+			}
+			return &abi.Type{
+				T:             abi.TupleTy,
+				TupleElems:    elems,
+				TupleRawName:  typ.Name(),
+				TupleRawNames: rawNames,
+				TupleType:     typ,
+			}, nil
 		}
 		return nil, fmt.Errorf("unknown type %q", typ)
 	}
@@ -176,4 +179,29 @@ var basicTypes = map[reflect.Type]abi.Type{
 	reflect.TypeFor[string]():         {T: abi.StringTy},
 	reflect.TypeFor[[]byte]():         {T: abi.BytesTy},
 	reflect.TypeFor[*big.Int]():       {T: abi.UintTy, Size: 256},
+}
+
+func toCamelCase(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+
+	r := []rune(s)
+
+	var prevUp bool
+	for i := range len(r) {
+		if i == 0 && unicode.IsUpper(r[i]) {
+			prevUp = true
+			r[i] = unicode.ToLower(r[i])
+		} else if unicode.IsUpper(r[i]) {
+			if prevUp {
+				r[i] = unicode.ToLower(r[i])
+			}
+			prevUp = true
+		} else {
+			prevUp = false
+		}
+	}
+
+	return string(r)
 }
