@@ -30,7 +30,15 @@ func TestTupleMap(t *testing.T) {
 		},
 		{
 			Tuples:  []any{Tuple1{}, Tuple1{}},
-			WantErr: errDuplicateTuple,
+			WantErr: errors.New("duplicate tuple definition: Tuple1"),
+		},
+		{
+			Tuples:  []any{123}, // int instead of struct
+			WantErr: errors.New("expected struct, got int"),
+		},
+		{
+			Tuples:  []any{"hello"}, // string instead of struct
+			WantErr: errors.New("expected struct, got string"),
 		},
 		{
 			Tuples: []any{Tuple1{}, Tuple2{}},
@@ -44,8 +52,10 @@ func TestTupleMap(t *testing.T) {
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			gotTuples, gotErr := tupleMap(test.Tuples...)
-			if !errors.Is(gotErr, test.WantErr) {
-				t.Fatalf("Err: want %v, got %v", test.WantErr, gotErr)
+			if diff := cmp.Diff(test.WantErr, gotErr,
+				internal.EquateErrors(),
+			); diff != "" {
+				t.Fatalf("Err (-want, +got):\n%s", diff)
 			}
 
 			want := slices.Sorted(maps.Keys(test.WantTuples))
@@ -262,6 +272,7 @@ func TestToCamelCase(t *testing.T) {
 		Input string
 		Want  string
 	}{
+		{"", ""},
 		{"test", "test"},
 		{"TEST", "test"},
 		{"Test", "test"},

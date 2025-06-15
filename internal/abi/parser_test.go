@@ -455,6 +455,61 @@ func TestParseArgs(t *testing.T) {
 				},
 			},
 		},
+		{
+			Input:   "@invalid",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "func(uint256 arg0",
+			WantErr: errors.New(`syntax error: unexpected "func", expecting type`),
+		},
+		{
+			Input:   "(:uint256)",
+			WantErr: errors.New(`syntax error: unexpected character: :`),
+		},
+		{
+			Input:   "(uint256 arg0 extra)",
+			WantErr: errors.New(`syntax error: unexpected "extra", expecting "," or ")"`),
+		},
+		{
+			Input:   "(uint256",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting "," or ")"`),
+		},
+		{
+			Input:   "(uint256 @)",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "uint256 arg0 extra",
+			WantErr: errors.New(`syntax error: unexpected "extra", want "," or EOF`),
+		},
+		{
+			Input:   "uint256 @",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "uint256,@",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "uint256[@",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "nonStruct",
+			Tuples:  []any{123},
+			WantErr: errors.New(`syntax error: expected struct, got int`),
+		},
+		{
+			Input:   "stringType",
+			Tuples:  []any{"hello"},
+			WantErr: errors.New(`syntax error: expected struct, got string`),
+		},
+		{
+			Input:   "structWithInvalidField",
+			Tuples:  []any{structWithInvalidField{}},
+			WantErr: errors.New(`syntax error: unknown type "func()"`),
+		},
 	}
 
 	for i, test := range tests {
@@ -554,6 +609,31 @@ func TestParseArgsWithName(t *testing.T) {
 				},
 			}},
 		},
+		// Test cases for error paths in ParseWithName
+		{
+			Input:   "f(uint256) extra",
+			WantErr: errors.New(`syntax error: unexpected "extra", expecting EOF`),
+		},
+		{
+			Input:   "f(uint256,",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting type`),
+		},
+		{
+			Input:   "f(uint256 arg0",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
+		{
+			Input:   "f(uint256 indexed arg0",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
+		{
+			Input:   "f((uint256",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting "," or ")"`),
+		},
+		{
+			Input:   "f(uint256 extra",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
 	}
 
 	for i, test := range tests {
@@ -649,3 +729,8 @@ type arrayStruct struct {
 }
 
 type emptyStruct struct{}
+
+// Test struct with invalid field type for coverage
+type structWithInvalidField struct {
+	InvalidFunc func() // This will cause typeOf to fail
+}
