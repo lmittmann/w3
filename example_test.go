@@ -31,7 +31,7 @@ var (
 	addrWETH = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 	addrDAI  = w3.A("0x6B175474E89094C44Da98b954EedeAC495271d0F")
 
-	client = w3.MustDial("https://eth.llamarpc.com")
+	client = w3.MustDial("https://ethereum-rpc.publicnode.com")
 )
 
 // Call the name, symbol, decimals, and balanceOf functions of the Wrapped Ether
@@ -90,6 +90,7 @@ func ExampleClient_batchCallFuncUniswapQuoter() {
 		eth.CallFunc(addrUniswapV3Quoter, funcQuote, addrTokenIn, addrTokenOut, big.NewInt(3000), amountIn, w3.Big0).AtBlock(blockNumber).Returns(&amountOut3000),
 		eth.CallFunc(addrUniswapV3Quoter, funcQuote, addrTokenIn, addrTokenOut, big.NewInt(10000), amountIn, w3.Big0).AtBlock(blockNumber).Returns(&amountOut10000),
 	); err != nil {
+		fmt.Println(err)
 		// ...
 	}
 	fmt.Println("Swap 100 WETH for DAI:")
@@ -316,7 +317,7 @@ func ExampleClient_subscribeToPendingTransactions() {
 // Rate Limit the number of requests to 10 per second, with bursts of up to 20
 // requests.
 func ExampleClient_rateLimitByRequest() {
-	client, err := w3.Dial("https://eth.llamarpc.com",
+	client, err := w3.Dial("https://ethereum-rpc.publicnode.com",
 		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second/10), 20), nil),
 	)
 	if err != nil {
@@ -353,7 +354,7 @@ func ExampleClient_rateLimitByComputeUnits() {
 		return cost
 	}
 
-	client, err := w3.Dial("https://eth.llamarpc.com",
+	client, err := w3.Dial("https://ethereum-rpc.publicnode.com",
 		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second/300), 300), cu),
 	)
 	if err != nil {
