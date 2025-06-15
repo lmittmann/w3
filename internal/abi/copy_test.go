@@ -159,6 +159,11 @@ func TestCopy(t *testing.T) {
 			WantDst: &tuple0{Uint: big.NewInt(1), Addr: common.Address{1}},
 		},
 		{
+			Dst:     new(tuple0),
+			Src:     tuple0{Uint: big.NewInt(1), Addr: common.Address{1}},
+			WantDst: &tuple0{Uint: big.NewInt(1), Addr: common.Address{1}},
+		},
+		{
 			Dst: ptr(new(tuple0)),
 			Src: struct {
 				Uint *big.Int
