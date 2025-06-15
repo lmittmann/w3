@@ -86,14 +86,18 @@ func (p *parser) peek() *item {
 
 func (p *parser) parseArgsWithName() error {
 	// parse name
-	if next := p.next(); next.Typ != itemTypeID {
+	if next := p.next(); p.err != nil {
+		return p.err
+	} else if next.Typ != itemTypeID {
 		return fmt.Errorf(`unexpected %s, expecting name`, next)
 	} else {
 		p.name = next.Val
 	}
 
 	// parse "("
-	if next := p.next(); next.Typ != itemTypePunct || next.Val != "(" {
+	if next := p.next(); p.err != nil {
+		return p.err
+	} else if next.Typ != itemTypePunct || next.Val != "(" {
 		return fmt.Errorf(`unexpected %s, expecting "("`, next)
 	}
 
@@ -102,12 +106,16 @@ func (p *parser) parseArgsWithName() error {
 	}
 
 	// parse ")"
-	if next := p.next(); next.Typ != itemTypePunct || next.Val != ")" {
+	if next := p.next(); p.err != nil {
+		return p.err
+	} else if next.Typ != itemTypePunct || next.Val != ")" {
 		return fmt.Errorf(`unexpected %s, expecting ")"`, next)
 	}
 
 	// parse EOF
-	if next := p.next(); next.Typ != itemTypeEOF {
+	if next := p.next(); p.err != nil {
+		return p.err
+	} else if next.Typ != itemTypeEOF {
 		return fmt.Errorf(`unexpected %s, expecting EOF`, next)
 	}
 	return nil
@@ -121,7 +129,9 @@ func (p *parser) parseArgs() error {
 	}
 	p.tupleMap = tupleMap
 
-	if peek := p.peek(); (peek.Typ == itemTypeEOF && p.name == "") ||
+	if peek := p.peek(); p.err != nil {
+		return p.err
+	} else if (peek.Typ == itemTypeEOF && p.name == "") ||
 		(peek.Typ == itemTypePunct && peek.Val == ")" && p.name != "") {
 		return nil
 	}
@@ -136,7 +146,9 @@ func (p *parser) parseArgs() error {
 
 		// parse optional indexed and name
 		peek := p.peek()
-		if peek.Typ == itemTypeID {
+		if p.err != nil {
+			return p.err
+		} else if peek.Typ == itemTypeID {
 			if peek.Val == "indexed" {
 				arg.Indexed = true
 			} else {
@@ -145,7 +157,9 @@ func (p *parser) parseArgs() error {
 			p.next()
 
 			peek = p.peek()
-			if peek.Typ == itemTypeID && arg.Indexed {
+			if p.err != nil {
+				return p.err
+			} else if peek.Typ == itemTypeID && arg.Indexed {
 				arg.Name = peek.Val
 				p.next()
 			}
@@ -154,7 +168,9 @@ func (p *parser) parseArgs() error {
 		p.args = append(p.args, arg)
 
 		// parse ",", EOF, or ")"
-		if peek := p.peek(); peek.Typ == itemTypeEOF && p.name == "" {
+		if peek := p.peek(); p.err != nil {
+			return p.err
+		} else if peek.Typ == itemTypeEOF && p.name == "" {
 			break
 		} else if peek.Typ == itemTypePunct && peek.Val == ")" && p.name != "" {
 			break
@@ -178,7 +194,9 @@ func (p *parser) parseType() (*abi.Type, error) {
 		ok  bool
 		err error
 	)
-	if peek := p.peek(); peek.Typ == itemTypeID {
+	if peek := p.peek(); p.err != nil {
+		return nil, p.err
+	} else if peek.Typ == itemTypeID {
 		// check built-in types first
 		typ, ok = peek.IsType()
 		if !ok {
@@ -219,6 +237,9 @@ func (p *parser) parseTupleType(i int) (*abi.Type, string, error) {
 
 	// parse name
 	next := p.next()
+	if p.err != nil {
+		return nil, "", p.err
+	}
 	if next.Typ != itemTypeID {
 		// no name given; put the token back and make up a fake name
 		p.backup()
@@ -229,7 +250,9 @@ func (p *parser) parseTupleType(i int) (*abi.Type, string, error) {
 }
 
 func (p *parser) parseTupleTypes() (*abi.Type, error) {
-	if next := p.next(); next.Typ != itemTypePunct || next.Val != "(" {
+	if next := p.next(); p.err != nil {
+		return nil, p.err
+	} else if next.Typ != itemTypePunct || next.Val != "(" {
 		return nil, fmt.Errorf(`unexpected %s, expecting "("`, next)
 	}
 
@@ -250,6 +273,9 @@ func (p *parser) parseTupleTypes() (*abi.Type, error) {
 		})
 
 		next := p.next()
+		if p.err != nil {
+			return nil, p.err
+		}
 		if next.Typ == itemTypePunct {
 			if next.Val == ")" {
 				break
@@ -265,7 +291,7 @@ func (p *parser) parseTupleTypes() (*abi.Type, error) {
 
 func (p *parser) parseSliceOrArray(typ *abi.Type) (*abi.Type, error) {
 	parent := *typ
-	for peek := p.peek(); peek.Typ == itemTypePunct && peek.Val == "["; peek = p.peek() {
+	for peek := p.peek(); p.err == nil && peek.Typ == itemTypePunct && peek.Val == "["; peek = p.peek() {
 		// parse "["
 		p.next()
 
@@ -277,10 +303,16 @@ func (p *parser) parseSliceOrArray(typ *abi.Type) (*abi.Type, error) {
 
 		// parse optional number
 		next := p.next()
+		if p.err != nil {
+			return nil, p.err
+		}
 		if next.Typ == itemTypeNum {
 			parent.Size, _ = strconv.Atoi(next.Val)
 			parent.T = abi.ArrayTy
 			next = p.next()
+			if p.err != nil {
+				return nil, p.err
+			}
 		} else {
 			parent.T = abi.SliceTy
 		}
@@ -289,6 +321,9 @@ func (p *parser) parseSliceOrArray(typ *abi.Type) (*abi.Type, error) {
 		if next.Typ != itemTypePunct || next.Val != "]" {
 			return nil, fmt.Errorf(`unexpected %s, expecting "]"`, next)
 		}
+	}
+	if p.err != nil {
+		return nil, p.err
 	}
 	return &parent, nil
 }
