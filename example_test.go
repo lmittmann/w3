@@ -90,7 +90,6 @@ func ExampleClient_batchCallFuncUniswapQuoter() {
 		eth.CallFunc(addrUniswapV3Quoter, funcQuote, addrTokenIn, addrTokenOut, big.NewInt(3000), amountIn, w3.Big0).AtBlock(blockNumber).Returns(&amountOut3000),
 		eth.CallFunc(addrUniswapV3Quoter, funcQuote, addrTokenIn, addrTokenOut, big.NewInt(10000), amountIn, w3.Big0).AtBlock(blockNumber).Returns(&amountOut10000),
 	); err != nil {
-		fmt.Println(err)
 		// ...
 	}
 	fmt.Println("Swap 100 WETH for DAI:")
