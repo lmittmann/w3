@@ -47,6 +47,24 @@ func TestNewFunc(t *testing.T) {
 				Selector:  [4]byte{0xa0, 0x54, 0xdf, 0xd5},
 			},
 		},
+		{
+			Signature: "testTuple(tupleWithTag)",
+			Returns:   "bool",
+			Tuples:    []any{tupleWithTag{}},
+			WantFunc: &w3.Func{
+				Signature: "testTuple((address,uint128))",
+				Selector:  [4]byte{0xa8, 0x97, 0xff, 0xb3},
+			},
+		},
+		{
+			Signature: "testTuple(tupleWithNesting)",
+			Returns:   "bool",
+			Tuples:    []any{tupleWithNesting{}},
+			WantFunc: &w3.Func{
+				Signature: "testTuple((address,(address,uint256)))",
+				Selector:  [4]byte{0xff, 0x4c, 0x07, 0xd1},
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -492,6 +510,16 @@ func ptr[T any](v T) *T { return &v }
 type tuple struct {
 	Arg0 common.Address
 	Arg1 *big.Int
+}
+
+type tupleWithTag struct {
+	Arg0 common.Address `abitype:"address"`
+	Arg1 *big.Int       `abitype:"uint128"`
+}
+
+type tupleWithNesting struct {
+	Arg0 common.Address
+	Arg1 tuple
 }
 
 type tupleWithBytes struct {
