@@ -39,9 +39,23 @@ type Func struct {
 // NewFunc returns a new Smart Contract function ABI binding from the given
 // Solidity function signature and its returns.
 //
+// The optional tuples parameter accepts struct definitions that can be
+// referenced by name in the signature instead of using inline tuple
+// definitions. This enables cleaner, more readable function signatures when
+// working with complex tuple types.
+//
+// Examples:
+//
+//	// Without named tuples (inline)
+//	NewFunc("transfer((address,uint256))", "bool")
+//
+//	// With named tuple
+//	type Token struct { To common.Address; Amount *big.Int }
+//	NewFunc("transfer(Token)", "bool", Token{})
+//
 // An error is returned if the signature or returns parsing fails.
-func NewFunc(signature, returns string) (*Func, error) {
-	name, args, err := _abi.ParseWithName(signature)
+func NewFunc(signature, returns string, tuples ...any) (*Func, error) {
+	name, args, err := _abi.ParseWithName(signature, tuples...)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidABI, err)
 	}
@@ -49,7 +63,7 @@ func NewFunc(signature, returns string) (*Func, error) {
 		return nil, fmt.Errorf("%w: missing function name", ErrInvalidABI)
 	}
 
-	returnArgs, err := _abi.Parse(returns)
+	returnArgs, err := _abi.Parse(returns, tuples...)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidABI, err)
 	}
@@ -66,8 +80,8 @@ func NewFunc(signature, returns string) (*Func, error) {
 
 // MustNewFunc is like [NewFunc] but panics if the signature or returns parsing
 // fails.
-func MustNewFunc(signature, returns string) *Func {
-	fn, err := NewFunc(signature, returns)
+func MustNewFunc(signature, returns string, tuples ...any) *Func {
+	fn, err := NewFunc(signature, returns, tuples...)
 	if err != nil {
 		panic(err)
 	}

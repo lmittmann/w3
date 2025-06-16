@@ -19,6 +19,7 @@ func TestNewFunc(t *testing.T) {
 	tests := []struct {
 		Signature string
 		Returns   string
+		Tuples    []any
 		WantFunc  *w3.Func
 	}{
 		{
@@ -37,11 +38,38 @@ func TestNewFunc(t *testing.T) {
 				Selector:  [4]byte{0xa9, 0x05, 0x9c, 0xbb},
 			},
 		},
+		{
+			Signature: "testTuple(tuple)",
+			Returns:   "bool",
+			Tuples:    []any{tuple{}},
+			WantFunc: &w3.Func{
+				Signature: "testTuple((address,uint256))",
+				Selector:  [4]byte{0xa0, 0x54, 0xdf, 0xd5},
+			},
+		},
+		{
+			Signature: "testTuple(tupleWithTag)",
+			Returns:   "bool",
+			Tuples:    []any{tupleWithTag{}},
+			WantFunc: &w3.Func{
+				Signature: "testTuple((address,uint128))",
+				Selector:  [4]byte{0xa8, 0x97, 0xff, 0xb3},
+			},
+		},
+		{
+			Signature: "testTuple(tupleWithNesting)",
+			Returns:   "bool",
+			Tuples:    []any{tupleWithNesting{}},
+			WantFunc: &w3.Func{
+				Signature: "testTuple((address,(address,uint256)))",
+				Selector:  [4]byte{0xff, 0x4c, 0x07, 0xd1},
+			},
+		},
 	}
 
 	for i, test := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotFunc, err := w3.NewFunc(test.Signature, test.Returns)
+			gotFunc, err := w3.NewFunc(test.Signature, test.Returns, test.Tuples...)
 			if err != nil {
 				t.Fatalf("Failed to create new FUnc: %v", err)
 			}
@@ -158,6 +186,14 @@ func TestFuncEncodeArgs(t *testing.T) {
 				[2]uint64{0xdead, 0xbeef},
 			},
 			Want: w3.B("0x533d6285000000000000000000000000000000000000000000000000000000000000dead000000000000000000000000000000000000000000000000000000000000beef"),
+		},
+		{
+			Func: w3.MustNewFunc("testTuple(tuple)", "bool", tuple{}),
+			Args: []any{&tuple{
+				Arg0: w3.A("0x000000000000000000000000000000000000c0Fe"),
+				Arg1: big.NewInt(42),
+			}},
+			Want: w3.B("0xa054dfd5000000000000000000000000000000000000000000000000000000000000c0fe000000000000000000000000000000000000000000000000000000000000002a"),
 		},
 		{ // https://github.com/lmittmann/w3/issues/35
 			Func: w3.MustNewFunc("test(((address to)[] recipients) param)", ""),
@@ -345,6 +381,15 @@ func TestFuncDecodeArgs(t *testing.T) {
 				&[2]uint64{0xdead, 0xbeef},
 			},
 		},
+		{
+			Func:  w3.MustNewFunc("testTuple(tuple)", "bool", tuple{}),
+			Input: w3.B("0xa054dfd5000000000000000000000000000000000000000000000000000000000000c0fe000000000000000000000000000000000000000000000000000000000000002a"),
+			Args:  []any{new(tuple)},
+			WantArgs: []any{&tuple{
+				Arg0: w3.A("0x000000000000000000000000000000000000c0Fe"),
+				Arg1: big.NewInt(42),
+			}},
+		},
 		{ // https://github.com/lmittmann/w3/issues/35
 			Func:  w3.MustNewFunc("test(((address to)[] recipients) param)", ""),
 			Input: w3.B("0xf61d1a2a00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000011111111111111111111111111111111111111110000000000000000000000002222222222222222222222222222222222222222"),
@@ -437,6 +482,15 @@ func TestFuncDecodeReturns(t *testing.T) {
 				Arg1: big.NewInt(42),
 			}},
 		},
+		{
+			Func:    w3.MustNewFunc("test()", "tuple", tuple{}),
+			Output:  w3.B("0x000000000000000000000000000000000000000000000000000000000000c0fe000000000000000000000000000000000000000000000000000000000000002a"),
+			Returns: []any{new(tuple)},
+			WantReturns: []any{&tuple{
+				Arg0: w3.A("0x000000000000000000000000000000000000c0Fe"),
+				Arg1: big.NewInt(42),
+			}},
+		},
 	}
 
 	for i, test := range tests {
@@ -456,6 +510,16 @@ func ptr[T any](v T) *T { return &v }
 type tuple struct {
 	Arg0 common.Address
 	Arg1 *big.Int
+}
+
+type tupleWithTag struct {
+	Arg0 common.Address `abitype:"address"`
+	Arg1 *big.Int       `abitype:"uint128"`
+}
+
+type tupleWithNesting struct {
+	Arg0 common.Address
+	Arg1 tuple
 }
 
 type tupleWithBytes struct {
