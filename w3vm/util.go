@@ -34,13 +34,77 @@ var (
 // WETHBalanceSlot returns the storage slot that stores the WETH balance of
 // the given addr.
 func WETHBalanceSlot(addr common.Address) common.Hash {
-	return Slot(weth9BalancePos, common.BytesToHash(addr[:]))
+	return SoliditySlot(weth9BalancePos, common.BytesToHash(addr[:]))
 }
 
 // WETHAllowanceSlot returns the storage slot that stores the WETH allowance
 // of the given owner to the spender.
 func WETHAllowanceSlot(owner, spender common.Address) common.Hash {
-	return Slot2(weth9AllowancePos, common.BytesToHash(owner[:]), common.BytesToHash(spender[:]))
+	return SoliditySlot2(weth9AllowancePos, common.BytesToHash(owner[:]), common.BytesToHash(spender[:]))
+}
+
+// SoliditySlot returns the storage slot of a mapping with the given position and key.
+//
+//	mapping(bytes32 => bytes32)
+func SoliditySlot(pos, key common.Hash) common.Hash {
+	return crypto.Keccak256Hash(key[:], pos[:])
+}
+
+// SoliditySlot2 returns the storage slot of a double mapping with the given position
+// and keys.
+//
+//	mapping(bytes32 => mapping(bytes32 => bytes32))
+func SoliditySlot2(pos, key0, key1 common.Hash) common.Hash {
+	return crypto.Keccak256Hash(
+		key1[:],
+		crypto.Keccak256(key0[:], pos[:]),
+	)
+}
+
+// SoliditySlot3 returns the storage slot of a triple mapping with the given position
+// and keys.
+//
+//	mapping(bytes32 => mapping(bytes32 => mapping(bytes32 => bytes32)))
+func SoliditySlot3(pos, key0, key1, key2 common.Hash) common.Hash {
+	return crypto.Keccak256Hash(
+		key2[:],
+		crypto.Keccak256(
+			key1[:],
+			crypto.Keccak256(key0[:], pos[:]),
+		),
+	)
+}
+
+// VyperSlot returns the storage slot of a mapping with the given position and key.
+//
+//	HashMap[bytes32, bytes32]
+func VyperSlot(pos, key common.Hash) common.Hash {
+	return crypto.Keccak256Hash(pos[:], key[:])
+}
+
+// VyperSlot2 returns the storage slot of a double mapping with the given position
+// and keys.
+//
+//	HashMap[bytes32, HashMap[bytes32, bytes32]]
+func VyperSlot2(pos, key0, key1 common.Hash) common.Hash {
+	return crypto.Keccak256Hash(
+		crypto.Keccak256(pos[:], key0[:]),
+		key1[:],
+	)
+}
+
+// VyperSlot3 returns the storage slot of a triple mapping with the given position
+// and keys.
+//
+//	HashMap[bytes32, HashMap[bytes32, HashMap[bytes32, bytes32]]]
+func VyperSlot3(pos, key0, key1, key2 common.Hash) common.Hash {
+	return crypto.Keccak256Hash(
+		crypto.Keccak256(
+			crypto.Keccak256(pos[:], key0[:]),
+			key1[:],
+		),
+		key2[:],
+	)
 }
 
 // Slot returns the storage slot of a mapping with the given position and key.
@@ -48,8 +112,10 @@ func WETHAllowanceSlot(owner, spender common.Address) common.Hash {
 // Slot follows the Solidity storage layout for:
 //
 //	mapping(bytes32 => bytes32)
+//
+// Deprecated: Use SoliditySlot instead.
 func Slot(pos, key common.Hash) common.Hash {
-	return crypto.Keccak256Hash(key[:], pos[:])
+	return SoliditySlot(pos, key)
 }
 
 // Slot2 returns the storage slot of a double mapping with the given position
@@ -58,11 +124,10 @@ func Slot(pos, key common.Hash) common.Hash {
 // Slot2 follows the Solidity storage layout for:
 //
 //	mapping(bytes32 => mapping(bytes32 => bytes32))
+//
+// Deprecated: Use SoliditySlot2 instead.
 func Slot2(pos, key0, key1 common.Hash) common.Hash {
-	return crypto.Keccak256Hash(
-		key1[:],
-		crypto.Keccak256(key0[:], pos[:]),
-	)
+	return SoliditySlot2(pos, key0, key1)
 }
 
 // Slot3 returns the storage slot of a triple mapping with the given position
@@ -71,14 +136,10 @@ func Slot2(pos, key0, key1 common.Hash) common.Hash {
 // Slot3 follows the Solidity storage layout for:
 //
 //	mapping(bytes32 => mapping(bytes32 => mapping(bytes32 => bytes32)))
+//
+// Deprecated: Use SoliditySlot3 instead.
 func Slot3(pos, key0, key1, key2 common.Hash) common.Hash {
-	return crypto.Keccak256Hash(
-		key2[:],
-		crypto.Keccak256(
-			key1[:],
-			crypto.Keccak256(key0[:], pos[:]),
-		),
-	)
+	return SoliditySlot3(pos, key0, key1, key2)
 }
 
 // zeroHashFunc implements a [vm.GetHashFunc] that always returns the zero hash.
