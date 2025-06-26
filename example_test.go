@@ -402,27 +402,25 @@ func ExampleFunc_balanceOf() {
 
 // ABI bindings for the Uniswap v4 swap function.
 func ExampleFunc_uniswapV4Swap() {
-	funcSwap := w3.MustNewFunc(`swap(
-		(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key,
-		(bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params,
-		bytes hookData
-	)`, "int256 delta")
-
 	// ABI binding for the PoolKey struct.
 	type PoolKey struct {
 		Currency0   common.Address
 		Currency1   common.Address
-		Fee         *big.Int
-		TickSpacing *big.Int
+		Fee         *big.Int `abitype:"uint24"`
+		TickSpacing *big.Int `abitype:"int24"`
 		Hooks       common.Address
 	}
 
 	// ABI binding for the SwapParams struct.
 	type SwapParams struct {
 		ZeroForOne        bool
-		AmountSpecified   *big.Int
-		SqrtPriceLimitX96 *big.Int
+		AmountSpecified   *big.Int `abitype:"int256"`
+		SqrtPriceLimitX96 *big.Int `abitype:"uint160"`
 	}
+
+	funcSwap := w3.MustNewFunc(`swap(PoolKey key, SwapParams params, bytes hookData)`, "int256 delta",
+		PoolKey{}, SwapParams{},
+	)
 
 	// encode
 	input, _ := funcSwap.EncodeArgs(
