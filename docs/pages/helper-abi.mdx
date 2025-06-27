@@ -68,10 +68,25 @@ type QuoteExactInputSingleParams struct {
     TokenIn           common.Address
     TokenOut          common.Address
     AmountIn          *big.Int
-    Fee               *big.Int
-    SqrtPriceLimitX96 *big.Int
+    Fee               *big.Int `abitype:"uint24"`
+    SqrtPriceLimitX96 *big.Int `abitype:"uint160"`
 }
 
+var funcQuoteExactInputSingle = w3.MustNewFunc(
+    `quoteExactInputSingle(QuoteExactInputSingleParams params)`,
+    `uint256 amountOut,
+     uint160 sqrtPriceX96After,
+     uint32 initializedTicksCrossed,
+     uint256 gasEstimate`,
+    QuoteExactInputSingleParams{}, // Pass struct type as tuple definition
+)
+```
+
+##### Alternative: Inline Tuple Definition
+
+For simple cases or when you prefer not to define separate structs, you can use inline tuple definitions:
+
+```go filename="Go"
 var funcQuoteExactInputSingle = w3.MustNewFunc(
     `quoteExactInputSingle((
         address tokenIn,
