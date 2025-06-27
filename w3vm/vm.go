@@ -138,7 +138,7 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		GasUsed:    result.UsedGas,
 		MaxGasUsed: result.MaxUsedGas,
 		Output:     result.ReturnData,
-		Logs:       v.db.GetLogs(txHash, 0, w3.Hash0),
+		Logs:       v.db.GetLogs(txHash, 0, w3.Hash0, 0),
 	}
 
 	// zero out the log tx hashes, indices and normalize the log indices
