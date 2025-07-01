@@ -2,10 +2,12 @@ package abi
 
 import (
 	"errors"
-	"strconv"
+	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3/internal"
@@ -22,6 +24,7 @@ var (
 func TestParseArgs(t *testing.T) {
 	tests := []struct {
 		Input    string
+		Tuples   []any
 		WantArgs Arguments
 		WantErr  error
 	}{
@@ -154,11 +157,364 @@ func TestParseArgs(t *testing.T) {
 				}, TupleRawNames: []string{"v0", "v1"}}},
 			},
 		},
+		{
+			Input:  "simpleStruct",
+			Tuples: []any{simpleStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T:             abi.TupleTy,
+					TupleRawName:  "simpleStruct",
+					TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+					TupleRawNames: []string{"amount", "token"},
+				},
+			}},
+		},
+		{
+			Input:  "simpleStructWithoutTags",
+			Tuples: []any{simpleStructWithoutTags{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T:             abi.TupleTy,
+					TupleRawName:  "simpleStructWithoutTags",
+					TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+					TupleRawNames: []string{"amount", "token"},
+				},
+			}},
+		},
+		{
+			Input:  "simpleStruct[]",
+			Tuples: []any{simpleStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T: abi.SliceTy,
+					Elem: &abi.Type{
+						T:             abi.TupleTy,
+						TupleRawName:  "simpleStruct",
+						TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+						TupleRawNames: []string{"amount", "token"},
+					},
+				},
+			}},
+		},
+		{
+			Input:  "simpleStruct[3]",
+			Tuples: []any{simpleStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T:    abi.ArrayTy,
+					Size: 3,
+					Elem: &abi.Type{
+						T:             abi.TupleTy,
+						TupleRawName:  "simpleStruct",
+						TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+						TupleRawNames: []string{"amount", "token"},
+					},
+				},
+			}},
+		},
+		{
+			Input:  "uint256,simpleStruct,address",
+			Tuples: []any{simpleStruct{}},
+			WantArgs: Arguments{
+				{Type: typeUint256},
+				{
+					Type: abi.Type{
+						T:             abi.TupleTy,
+						TupleRawName:  "simpleStruct",
+						TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+						TupleRawNames: []string{"amount", "token"},
+					},
+				},
+				{Type: typeAddress},
+			},
+		},
+		{
+			Input:  "emptyStruct",
+			Tuples: []any{emptyStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T:             abi.TupleTy,
+					TupleRawName:  "emptyStruct",
+					TupleElems:    []*abi.Type{},
+					TupleRawNames: []string{},
+				},
+			}},
+		},
+		{
+			Input:   "unknownStruct",
+			Tuples:  []any{simpleStruct{}},
+			WantErr: errors.New(`syntax error: unexpected "unknownStruct", expecting type`),
+		},
+		{
+			Input:   "simpleStruct",
+			Tuples:  []any{}, // no tuples provided
+			WantErr: errors.New(`syntax error: unexpected "simpleStruct", expecting type`),
+		},
+		{
+			Input:   "simpleStruct",
+			Tuples:  []any{simpleStruct{}, simpleStruct{}},
+			WantErr: errors.New(`syntax error: duplicate tuple definition: simpleStruct`),
+		},
+		{
+			Input:  "nestedStruct",
+			Tuples: []any{nestedStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T:            abi.TupleTy,
+					TupleRawName: "nestedStruct",
+					TupleElems: []*abi.Type{
+						{
+							T:             abi.TupleTy,
+							TupleRawName:  "simpleStruct",
+							TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+							TupleRawNames: []string{"amount", "token"},
+						},
+						&typeBool,
+					},
+					TupleRawNames: []string{"inner", "active"},
+				},
+			}},
+		},
+		{
+			Input:  "nestedStruct[]",
+			Tuples: []any{nestedStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T: abi.SliceTy,
+					Elem: &abi.Type{
+						T:            abi.TupleTy,
+						TupleRawName: "nestedStruct",
+						TupleElems: []*abi.Type{
+							{
+								T:             abi.TupleTy,
+								TupleRawName:  "simpleStruct",
+								TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+								TupleRawNames: []string{"amount", "token"},
+							},
+							&typeBool,
+						},
+						TupleRawNames: []string{"inner", "active"},
+					},
+				},
+			}},
+		},
+		{
+			Input:  "complexStruct",
+			Tuples: []any{complexStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T:            abi.TupleTy,
+					TupleRawName: "complexStruct",
+					TupleElems: []*abi.Type{
+						&typeUint256,
+						&typeAddress,
+						{T: abi.BytesTy},
+						{
+							T:            abi.TupleTy,
+							TupleRawName: "nestedStruct",
+							TupleElems: []*abi.Type{
+								{
+									T:             abi.TupleTy,
+									TupleRawName:  "simpleStruct",
+									TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+									TupleRawNames: []string{"amount", "token"},
+								},
+								&typeBool,
+							},
+							TupleRawNames: []string{"inner", "active"},
+						},
+					},
+					TupleRawNames: []string{"id", "owner", "data", "metadata"},
+				},
+			}},
+		},
+		{
+			Input:  "complexStruct[2]",
+			Tuples: []any{complexStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T:    abi.ArrayTy,
+					Size: 2,
+					Elem: &abi.Type{
+						T:            abi.TupleTy,
+						TupleRawName: "complexStruct",
+						TupleElems: []*abi.Type{
+							&typeUint256,
+							&typeAddress,
+							{T: abi.BytesTy},
+							{
+								T:            abi.TupleTy,
+								TupleRawName: "nestedStruct",
+								TupleElems: []*abi.Type{
+									{
+										T:             abi.TupleTy,
+										TupleRawName:  "simpleStruct",
+										TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+										TupleRawNames: []string{"amount", "token"},
+									},
+									&typeBool,
+								},
+								TupleRawNames: []string{"inner", "active"},
+							},
+						},
+						TupleRawNames: []string{"id", "owner", "data", "metadata"},
+					},
+				},
+			}},
+		},
+		{
+			Input:  "arrayStruct",
+			Tuples: []any{arrayStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T:            abi.TupleTy,
+					TupleRawName: "arrayStruct",
+					TupleElems: []*abi.Type{
+						{T: abi.SliceTy, Elem: &typeUint256},
+						&typeUint256,
+					},
+					TupleRawNames: []string{"values", "count"},
+				},
+			}},
+		},
+		{
+			Input:  "arrayStruct[]",
+			Tuples: []any{arrayStruct{}},
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T: abi.SliceTy,
+					Elem: &abi.Type{
+						T:            abi.TupleTy,
+						TupleRawName: "arrayStruct",
+						TupleElems: []*abi.Type{
+							{T: abi.SliceTy, Elem: &typeUint256},
+							&typeUint256,
+						},
+						TupleRawNames: []string{"values", "count"},
+					},
+				},
+			}},
+		},
+		{
+			Input:  "uint256,nestedStruct,complexStruct,arrayStruct",
+			Tuples: []any{nestedStruct{}, complexStruct{}, arrayStruct{}},
+			WantArgs: Arguments{
+				{Type: typeUint256},
+				{
+					Type: abi.Type{
+						T:            abi.TupleTy,
+						TupleRawName: "nestedStruct",
+						TupleElems: []*abi.Type{
+							{
+								T:             abi.TupleTy,
+								TupleRawName:  "simpleStruct",
+								TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+								TupleRawNames: []string{"amount", "token"},
+							},
+							&typeBool,
+						},
+						TupleRawNames: []string{"inner", "active"},
+					},
+				},
+				{
+					Type: abi.Type{
+						T:            abi.TupleTy,
+						TupleRawName: "complexStruct",
+						TupleElems: []*abi.Type{
+							&typeUint256,
+							&typeAddress,
+							{T: abi.BytesTy},
+							{
+								T:            abi.TupleTy,
+								TupleRawName: "nestedStruct",
+								TupleElems: []*abi.Type{
+									{
+										T:             abi.TupleTy,
+										TupleRawName:  "simpleStruct",
+										TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+										TupleRawNames: []string{"amount", "token"},
+									},
+									&typeBool,
+								},
+								TupleRawNames: []string{"inner", "active"},
+							},
+						},
+						TupleRawNames: []string{"id", "owner", "data", "metadata"},
+					},
+				},
+				{
+					Type: abi.Type{
+						T:            abi.TupleTy,
+						TupleRawName: "arrayStruct",
+						TupleElems: []*abi.Type{
+							{T: abi.SliceTy, Elem: &typeUint256},
+							&typeUint256,
+						},
+						TupleRawNames: []string{"values", "count"},
+					},
+				},
+			},
+		},
+		{
+			Input:   "@invalid",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "func(uint256 arg0",
+			WantErr: errors.New(`syntax error: unexpected "func", expecting type`),
+		},
+		{
+			Input:   "(:uint256)",
+			WantErr: errors.New(`syntax error: unexpected character: :`),
+		},
+		{
+			Input:   "(uint256 arg0 extra)",
+			WantErr: errors.New(`syntax error: unexpected "extra", expecting "," or ")"`),
+		},
+		{
+			Input:   "(uint256",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting "," or ")"`),
+		},
+		{
+			Input:   "(uint256 @)",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "uint256 arg0 extra",
+			WantErr: errors.New(`syntax error: unexpected "extra", want "," or EOF`),
+		},
+		{
+			Input:   "uint256 @",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "uint256,@",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "uint256[@",
+			WantErr: errors.New(`syntax error: unexpected character: @`),
+		},
+		{
+			Input:   "nonStruct",
+			Tuples:  []any{123},
+			WantErr: errors.New(`syntax error: expected struct, got int`),
+		},
+		{
+			Input:   "stringType",
+			Tuples:  []any{"hello"},
+			WantErr: errors.New(`syntax error: expected struct, got string`),
+		},
+		{
+			Input:   "structWithInvalidField",
+			Tuples:  []any{structWithInvalidField{}},
+			WantErr: errors.New(`syntax error: unknown type "func()"`),
+		},
 	}
 
 	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotArgs, gotErr := Parse(test.Input)
+		t.Run(fmt.Sprintf("%d_%s", i, test.Input), func(t *testing.T) {
+			gotArgs, gotErr := Parse(test.Input, test.Tuples...)
 			if diff := cmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
@@ -177,6 +533,7 @@ func TestParseArgs(t *testing.T) {
 func TestParseArgsWithName(t *testing.T) {
 	tests := []struct {
 		Input    string
+		Tuples   []any
 		WantArgs Arguments
 		WantName string
 		WantErr  error
@@ -239,11 +596,49 @@ func TestParseArgsWithName(t *testing.T) {
 			}},
 			WantName: "exactInputSingle",
 		},
+		{
+			Input:    "transfer(simpleStruct)",
+			Tuples:   []any{simpleStruct{}},
+			WantName: "transfer",
+			WantArgs: Arguments{{
+				Type: abi.Type{
+					T:             abi.TupleTy,
+					TupleRawName:  "simpleStruct",
+					TupleElems:    []*abi.Type{&typeUint256, &typeAddress},
+					TupleRawNames: []string{"amount", "token"},
+				},
+			}},
+		},
+		// Test cases for error paths in ParseWithName
+		{
+			Input:   "f(uint256) extra",
+			WantErr: errors.New(`syntax error: unexpected "extra", expecting EOF`),
+		},
+		{
+			Input:   "f(uint256,",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting type`),
+		},
+		{
+			Input:   "f(uint256 arg0",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
+		{
+			Input:   "f(uint256 indexed arg0",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
+		{
+			Input:   "f((uint256",
+			WantErr: errors.New(`syntax error: unexpected EOF, expecting "," or ")"`),
+		},
+		{
+			Input:   "f(uint256 extra",
+			WantErr: errors.New(`syntax error: unexpected EOF, want "," or ")"`),
+		},
 	}
 
 	for i, test := range tests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			gotName, gotArgs, gotErr := ParseWithName(test.Input)
+		t.Run(fmt.Sprintf("%d_%s", i, test.Input), func(t *testing.T) {
+			gotName, gotArgs, gotErr := ParseWithName(test.Input, test.Tuples...)
 			if diff := cmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
@@ -303,4 +698,39 @@ func BenchmarkParseArgsWithName(b *testing.B) {
 			}
 		})
 	}
+}
+
+// test structs for tuple functionality
+type simpleStruct struct {
+	Amount *big.Int       `abitype:"uint256"`
+	Token  common.Address `abitype:"address"`
+}
+
+type simpleStructWithoutTags struct {
+	Amount *big.Int
+	Token  common.Address
+}
+
+type nestedStruct struct {
+	Inner  simpleStruct
+	Active bool
+}
+
+type complexStruct struct {
+	ID       *big.Int `abitype:"uint256"`
+	Owner    common.Address
+	Data     []byte
+	Metadata nestedStruct
+}
+
+type arrayStruct struct {
+	Values []*big.Int `abitype:"uint256"`
+	Count  *big.Int   `abitype:"uint256"`
+}
+
+type emptyStruct struct{}
+
+// Test struct with invalid field type for coverage
+type structWithInvalidField struct {
+	InvalidFunc func() // This will cause typeOf to fail
 }
