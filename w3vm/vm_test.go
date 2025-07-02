@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -27,7 +26,6 @@ import (
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 	"github.com/lmittmann/w3/w3vm"
-	"golang.org/x/time/rate"
 )
 
 var (
@@ -42,10 +40,11 @@ var (
 	funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 	funcTransfer  = w3.MustNewFunc("transfer(address,uint256)", "bool")
 
-	client = w3.MustDial("https://eth.llamarpc.com", w3.WithRateLimiter(
-		rate.NewLimiter(rate.Every(time.Minute/100), 100),
-		func(methods []string) (cost int) { return len(methods) },
-	))
+	// client = w3.MustDial("https://eth.llamarpc.com", w3.WithRateLimiter(
+	// 	rate.NewLimiter(rate.Every(time.Minute/100), 100),
+	// 	func(methods []string) (cost int) { return len(methods) },
+	// ))
+	client = w3.MustDial("http://localhost:8545")
 )
 
 func TestVMSetNonce(t *testing.T) {
