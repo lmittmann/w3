@@ -850,7 +850,7 @@ func TestVMApply_Integration(t *testing.T) {
 							cmpopts.EquateErrors(),
 							cmpopts.IgnoreUnexported(w3vm.Receipt{}),
 							cmpopts.IgnoreFields(w3vm.Receipt{}, "MaxGasUsed", "Output"),
-							cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "BlockTime", "TxHash", "TxIndex", "Index"),
+							cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "BlockTimestamp", "TxHash", "TxIndex", "Index"),
 							cmpopts.EquateComparable(common.Address{}, common.Hash{}),
 						); diff != "" {
 							t.Fatalf("[%v,%d,%s] (-want +got)\n%s", block.Number(), j, tx.Hash(), diff)
