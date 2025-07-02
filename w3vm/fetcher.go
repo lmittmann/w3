@@ -376,7 +376,7 @@ func (f *rpcFetcher) storeTestdataState(chainID uint64) error {
 		writeTestdata("contracts.json", contracts),
 		writeTestdata(headerHashesFn, headerHashes),
 	); err != nil {
-		return fmt.Errorf("failed to write testdata state: %w", err)
+		return err
 	}
 
 	return nil
@@ -408,7 +408,7 @@ func (s testdataState) Merge(other testdataState) error {
 type testdataAccount struct {
 	Nonce    hexutil.Uint64                    `json:"nonce"`
 	Balance  *hexutil.U256                     `json:"balance"`
-	CodeHash common.Hash                       `json:"codeHash,omitempty"`
+	CodeHash common.Hash                       `json:"codeHash,omitzero"`
 	Storage  map[w3hexutil.Hash]w3hexutil.Hash `json:"storage,omitempty"`
 }
 
@@ -490,7 +490,10 @@ func readTestdata(filename string, data any) error {
 	}
 	defer f.Close()
 
-	return json.NewDecoder(f).Decode(data)
+	if err := json.NewDecoder(f).Decode(data); err != nil {
+		return fmt.Errorf("decode json: %w", err)
+	}
+	return nil
 }
 
 func writeTestdata(filename string, data any) error {
@@ -513,7 +516,10 @@ func writeTestdata(filename string, data any) error {
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "\t")
-	return enc.Encode(data)
+	if err := enc.Encode(data); err != nil {
+		return fmt.Errorf("encode json: %w", err)
+	}
+	return nil
 }
 
 func testdataPath(filename string) string {
