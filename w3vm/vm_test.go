@@ -782,8 +782,8 @@ func TestVMApply_Integration(t *testing.T) {
 
 	tests := []struct {
 		Name   string
-		Offset uint64 // Start block number
-		Size   uint64 // Number of blocks
+		Offset int64 // Start block number
+		Size   int64 // Number of blocks
 	}{
 		{Name: "Byzantium", Offset: 4_370_000 - 2, Size: 4},
 		{Name: "Constantinople&Petersburg", Offset: 7_280_000 - 2, Size: 4},
@@ -803,7 +803,7 @@ func TestVMApply_Integration(t *testing.T) {
 			// execute blocks
 			for i := test.Offset; i < test.Offset+test.Size; i++ {
 				// gather block and receipts
-				blockNumber := big.NewInt(int64(i))
+				blockNumber := big.NewInt(i)
 
 				t.Run(blockNumber.String(), func(t *testing.T) {
 					t.Parallel()
@@ -821,7 +821,7 @@ func TestVMApply_Integration(t *testing.T) {
 					}
 
 					// setup vm
-					f := w3vm.NewTestingRPCFetcher(t, 1, client, big.NewInt(int64(i)-1))
+					f := w3vm.NewTestingRPCFetcher(t, 1, client, big.NewInt(i-1))
 					vm, _ := w3vm.New(
 						w3vm.WithFetcher(f),
 						w3vm.WithHeader(block.Header()),
