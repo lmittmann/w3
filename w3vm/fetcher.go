@@ -2,7 +2,6 @@ package w3vm
 
 import (
 	"bytes"
-	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -215,9 +214,14 @@ func NewTestingRPCFetcher(tb testing.TB, chainID uint64, client *w3.Client, bloc
 	return fetcher
 }
 
-var testdataLock = flock.New(testdataPath("LOCK"))
+var (
+	testdataMutex sync.RWMutex                      // in-process synchronization
+	testdataLock  = flock.New(testdataPath("LOCK")) // inter-process synchronization
+)
 
 func (f *rpcFetcher) loadTestdataState(chainID uint64) error {
+	testdataMutex.RLock()
+	defer testdataMutex.RUnlock()
 	testdataLock.RLock()
 	defer testdataLock.Unlock()
 
@@ -275,6 +279,8 @@ func (f *rpcFetcher) loadTestdataState(chainID uint64) error {
 }
 
 func (f *rpcFetcher) storeTestdataState(chainID uint64) error {
+	testdataMutex.Lock()
+	defer testdataMutex.Unlock()
 	testdataLock.Lock()
 	defer testdataLock.Unlock()
 
@@ -371,11 +377,13 @@ func (f *rpcFetcher) storeTestdataState(chainID uint64) error {
 	}
 
 	// write state
-	if err := cmp.Or(
-		writeTestdata(stateFn, state),
-		writeTestdata("contracts.json", contracts),
-		writeTestdata(headerHashesFn, headerHashes),
-	); err != nil {
+	if err := writeTestdata(stateFn, state); err != nil {
+		return err
+	}
+	if err := writeTestdata("contracts.json", contracts); err != nil {
+		return err
+	}
+	if err := writeTestdata(headerHashesFn, headerHashes); err != nil {
 		return err
 	}
 
@@ -491,7 +499,7 @@ func readTestdata(filename string, data any) error {
 	defer f.Close()
 
 	if err := json.NewDecoder(f).Decode(data); err != nil {
-		return fmt.Errorf("decode json: %w", err)
+		return fmt.Errorf("decode json %s: %w", filename, err)
 	}
 	return nil
 }
@@ -517,7 +525,7 @@ func writeTestdata(filename string, data any) error {
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "\t")
 	if err := enc.Encode(data); err != nil {
-		return fmt.Errorf("encode json: %w", err)
+		return fmt.Errorf("encode json %s: %w", filename, err)
 	}
 	return nil
 }
