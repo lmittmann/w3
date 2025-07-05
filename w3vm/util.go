@@ -3,10 +3,6 @@ package w3vm
 import (
 	"crypto/rand"
 	"math/big"
-	"path/filepath"
-	"runtime"
-	"strings"
-	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -15,7 +11,6 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/internal/crypto"
-	"github.com/lmittmann/w3/internal/mod"
 	"github.com/lmittmann/w3/internal/module"
 	"github.com/lmittmann/w3/w3types"
 )
@@ -311,37 +306,4 @@ func joinHooks(hooks []*tracing.Hooks) *tracing.Hooks {
 		}
 	}
 	return hook
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Testing /////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-func getTbFilepath(tb testing.TB) string {
-	// Find test name of the root test (drop subtests from name).
-	if tb == nil || tb.Name() == "" {
-		return ""
-	}
-	tn := strings.SplitN(tb.Name(), "/", 2)[0]
-
-	// Find the test function in the call stack. Don't go deeper than 32 frames.
-	for i := range 32 {
-		pc, file, _, ok := runtime.Caller(i)
-		if !ok {
-			break
-		}
-
-		fn := runtime.FuncForPC(pc).Name()
-		_, fn = filepath.Split(fn)
-		fn = strings.SplitN(fn, ".", 3)[1]
-
-		if fn == tn {
-			return filepath.Dir(file)
-		}
-	}
-	return ""
-}
-
-func isTbInMod(fp string) bool {
-	return mod.Root != "" && strings.HasPrefix(fp, mod.Root)
 }
