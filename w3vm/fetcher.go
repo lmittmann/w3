@@ -11,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -53,6 +54,11 @@ type rpcFetcher struct {
 	headerHashes map[uint64]func() (common.Hash, error)
 
 	dirty uint32 // indicates whether new state has been fetched (0=false, 1=true)
+
+	// file modification times for testdata files
+	stateFileModTime        time.Time
+	contractsFileModTime    time.Time
+	headerHashesFileModTime time.Time
 }
 
 // NewRPCFetcher returns a new [Fetcher] that fetches account state from the given
@@ -219,29 +225,32 @@ var (
 	testdataLock  = flock.New(testdataPath("LOCK")) // inter-process synchronization
 )
 
-func (f *rpcFetcher) loadTestdataState(chainID uint64) error {
+func (f *rpcFetcher) loadTestdataState(chainID uint64) (err error) {
+	// lock testdata files
 	testdataMutex.RLock()
 	defer testdataMutex.RUnlock()
 	testdataLock.RLock()
 	defer testdataLock.Unlock()
 
+	// read testdata files
 	stateFn := fmt.Sprintf("%d_%v.json", chainID, f.blockNumber)
 	var state testdataState
-	if err := readTestdata(stateFn, &state); err != nil {
+	if f.stateFileModTime, err = readTestdata(stateFn, &state, time.Time{}); err != nil {
 		return err
 	}
 
 	var contracts testdataContracts
-	if err := readTestdata("contracts.json", &contracts); err != nil {
+	if f.contractsFileModTime, err = readTestdata("contracts.json", &contracts, time.Time{}); err != nil {
 		return err
 	}
 
 	headerHashesFn := fmt.Sprintf("%d_header_hashes.json", chainID)
 	var headerHashes testdataHeaderHashes
-	if err := readTestdata(headerHashesFn, &headerHashes); err != nil {
+	if f.headerHashesFileModTime, err = readTestdata(headerHashesFn, &headerHashes, time.Time{}); err != nil {
 		return err
 	}
 
+	// build fetcher state
 	f.mux.Lock()
 	f.mux2.Lock()
 	f.mux3.Lock()
@@ -278,35 +287,12 @@ func (f *rpcFetcher) loadTestdataState(chainID uint64) error {
 	return nil
 }
 
-func (f *rpcFetcher) storeTestdataState(chainID uint64) error {
+func (f *rpcFetcher) storeTestdataState(chainID uint64) (err error) {
 	if atomic.LoadUint32(&f.dirty) == 0 {
 		return nil // if no new state was fetched, we do not need to store it
 	}
 
-	testdataMutex.Lock()
-	defer testdataMutex.Unlock()
-	testdataLock.Lock()
-	defer testdataLock.Unlock()
-
-	// load current testdata state
-	stateFn := fmt.Sprintf("%d_%v.json", chainID, f.blockNumber)
-	var state testdataState
-	if err := readTestdata(stateFn, &state); err != nil {
-		return err
-	}
-
-	var contracts testdataContracts
-	if err := readTestdata("contracts.json", &contracts); err != nil {
-		return err
-	}
-
-	headerHashesFn := fmt.Sprintf("%d_header_hashes.json", chainID)
-	var headerHashes testdataHeaderHashes
-	if err := readTestdata(headerHashesFn, &headerHashes); err != nil {
-		return err
-	}
-
-	// build state
+	// read fetcher state
 	f.mux.RLock()
 	f.mux2.RLock()
 	f.mux3.RLock()
@@ -315,25 +301,24 @@ func (f *rpcFetcher) storeTestdataState(chainID uint64) error {
 	defer f.mux3.RUnlock()
 
 	var (
-		otherState        = make(testdataState)
-		otherContracts    = make(testdataContracts)
-		otherHeaderHashes = make(testdataHeaderHashes)
+		state        = make(testdataState)
+		contracts    = make(testdataContracts)
+		headerHashes = make(testdataHeaderHashes)
 	)
-
 	for addr, accFunc := range f.accounts {
 		acc, err := accFunc()
 		if err != nil {
 			continue
 		}
 
-		otherState[addr] = &testdataAccount{
+		state[addr] = &testdataAccount{
 			Nonce:   hexutil.Uint64(acc.Nonce),
 			Balance: (*hexutil.U256)(acc.Balance),
 		}
 		if !bytes.Equal(acc.CodeHash, types.EmptyCodeHash[:]) {
 			codeHash := common.BytesToHash(acc.CodeHash)
-			otherState[addr].CodeHash = codeHash
-			otherContracts[codeHash], _ = f.contracts[codeHash]()
+			state[addr].CodeHash = codeHash
+			contracts[codeHash], _ = f.contracts[codeHash]()
 		}
 	}
 
@@ -343,14 +328,14 @@ func (f *rpcFetcher) storeTestdataState(chainID uint64) error {
 			continue
 		}
 
-		if _, ok := otherState[storageKey.addr]; !ok {
-			otherState[storageKey.addr] = &testdataAccount{
+		if _, ok := state[storageKey.addr]; !ok {
+			state[storageKey.addr] = &testdataAccount{
 				Storage: make(map[w3hexutil.Hash]w3hexutil.Hash),
 			}
-		} else if otherState[storageKey.addr].Storage == nil {
-			otherState[storageKey.addr].Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
+		} else if state[storageKey.addr].Storage == nil {
+			state[storageKey.addr].Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
 		}
-		otherState[storageKey.addr].Storage[w3hexutil.Hash(storageKey.slot)] = w3hexutil.Hash(storageVal)
+		state[storageKey.addr].Storage[w3hexutil.Hash(storageKey.slot)] = w3hexutil.Hash(storageVal)
 	}
 
 	for blockNumber, hashFunc := range f.headerHashes {
@@ -358,29 +343,47 @@ func (f *rpcFetcher) storeTestdataState(chainID uint64) error {
 		if err != nil {
 			continue
 		}
-		otherHeaderHashes[hexutil.Uint64(blockNumber)] = hash
+		headerHashes[hexutil.Uint64(blockNumber)] = hash
+	}
+
+	// lock testdata files
+	testdataMutex.Lock()
+	defer testdataMutex.Unlock()
+	testdataLock.Lock()
+	defer testdataLock.Unlock()
+
+	// load current testdata state
+	stateFn := fmt.Sprintf("%d_%v.json", chainID, f.blockNumber)
+	var otherState testdataState
+	if _, err = readTestdata(stateFn, &otherState, f.stateFileModTime); err != nil {
+		return err
+	}
+
+	var otherContracts testdataContracts
+	if _, err = readTestdata("contracts.json", &otherContracts, f.contractsFileModTime); err != nil {
+		return err
+	}
+
+	headerHashesFn := fmt.Sprintf("%d_header_hashes.json", chainID)
+	var otherHeaderHashes testdataHeaderHashes
+	if _, err = readTestdata(headerHashesFn, &otherHeaderHashes, f.headerHashesFileModTime); err != nil {
+		return err
 	}
 
 	// merge
-	if state == nil {
-		state = otherState
-	} else if err := state.Merge(otherState); err != nil {
+	if err := state.Merge(otherState); err != nil {
 		return fmt.Errorf("failed to merge testdata state: %w", err)
 	}
 
-	if contracts == nil {
-		contracts = otherContracts
-	} else if err := contracts.Merge(otherContracts); err != nil {
+	if err := contracts.Merge(otherContracts); err != nil {
 		return fmt.Errorf("failed to merge testdata contracts: %w", err)
 	}
 
-	if headerHashes == nil {
-		headerHashes = otherHeaderHashes
-	} else if err := headerHashes.Merge(otherHeaderHashes); err != nil {
+	if err := headerHashes.Merge(otherHeaderHashes); err != nil {
 		return fmt.Errorf("failed to merge testdata header hashes: %w", err)
 	}
 
-	// write state
+	// write testdata files
 	if err := writeTestdata(stateFn, state); err != nil {
 		return err
 	}
@@ -493,19 +496,32 @@ func (h testdataHeaderHashes) Merge(other testdataHeaderHashes) error {
 	return nil
 }
 
-func readTestdata(filename string, data any) error {
-	f, err := os.Open(testdataPath(filename))
+func readTestdata(filename string, data any, onlyIfModifiedAfter time.Time) (time.Time, error) {
+	path := testdataPath(filename)
+
+	// get file info first
+	info, err := os.Stat(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return nil
+		return time.Time{}, nil
 	} else if err != nil {
-		return err
+		return time.Time{}, err
+	}
+
+	if info.ModTime().After(onlyIfModifiedAfter) {
+		return info.ModTime(), nil // file was NOT modified after "onlyIfModifiedAfter"
+	}
+
+	// open and read file
+	f, err := os.Open(path)
+	if err != nil {
+		return time.Time{}, err
 	}
 	defer f.Close()
 
 	if err := json.NewDecoder(f).Decode(data); err != nil {
-		return fmt.Errorf("decode json %s: %w", filename, err)
+		return time.Time{}, fmt.Errorf("decode json %s: %w", filename, err)
 	}
-	return nil
+	return info.ModTime(), nil
 }
 
 func writeTestdata(filename string, data any) error {
