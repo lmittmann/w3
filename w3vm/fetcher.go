@@ -2,6 +2,7 @@ package w3vm
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -15,8 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/go-json-experiment/json"
-	"github.com/go-json-experiment/json/jsontext"
 	"github.com/gofrs/flock"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3"
@@ -519,7 +518,7 @@ func readTestdata(filename string, data any, onlyIfModifiedAfter time.Time) (tim
 	}
 	defer f.Close()
 
-	if err := json.UnmarshalRead(f, data); err != nil {
+	if err := json.NewDecoder(f).Decode(data); err != nil {
 		return time.Time{}, fmt.Errorf("decode json %s: %w", filename, err)
 	}
 	return info.ModTime(), nil
@@ -543,13 +542,11 @@ func writeTestdata(filename string, data any) error {
 	}
 	defer f.Close()
 
-	if err := json.MarshalWrite(f, data,
-		json.Deterministic(true),
-		jsontext.Multiline(true),
-	); err != nil {
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "\t")
+	if err := enc.Encode(data); err != nil {
 		return fmt.Errorf("encode json %s: %w", filename, err)
 	}
-	f.Write([]byte("\n")) // ensure that the file ends with a newline
 	return nil
 }
 
