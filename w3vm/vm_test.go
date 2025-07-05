@@ -46,7 +46,7 @@ var (
 
 	testArchiveRPC = cmp.Or(os.Getenv("RPC_MAINNET"), "https://eth.llamarpc.com")
 	testClient     = w3.MustDial(testArchiveRPC, w3.WithRateLimiter(
-		rate.NewLimiter(rate.Every(time.Second/25), 100),
+		rate.NewLimiter(rate.Every(time.Second/20), 100),
 		func(methods []string) (cost int) { return len(methods) },
 	))
 )
