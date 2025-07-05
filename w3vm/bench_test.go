@@ -35,14 +35,14 @@ func BenchmarkVM(b *testing.B) {
 		calls[i] = eth.BlockByNumber(number).Returns(&blocks[i])
 	}
 
-	if err := client.Call(calls...); err != nil {
+	if err := testClient.Call(calls...); err != nil {
 		b.Fatalf("Failed to fetch blocks: %v", err)
 	}
 
 	// execute blocks once to fetch the required state
 	fetchers := make([]w3vm.Fetcher, 0, len(blocks))
 	for _, block := range blocks {
-		fetcher := w3vm.NewTestingRPCFetcher(b, 1, client, new(big.Int).Sub(block.Number(), w3.Big1))
+		fetcher := w3vm.NewTestingRPCFetcher(b, 1, testClient, new(big.Int).Sub(block.Number(), w3.Big1))
 		fetchers = append(fetchers, fetcher)
 		vm, err := w3vm.New(
 			w3vm.WithFetcher(fetcher),
@@ -120,7 +120,7 @@ func BenchmarkVMCall(b *testing.B) {
 		{
 			Name: "UniswapV3Quote",
 			Opts: []w3vm.Option{
-				w3vm.WithFork(client, big.NewInt(20_000_000)),
+				w3vm.WithFork(testClient, big.NewInt(20_000_000)),
 				w3vm.WithTB(b),
 			},
 			Msg: &w3types.Message{
@@ -131,7 +131,7 @@ func BenchmarkVMCall(b *testing.B) {
 		{
 			Name: "WethBalanceOf",
 			Opts: []w3vm.Option{
-				w3vm.WithFork(client, big.NewInt(20_000_000)),
+				w3vm.WithFork(testClient, big.NewInt(20_000_000)),
 				w3vm.WithTB(b),
 			},
 			Msg: &w3types.Message{
