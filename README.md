@@ -4,6 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/lmittmann/w3)](https://goreportcard.com/report/github.com/lmittmann/w3)
 [![Coverage Status](https://coveralls.io/repos/github/lmittmann/w3/badge.svg?branch=main)](https://coveralls.io/github/lmittmann/w3?branch=main)
 [![Latest Release](https://img.shields.io/github/v/release/lmittmann/w3)](https://github.com/lmittmann/w3/releases)
+[![Chat on Telegram](https://img.shields.io/badge/Telegram-blue?logo=telegram&logoColor=white)](https://t.me/w3_golang)
 <img src="https://w3.cool/gopher.png" align="right" alt="W3 Gopher" width="158" height="224">
 
 `w3` is your toolbelt for integrating with Ethereum in Go. Closely linked to `go‑ethereum`, it provides an ergonomic wrapper for working with **RPC**, **ABI's**, and the **EVM**.
