@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build Docs
+    name: Build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -26,6 +26,7 @@ jobs:
         path: ./docs/out
 
   deploy:
+    name: Deploy
     needs: build
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
