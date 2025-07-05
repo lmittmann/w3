@@ -507,7 +507,7 @@ func readTestdata(filename string, data any, onlyIfModifiedAfter time.Time) (tim
 		return time.Time{}, err
 	}
 
-	if info.ModTime().After(onlyIfModifiedAfter) {
+	if info.ModTime().Before(onlyIfModifiedAfter) {
 		return info.ModTime(), nil // file was NOT modified after "onlyIfModifiedAfter"
 	}
 
