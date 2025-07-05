@@ -2,11 +2,13 @@ package w3vm_test
 
 import (
 	"bytes"
+	"cmp"
 	_ "embed"
 	"errors"
 	"fmt"
 	"math"
 	"math/big"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -20,7 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/google/go-cmp/cmp"
+	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/internal"
@@ -42,8 +44,9 @@ var (
 	funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 	funcTransfer  = w3.MustNewFunc("transfer(address,uint256)", "bool")
 
-	client = w3.MustDial("https://eth.llamarpc.com", w3.WithRateLimiter(
-		rate.NewLimiter(rate.Every(time.Minute/100), 100),
+	testArchiveRPC = cmp.Or(os.Getenv("RPC_MAINNET"), "https://eth.llamarpc.com")
+	testClient     = w3.MustDial(testArchiveRPC, w3.WithRateLimiter(
+		rate.NewLimiter(rate.Every(time.Minute/1800), 100),
 		func(methods []string) (cost int) { return len(methods) },
 	))
 )
@@ -276,12 +279,12 @@ func TestVMApply(t *testing.T) {
 				w3vm.WithState(test.PreState),
 			)
 			gotReceipt, gotErr := vm.Apply(test.Message)
-			if diff := cmp.Diff(test.WantErr, gotErr,
+			if diff := gocmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
-			if diff := cmp.Diff(test.WantReceipt, gotReceipt,
+			if diff := gocmp.Diff(test.WantReceipt, gotReceipt,
 				internal.EquateErrors(),
 				cmpopts.IgnoreUnexported(w3vm.Receipt{}),
 				cmpopts.EquateComparable(common.Address{}, common.Hash{}),
@@ -295,7 +298,7 @@ func TestVMApply(t *testing.T) {
 func TestVMApply_Hook(t *testing.T) {
 	vm, err := w3vm.New(
 		w3vm.WithNoBaseFee(),
-		w3vm.WithFork(client, big.NewInt(20_000_000)),
+		w3vm.WithFork(testClient, big.NewInt(20_000_000)),
 		w3vm.WithTB(t),
 	)
 	if err != nil {
@@ -553,7 +556,7 @@ func TestVMSnapshot_Logs(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if diff := cmp.Diff(receipt0.Logs, receipt1.Logs); diff != "" {
+			if diff := gocmp.Diff(receipt0.Logs, receipt1.Logs); diff != "" {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
 		})
@@ -595,12 +598,12 @@ func TestVMCall(t *testing.T) {
 				w3vm.WithState(test.PreState),
 			)
 			gotReceipt, gotErr := vm.Call(test.Message)
-			if diff := cmp.Diff(test.WantErr, gotErr,
+			if diff := gocmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
-			if diff := cmp.Diff(test.WantReceipt, gotReceipt,
+			if diff := gocmp.Diff(test.WantReceipt, gotReceipt,
 				internal.EquateErrors(),
 				cmpopts.IgnoreUnexported(w3vm.Receipt{}),
 				cmpopts.EquateComparable(common.Address{}, common.Hash{}),
@@ -814,7 +817,7 @@ func TestVMApply_Integration(t *testing.T) {
 						block    *types.Block
 						receipts types.Receipts
 					)
-					if err := client.Call(
+					if err := testClient.Call(
 						eth.BlockByNumber(blockNumber).Returns(&block),
 						eth.BlockReceipts(blockNumber).Returns(&receipts),
 					); err != nil {
@@ -822,7 +825,7 @@ func TestVMApply_Integration(t *testing.T) {
 					}
 
 					// setup vm
-					f := w3vm.NewTestingRPCFetcher(t, 1, client, big.NewInt(i-1))
+					f := w3vm.NewTestingRPCFetcher(t, 1, testClient, big.NewInt(i-1))
 					vm, _ := w3vm.New(
 						w3vm.WithFetcher(f),
 						w3vm.WithHeader(block.Header()),
@@ -845,7 +848,7 @@ func TestVMApply_Integration(t *testing.T) {
 						if err != nil && gotReceipt == nil {
 							t.Fatalf("Failed to apply tx %d (%s): %v", j, tx.Hash(), err)
 						}
-						if diff := cmp.Diff(wantReceipt, gotReceipt,
+						if diff := gocmp.Diff(wantReceipt, gotReceipt,
 							cmpopts.EquateEmpty(),
 							cmpopts.EquateErrors(),
 							cmpopts.IgnoreUnexported(w3vm.Receipt{}),
@@ -863,7 +866,7 @@ func TestVMApply_Integration(t *testing.T) {
 					}
 
 					var wantCoinbaseBal *big.Int
-					if err := client.Call(
+					if err := testClient.Call(
 						eth.Balance(block.Coinbase(), block.Number()).Returns(&wantCoinbaseBal),
 					); err != nil {
 						t.Fatalf("Failed to fetch coinbase balance: %v", err)

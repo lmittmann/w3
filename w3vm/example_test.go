@@ -23,6 +23,8 @@ import (
 var (
 	addrA = common.Address{0x0a}
 	addrB = common.Address{0x0b}
+
+	client = w3.MustDial("https://eth.llamarpc.com")
 )
 
 // Execute an Ether transfer.
