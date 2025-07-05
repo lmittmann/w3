@@ -279,6 +279,10 @@ func (f *rpcFetcher) loadTestdataState(chainID uint64) error {
 }
 
 func (f *rpcFetcher) storeTestdataState(chainID uint64) error {
+	if atomic.LoadUint32(&f.dirty) == 0 {
+		return nil // if no new state was fetched, we do not need to store it
+	}
+
 	testdataMutex.Lock()
 	defer testdataMutex.Unlock()
 	testdataLock.Lock()
