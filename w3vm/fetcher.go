@@ -543,7 +543,10 @@ func writeTestdata(filename string, data any) error {
 	}
 	defer f.Close()
 
-	if err := json.MarshalWrite(f, data, jsontext.Multiline(true)); err != nil {
+	if err := json.MarshalWrite(f, data,
+		json.Deterministic(true),
+		jsontext.Multiline(true),
+	); err != nil {
 		return fmt.Errorf("encode json %s: %w", filename, err)
 	}
 	return nil
