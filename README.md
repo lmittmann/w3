@@ -22,6 +22,15 @@ go get github.com/lmittmann/w3
 * Use `w3.A`, `w3.H`, and many other utility functions to parse addresses, hashes, and other common types from strings. [learn&nbsp;more&nbsp;↗](#utils)
 
 
+## Sponsors
+
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/public/assets/ef-logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/public/assets/ef-logo.svg">
+    <img src="docs/public/assets/ef-logo.svg" alt="ef logo" width="256" height="auto">
+</picture>
+
+
 ## Getting Started
 
 ### RPC Client
@@ -292,11 +301,3 @@ func (f *getTransactionBySenderAndNonceFactory) HandleResponse(elem rpc.BatchEle
     return nil
 }
 ```
-
-## Sponsors
-
-<picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/public/assets/ef-logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="docs/public/assets/ef-logo.svg">
-    <img src="docs/public/assets/ef-logo.svg" alt="ef logo" width="256" height="auto">
-</picture>
