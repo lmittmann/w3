@@ -549,6 +549,7 @@ func writeTestdata(filename string, data any) error {
 	); err != nil {
 		return fmt.Errorf("encode json %s: %w", filename, err)
 	}
+	f.Write([]byte("\n")) // ensure that the file ends with a newline
 	return nil
 }
 
