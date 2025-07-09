@@ -244,6 +244,7 @@ lookup(uint256 startIndex, uint256 endIndex)	address[] pools
 lookupPermissioned(address _tokenA, address _tokenB, address accessor, uint256 startIndex, uint256 endIndex)	address[] pools
 lookupPermissioned(uint256 feeAIn, uint256 feeBIn, uint256 tickSpacing, uint256 lookback, address tokenA, address tokenB, uint8 options, address accessor)	address
 lookupPermissioned(uint256 startIndex, uint256 endIndex)	address[] pools
+LSP8CannotSendToAddressZero()
 ma_exp_time()	uint256
 ma_last_time()	uint256
 maverickV2SwapCallback(address tokenIn, uint256 amountIn, uint256 amountOut, bytes data)
@@ -274,6 +275,7 @@ NoSlice()
 offpeg_fee_multiplier()	uint256
 onERC721Received(address operator, address from, uint256 tokenId, bytes data)	bytes4
 onSwap((uint8 kind, address tokenIn, address tokenOut, uint256 amount, bytes32 poolId, uint256 lastChangeBlock, address from, address to, bytes userData) swapRequest, uint256[] balances, uint256 indexIn, uint256 indexOut)	uint256 amount
+OwnableCannotSetZeroAddressAsOwner()
 owner()	address
 ownerOf(uint256 tokenId)	address
 pairFor(address factory, address tokenA, address tokenB)	address pair
@@ -351,6 +353,7 @@ RouterNotFactoryPool()
 RouterTooLittleReceived(uint256 amountOutMinimum, uint256 amountOut)
 RouterTooMuchRequested(uint256 amountInMaximum, uint256 amountIn)
 RouterZeroSwap()
+run(uint32, uint256)	string
 rush()	uint256 wad
 safeTransferFrom(address from, address to, uint256 tokenId)
 safeTransferFrom(address from, address to, uint256 tokenId, bytes data)
