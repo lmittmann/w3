@@ -31,7 +31,7 @@ var (
 	addrWETH = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 	addrDAI  = w3.A("0x6B175474E89094C44Da98b954EedeAC495271d0F")
 
-	client = w3.MustDial("https://eth.llamarpc.com")
+	client = w3.MustDial("https://ethereum-rpc.publicnode.com")
 )
 
 // Call the name, symbol, decimals, and balanceOf functions of the Wrapped Ether
@@ -316,7 +316,7 @@ func ExampleClient_subscribeToPendingTransactions() {
 // Rate Limit the number of requests to 10 per second, with bursts of up to 20
 // requests.
 func ExampleClient_rateLimitByRequest() {
-	client, err := w3.Dial("https://eth.llamarpc.com",
+	client, err := w3.Dial("https://ethereum-rpc.publicnode.com",
 		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second/10), 20), nil),
 	)
 	if err != nil {
@@ -353,7 +353,7 @@ func ExampleClient_rateLimitByComputeUnits() {
 		return cost
 	}
 
-	client, err := w3.Dial("https://eth.llamarpc.com",
+	client, err := w3.Dial("https://ethereum-rpc.publicnode.com",
 		w3.WithRateLimiter(rate.NewLimiter(rate.Every(time.Second/300), 300), cu),
 	)
 	if err != nil {
@@ -402,27 +402,25 @@ func ExampleFunc_balanceOf() {
 
 // ABI bindings for the Uniswap v4 swap function.
 func ExampleFunc_uniswapV4Swap() {
-	funcSwap := w3.MustNewFunc(`swap(
-		(address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key,
-		(bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params,
-		bytes hookData
-	)`, "int256 delta")
-
 	// ABI binding for the PoolKey struct.
 	type PoolKey struct {
 		Currency0   common.Address
 		Currency1   common.Address
-		Fee         *big.Int
-		TickSpacing *big.Int
+		Fee         *big.Int `abitype:"uint24"`
+		TickSpacing *big.Int `abitype:"int24"`
 		Hooks       common.Address
 	}
 
 	// ABI binding for the SwapParams struct.
 	type SwapParams struct {
 		ZeroForOne        bool
-		AmountSpecified   *big.Int
-		SqrtPriceLimitX96 *big.Int
+		AmountSpecified   *big.Int `abitype:"int256"`
+		SqrtPriceLimitX96 *big.Int `abitype:"uint160"`
 	}
+
+	funcSwap := w3.MustNewFunc(`swap(PoolKey key, SwapParams params, bytes hookData)`, "int256 delta",
+		PoolKey{}, SwapParams{},
+	)
 
 	// encode
 	input, _ := funcSwap.EncodeArgs(

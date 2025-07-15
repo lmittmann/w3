@@ -163,8 +163,8 @@ The `Receipt` struct contains the result of an executed message.
 
 #### Fields
 
-* `GasUsed uint64`: Gas used for executing the message.
-* `GasRefund uint64`: Gas refunded after executing the message.
+* `GasUsed uint64`: Gas used for executing the message (including refunds).
+* `MaxGasUsed uint64`: Maximum gas used during executing the message (excluding refunds).
 * `Logs []*types.Log`: Logs emitted while executing the message.
 * `Output []byte`: Output of the executed message.
 * `ContractAddress *common.Address`: Address of the created contract, if any.
@@ -203,5 +203,14 @@ An error only can only occur, if the VM fails to fetch state via a `w3vm.Fetcher
 * `w3vm.RandA() common.Address`: Returns a random address.
 * `WETHBalanceSlot(addr common.Address) common.Hash`: Returns the storage slot that stores the WETH balance of the given address.
 * `WETHAllowanceSlot(owner, spender common.Address) common.Hash`: Returns the storage slot that stores the WETH allowance of the given owner to the spender.
-* `Slot(pos, key common.Hash) common.Hash`: Returns the storage slot of a mapping with the given position and key.
-* `Slot2(pos, key, key2 common.Hash) common.Hash`: Returns the storage slot of a double mapping with the given position and keys.
+
+### Storage Slot Calculation
+
+Calculate storage slots for mappings. Solidity and Vyper use different parameter ordering for keccak256 hash calculation.
+
+* `SoliditySlot(pos, key common.Hash) common.Hash`: Single mapping storage slot.
+* `SoliditySlot2(pos, key0, key1 common.Hash) common.Hash`: Double mapping storage slot.
+* `SoliditySlot3(pos, key0, key1, key2 common.Hash) common.Hash`: Triple mapping storage slot.
+* `VyperSlot(pos, key common.Hash) common.Hash`: Single HashMap storage slot.
+* `VyperSlot2(pos, key0, key1 common.Hash) common.Hash`: Double HashMap storage slot.
+* `VyperSlot3(pos, key0, key1, key2 common.Hash) common.Hash`: Triple HashMap storage slot.

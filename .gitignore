@@ -1,0 +1,7 @@
+# files
+LOCK
+
+# dirs
+.next/
+node_modules/
+out/

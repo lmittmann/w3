@@ -2,11 +2,13 @@ package w3vm_test
 
 import (
 	"bytes"
+	"cmp"
 	_ "embed"
 	"errors"
 	"fmt"
 	"math"
 	"math/big"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -20,7 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/google/go-cmp/cmp"
+	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/internal"
@@ -42,8 +44,9 @@ var (
 	funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
 	funcTransfer  = w3.MustNewFunc("transfer(address,uint256)", "bool")
 
-	client = w3.MustDial("https://eth.llamarpc.com", w3.WithRateLimiter(
-		rate.NewLimiter(rate.Every(time.Minute/100), 100),
+	testArchiveRPC = cmp.Or(os.Getenv("RPC_MAINNET"), "https://eth.llamarpc.com")
+	testClient     = w3.MustDial(testArchiveRPC, w3.WithRateLimiter(
+		rate.NewLimiter(rate.Every(time.Second/20), 100),
 		func(methods []string) (cost int) { return len(methods) },
 	))
 )
@@ -147,7 +150,8 @@ func TestVMApply(t *testing.T) {
 				Value: w3.I("1 ether"),
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed: 21_000,
+				GasUsed:    21_000,
+				MaxGasUsed: 21_000,
 			},
 		},
 		{ // WETH transfer
@@ -167,8 +171,8 @@ func TestVMApply(t *testing.T) {
 				Gas:   100_000,
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed:   38_853,
-				GasRefund: 9_713,
+				GasUsed:    38_853,
+				MaxGasUsed: 48_566,
 				Logs: []*types.Log{
 					{
 						Address: addrWETH,
@@ -200,8 +204,9 @@ func TestVMApply(t *testing.T) {
 				Gas:   100_000,
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed: 24_019,
-				Err:     errors.New("execution reverted"),
+				GasUsed:    24_019,
+				MaxGasUsed: 24_019,
+				Err:        errors.New("execution reverted"),
 			},
 			WantErr: errors.New("execution reverted"),
 		},
@@ -215,9 +220,10 @@ func TestVMApply(t *testing.T) {
 				To:   &addr1,
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed: 21_008,
-				Output:  w3.B("0x00"),
-				Err:     errors.New("execution reverted"),
+				GasUsed:    21_008,
+				MaxGasUsed: 21_008,
+				Output:     w3.B("0x00"),
+				Err:        errors.New("execution reverted"),
 			},
 			WantErr: errors.New("execution reverted"),
 		},
@@ -228,6 +234,7 @@ func TestVMApply(t *testing.T) {
 			},
 			WantReceipt: &w3vm.Receipt{
 				GasUsed:         53_006,
+				MaxGasUsed:      53_006,
 				ContractAddress: ptr(crypto.CreateAddress(addr1, 0)),
 			},
 		},
@@ -241,6 +248,7 @@ func TestVMApply(t *testing.T) {
 			},
 			WantReceipt: &w3vm.Receipt{
 				GasUsed:         53_006,
+				MaxGasUsed:      53_006,
 				ContractAddress: ptr(crypto.CreateAddress(addr1, 1)),
 			},
 		},
@@ -259,7 +267,8 @@ func TestVMApply(t *testing.T) {
 				Value: w3.I("1 ether"),
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed: 21_000,
+				GasUsed:    21_000,
+				MaxGasUsed: 21_000,
 			},
 		},
 	}
@@ -270,12 +279,12 @@ func TestVMApply(t *testing.T) {
 				w3vm.WithState(test.PreState),
 			)
 			gotReceipt, gotErr := vm.Apply(test.Message)
-			if diff := cmp.Diff(test.WantErr, gotErr,
+			if diff := gocmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
-			if diff := cmp.Diff(test.WantReceipt, gotReceipt,
+			if diff := gocmp.Diff(test.WantReceipt, gotReceipt,
 				internal.EquateErrors(),
 				cmpopts.IgnoreUnexported(w3vm.Receipt{}),
 				cmpopts.EquateComparable(common.Address{}, common.Hash{}),
@@ -289,7 +298,7 @@ func TestVMApply(t *testing.T) {
 func TestVMApply_Hook(t *testing.T) {
 	vm, err := w3vm.New(
 		w3vm.WithNoBaseFee(),
-		w3vm.WithFork(client, big.NewInt(20_000_000)),
+		w3vm.WithFork(testClient, big.NewInt(20_000_000)),
 		w3vm.WithTB(t),
 	)
 	if err != nil {
@@ -547,7 +556,7 @@ func TestVMSnapshot_Logs(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if diff := cmp.Diff(receipt0.Logs, receipt1.Logs); diff != "" {
+			if diff := gocmp.Diff(receipt0.Logs, receipt1.Logs); diff != "" {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
 		})
@@ -576,8 +585,9 @@ func TestVMCall(t *testing.T) {
 				Input: mustEncodeArgs(funcBalanceOf, addr0),
 			},
 			WantReceipt: &w3vm.Receipt{
-				GasUsed: 23_726,
-				Output:  w3.B("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"),
+				GasUsed:    23_726,
+				MaxGasUsed: 23_726,
+				Output:     w3.B("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"),
 			},
 		},
 	}
@@ -588,12 +598,12 @@ func TestVMCall(t *testing.T) {
 				w3vm.WithState(test.PreState),
 			)
 			gotReceipt, gotErr := vm.Call(test.Message)
-			if diff := cmp.Diff(test.WantErr, gotErr,
+			if diff := gocmp.Diff(test.WantErr, gotErr,
 				internal.EquateErrors(),
 			); diff != "" {
 				t.Fatalf("(-want +got)\n%s", diff)
 			}
-			if diff := cmp.Diff(test.WantReceipt, gotReceipt,
+			if diff := gocmp.Diff(test.WantReceipt, gotReceipt,
 				internal.EquateErrors(),
 				cmpopts.IgnoreUnexported(w3vm.Receipt{}),
 				cmpopts.EquateComparable(common.Address{}, common.Hash{}),
@@ -776,8 +786,8 @@ func TestVMApply_Integration(t *testing.T) {
 
 	tests := []struct {
 		Name   string
-		Offset uint64 // Start block number
-		Size   uint64 // Number of blocks
+		Offset int64 // Start block number
+		Size   int64 // Number of blocks
 	}{
 		{Name: "Byzantium", Offset: 4_370_000 - 2, Size: 4},
 		{Name: "Constantinople&Petersburg", Offset: 7_280_000 - 2, Size: 4},
@@ -797,7 +807,7 @@ func TestVMApply_Integration(t *testing.T) {
 			// execute blocks
 			for i := test.Offset; i < test.Offset+test.Size; i++ {
 				// gather block and receipts
-				blockNumber := big.NewInt(int64(i))
+				blockNumber := big.NewInt(i)
 
 				t.Run(blockNumber.String(), func(t *testing.T) {
 					t.Parallel()
@@ -807,7 +817,7 @@ func TestVMApply_Integration(t *testing.T) {
 						block    *types.Block
 						receipts types.Receipts
 					)
-					if err := client.Call(
+					if err := testClient.Call(
 						eth.BlockByNumber(blockNumber).Returns(&block),
 						eth.BlockReceipts(blockNumber).Returns(&receipts),
 					); err != nil {
@@ -815,7 +825,7 @@ func TestVMApply_Integration(t *testing.T) {
 					}
 
 					// setup vm
-					f := w3vm.NewTestingRPCFetcher(t, 1, client, big.NewInt(int64(i)-1))
+					f := w3vm.NewTestingRPCFetcher(t, 1, testClient, big.NewInt(i-1))
 					vm, _ := w3vm.New(
 						w3vm.WithFetcher(f),
 						w3vm.WithHeader(block.Header()),
@@ -838,12 +848,12 @@ func TestVMApply_Integration(t *testing.T) {
 						if err != nil && gotReceipt == nil {
 							t.Fatalf("Failed to apply tx %d (%s): %v", j, tx.Hash(), err)
 						}
-						if diff := cmp.Diff(wantReceipt, gotReceipt,
+						if diff := gocmp.Diff(wantReceipt, gotReceipt,
 							cmpopts.EquateEmpty(),
 							cmpopts.EquateErrors(),
 							cmpopts.IgnoreUnexported(w3vm.Receipt{}),
-							cmpopts.IgnoreFields(w3vm.Receipt{}, "GasRefund", "Output"),
-							cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "TxHash", "TxIndex", "Index"),
+							cmpopts.IgnoreFields(w3vm.Receipt{}, "MaxGasUsed", "Output"),
+							cmpopts.IgnoreFields(types.Log{}, "BlockHash", "BlockNumber", "BlockTimestamp", "TxHash", "TxIndex", "Index"),
 							cmpopts.EquateComparable(common.Address{}, common.Hash{}),
 						); diff != "" {
 							t.Fatalf("[%v,%d,%s] (-want +got)\n%s", block.Number(), j, tx.Hash(), diff)
@@ -856,7 +866,7 @@ func TestVMApply_Integration(t *testing.T) {
 					}
 
 					var wantCoinbaseBal *big.Int
-					if err := client.Call(
+					if err := testClient.Call(
 						eth.Balance(block.Coinbase(), block.Number()).Returns(&wantCoinbaseBal),
 					); err != nil {
 						t.Fatalf("Failed to fetch coinbase balance: %v", err)

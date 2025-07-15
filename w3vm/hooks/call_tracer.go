@@ -196,6 +196,8 @@ func renderCallType(typ byte) string {
 	switch vm.OpCode(typ) {
 	case vm.CALL:
 		return ""
+	case vm.CALLCODE:
+		return "callcode "
 	case vm.STATICCALL:
 		return stylesStaticcall.Render("static") + " "
 	case vm.DELEGATECALL:
@@ -204,8 +206,10 @@ func renderCallType(typ byte) string {
 		return "create "
 	case vm.CREATE2:
 		return "create2 "
+	case vm.SELFDESTRUCT:
+		return "selfdestruct "
 	default:
-		panic(fmt.Sprintf("unknown call type %92x", typ))
+		panic(fmt.Sprintf("unknown call type %02x", typ))
 	}
 }
 

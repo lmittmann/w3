@@ -18,7 +18,7 @@ type State map[common.Address]*Account
 // SetGenesisAlloc copies the given [types.GenesisAlloc] to the state and
 // returns it.
 func (s State) SetGenesisAlloc(alloc types.GenesisAlloc) State {
-	s = make(State, len(alloc))
+	clear(s)
 	for addr, acc := range alloc {
 		s[addr] = &Account{
 			Nonce:   acc.Nonce,
