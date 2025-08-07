@@ -404,7 +404,7 @@ func defaultBlockContext() *vm.BlockContext {
 		Time:        uint64(time.Now().Unix()),
 		Difficulty:  new(big.Int),
 		BaseFee:     new(big.Int),
-		GasLimit:    params.MaxGasLimit,
+		GasLimit:    params.MaxTxGas,
 		Random:      &random,
 	}
 }
