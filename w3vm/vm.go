@@ -589,7 +589,7 @@ func WithTB(tb testing.TB) Option {
 	return func(vm *VM) { vm.opts.tb = tb }
 }
 
-// WithJumpDestCache sets the jump dest cache for the VM.
+// WithJumpDestCache sets the jump destination analysis cache for the VM.
 func WithJumpDestCache(cache vm.JumpDestCache) Option {
 	return func(vm *VM) { vm.opts.jumpDestCache = cache }
 }
