@@ -589,6 +589,12 @@ func WithTB(tb testing.TB) Option {
 	return func(vm *VM) { vm.opts.tb = tb }
 }
 
+// Clone creates a new VM with a copy of the current VM's options and a snapshot of its state.
+func (vm *VM) Clone() *VM {
+	clonedOpts := *vm.opts
+	return &VM{opts: &clonedOpts, txIndex: vm.txIndex, db: vm.Snapshot()}
+}
+
 // WithJumpDestCache sets the jump destination analysis cache for the VM.
 func WithJumpDestCache(cache vm.JumpDestCache) Option {
 	return func(vm *VM) { vm.opts.jumpDestCache = cache }
