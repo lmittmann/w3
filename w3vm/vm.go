@@ -124,10 +124,6 @@ func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Re
 		evm.SetPrecompiles(v.opts.precompiles)
 	}
 
-	if v.opts.jumpDestCache != nil {
-		evm.SetJumpDestCache(v.opts.jumpDestCache)
-	}
-
 	snap := v.db.Snapshot()
 
 	// apply the message to the evm
@@ -430,8 +426,6 @@ type options struct {
 	fetcher         Fetcher
 	tb              testing.TB
 
-	jumpDestCache vm.JumpDestCache
-
 	precompiles vm.PrecompiledContracts
 }
 
@@ -587,9 +581,4 @@ func WithFetcher(fetcher Fetcher) Option {
 // State is stored in the testdata directory of the tests package.
 func WithTB(tb testing.TB) Option {
 	return func(vm *VM) { vm.opts.tb = tb }
-}
-
-// WithJumpDestCache sets the jump dest cache for the VM.
-func WithJumpDestCache(cache vm.JumpDestCache) Option {
-	return func(vm *VM) { vm.opts.jumpDestCache = cache }
 }
