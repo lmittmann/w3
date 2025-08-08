@@ -1,11 +1,14 @@
 package w3vm_test
 
 import (
+	_ "embed"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
@@ -35,14 +38,14 @@ func BenchmarkVM(b *testing.B) {
 		calls[i] = eth.BlockByNumber(number).Returns(&blocks[i])
 	}
 
-	if err := client.Call(calls...); err != nil {
+	if err := testClient.Call(calls...); err != nil {
 		b.Fatalf("Failed to fetch blocks: %v", err)
 	}
 
 	// execute blocks once to fetch the required state
 	fetchers := make([]w3vm.Fetcher, 0, len(blocks))
 	for _, block := range blocks {
-		fetcher := w3vm.NewTestingRPCFetcher(b, 1, client, new(big.Int).Sub(block.Number(), w3.Big1))
+		fetcher := w3vm.NewTestingRPCFetcher(b, 1, testClient, new(big.Int).Sub(block.Number(), w3.Big1))
 		fetchers = append(fetchers, fetcher)
 		vm, err := w3vm.New(
 			w3vm.WithFetcher(fetcher),
@@ -102,15 +105,26 @@ func BenchmarkVM(b *testing.B) {
 	b.ReportMetric(float64(gasSimulated)/dur.Seconds(), "gas/s")
 }
 
+//go:embed testdata/burntpix.genesis.json
+var rawGenesisBurntpix []byte
+
 func BenchmarkVMCall(b *testing.B) {
 	var (
-		addrQuoter = w3.A("0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6")
-		addrWETH   = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
-		addrUSDC   = w3.A("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+		addrQuoter   = w3.A("0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6")
+		addrWETH     = w3.A("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+		addrUSDC     = w3.A("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+		addrBurntpix = w3.A("0x49206861766520746f6f206d7563682074696d65")
 
 		funcQuote     = w3.MustNewFunc("quoteExactInputSingle(address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96)", "uint256 amountOut")
 		funcBalanceOf = w3.MustNewFunc("balanceOf(address)", "uint256")
+		funcRun       = w3.MustNewFunc("run(uint32 seed, uint256 iterations)", "string")
+
+		genesisBurntpix types.GenesisAlloc
 	)
+
+	if err := json.Unmarshal(rawGenesisBurntpix, &genesisBurntpix); err != nil {
+		b.Fatalf("Failed to unmarshal burntpix genesis: %v", err)
+	}
 
 	benchmarks := []struct {
 		Name string
@@ -120,7 +134,7 @@ func BenchmarkVMCall(b *testing.B) {
 		{
 			Name: "UniswapV3Quote",
 			Opts: []w3vm.Option{
-				w3vm.WithFork(client, big.NewInt(20_000_000)),
+				w3vm.WithFork(testClient, big.NewInt(20_000_000)),
 				w3vm.WithTB(b),
 			},
 			Msg: &w3types.Message{
@@ -131,12 +145,28 @@ func BenchmarkVMCall(b *testing.B) {
 		{
 			Name: "WethBalanceOf",
 			Opts: []w3vm.Option{
-				w3vm.WithFork(client, big.NewInt(20_000_000)),
+				w3vm.WithFork(testClient, big.NewInt(20_000_000)),
 				w3vm.WithTB(b),
 			},
 			Msg: &w3types.Message{
 				To:    &addrWETH,
 				Input: mustEncodeArgs(funcBalanceOf, addrWETH),
+			},
+		},
+		{ // https://github.com/karalabe/burntpix-benchmark
+			Name: "Burntpix",
+			Opts: []w3vm.Option{
+				w3vm.WithChainConfig(params.AllDevChainProtocolChanges),
+				w3vm.WithHeader(&types.Header{
+					GasLimit: 0xffffffffffffffff,
+				}),
+				w3vm.WithState(w3types.State{}.SetGenesisAlloc(genesisBurntpix)),
+			},
+			Msg: &w3types.Message{
+				From:  w3vm.RandA(),
+				To:    &addrBurntpix,
+				Gas:   0xffffffffffffffff,
+				Input: mustEncodeArgs(funcRun, uint32(0), big.NewInt(500_000)),
 			},
 		},
 	}

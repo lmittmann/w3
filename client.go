@@ -29,9 +29,10 @@ type Client struct {
 
 // NewClient returns a new Client given an rpc.Client client.
 func NewClient(client *rpc.Client, opts ...Option) *Client {
-	c := &Client{
-		client: client,
+	if client == nil {
+		panic("w3: client is nil")
 	}
+	c := &Client{client: client}
 	for _, opt := range opts {
 		if opt == nil {
 			continue

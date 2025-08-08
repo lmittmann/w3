@@ -22,9 +22,14 @@ type Event struct {
 // NewEvent returns a new Smart Contract event log decoder from the given
 // Solidity event signature.
 //
+// The optional tuples parameter accepts struct definitions that can be
+// referenced by name in the signature instead of using inline tuple
+// definitions. This enables cleaner, more readable function signatures when
+// working with complex tuple types.
+//
 // An error is returned if the signature parsing fails.
-func NewEvent(signature string) (*Event, error) {
-	name, args, err := _abi.ParseWithName(signature)
+func NewEvent(signature string, tuples ...any) (*Event, error) {
+	name, args, err := _abi.ParseWithName(signature, tuples...)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidABI, err)
 	}
@@ -50,8 +55,8 @@ func NewEvent(signature string) (*Event, error) {
 }
 
 // MustNewEvent is like [NewEvent] but panics if the signature parsing fails.
-func MustNewEvent(signature string) *Event {
-	event, err := NewEvent(signature)
+func MustNewEvent(signature string, tuples ...any) *Event {
+	event, err := NewEvent(signature, tuples...)
 	if err != nil {
 		panic(err)
 	}

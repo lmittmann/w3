@@ -7,18 +7,23 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/gofrs/flock"
 	"github.com/holiman/uint256"
 	"github.com/lmittmann/w3"
 	"github.com/lmittmann/w3/internal/crypto"
 	w3hexutil "github.com/lmittmann/w3/internal/hexutil"
+	"github.com/lmittmann/w3/internal/mod"
 	"github.com/lmittmann/w3/module/eth"
 	"github.com/lmittmann/w3/w3types"
 )
@@ -51,6 +56,11 @@ type rpcFetcher struct {
 	headerHashes map[uint64]func() (common.Hash, error)
 
 	dirty uint32 // indicates whether new state has been fetched (0=false, 1=true)
+
+	// file modification times for testdata files
+	stateFileModTime        time.Time
+	contractsFileModTime    time.Time
+	headerHashesFileModTime time.Time
 }
 
 // NewRPCFetcher returns a new [Fetcher] that fetches account state from the given
@@ -195,17 +205,37 @@ func (f *rpcFetcher) call(calls ...w3types.RPCCaller) error {
 // NewTestingRPCFetcher returns a new [Fetcher] like [NewRPCFetcher], but caches
 // the fetched state on disk in the testdata directory of the tests package.
 func NewTestingRPCFetcher(tb testing.TB, chainID uint64, client *w3.Client, blockNumber *big.Int) Fetcher {
-	if ok := isTbInMod(getTbFilepath(tb)); !ok {
-		panic("must be called from a test in a module")
+	if mod.Root == "" {
+		panic("w3vm: NewTestingRPCFetcher must be used in a module test")
 	}
 
 	fetcher := newRPCFetcher(client, blockNumber)
-	if err := fetcher.loadTestdataState(tb, chainID); err != nil {
+	if err := fetcher.loadTestdataState(chainID); err != nil {
 		tb.Fatalf("w3vm: failed to load state from testdata: %v", err)
 	}
 
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
+	var storingStarted atomic.Bool
+	storingDone := make(chan struct{})
+
+	// handle signals in a goroutine
+	go func() {
+		sig := <-sigCh
+		if storingStarted.Load() {
+			<-storingDone // cleanup already started, wait for it to complete
+		}
+		// re-send the signal after cleanup is done
+		signal.Stop(sigCh)
+		syscall.Kill(syscall.Getpid(), sig.(syscall.Signal))
+	}()
+
 	tb.Cleanup(func() {
-		if err := fetcher.storeTestdataState(tb, chainID); err != nil {
+		storingStarted.Store(true)
+		defer close(storingDone)
+
+		if err := fetcher.storeTestdataState(chainID); err != nil {
 			tb.Fatalf("w3vm: failed to write state to testdata: %v", err)
 		}
 	})
@@ -213,40 +243,36 @@ func NewTestingRPCFetcher(tb testing.TB, chainID uint64, client *w3.Client, bloc
 }
 
 var (
-	globalStateStoreMux sync.RWMutex
-	globalStateStore    = make(map[string]*testdataState)
+	testdataMutex sync.RWMutex                      // in-process synchronization
+	testdataLock  = flock.New(testdataPath("LOCK")) // inter-process synchronization
 )
 
-func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
-	dir := getTbFilepath(tb)
-	fn := filepath.Join(dir,
-		"testdata",
-		"w3vm",
-		fmt.Sprintf("%d_%v.json", chainID, f.blockNumber),
-	)
+func (f *rpcFetcher) loadTestdataState(chainID uint64) (err error) {
+	// lock testdata files
+	testdataMutex.RLock()
+	defer testdataMutex.RUnlock()
+	testdataLock.RLock()
+	defer testdataLock.Unlock()
 
-	var s *testdataState
-
-	// check if the state has already been loaded
-	globalStateStoreMux.RLock()
-	s, ok := globalStateStore[fn]
-	globalStateStoreMux.RUnlock()
-
-	if !ok {
-		// load state from file
-		file, err := os.Open(fn)
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		} else if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		if err := json.NewDecoder(file).Decode(&s); err != nil {
-			return err
-		}
+	// read testdata files
+	stateFn := fmt.Sprintf("%d_%v.json", chainID, f.blockNumber)
+	var state testdataState
+	if f.stateFileModTime, err = readTestdata(stateFn, &state, time.Time{}); err != nil {
+		return err
 	}
 
+	var contracts testdataContracts
+	if f.contractsFileModTime, err = readTestdata("contracts.json", &contracts, time.Time{}); err != nil {
+		return err
+	}
+
+	headerHashesFn := fmt.Sprintf("%d_header_hashes.json", chainID)
+	var headerHashes testdataHeaderHashes
+	if f.headerHashesFileModTime, err = readTestdata(headerHashesFn, &headerHashes, time.Time{}); err != nil {
+		return err
+	}
+
+	// build fetcher state
 	f.mux.Lock()
 	f.mux2.Lock()
 	f.mux3.Lock()
@@ -254,13 +280,8 @@ func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 	defer f.mux2.Unlock()
 	defer f.mux3.Unlock()
 
-	for addr, acc := range s.Accounts {
-		var codeHash common.Hash
-		if len(acc.Code) > 0 {
-			codeHash = crypto.Keccak256Hash(acc.Code)
-		} else {
-			codeHash = types.EmptyCodeHash
-		}
+	for addr, acc := range state {
+		codeHash := acc.codeHash()
 
 		f.accounts[addr] = func() (*types.StateAccount, error) {
 			return &types.StateAccount{
@@ -271,7 +292,7 @@ func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 		}
 		if _, ok := f.contracts[codeHash]; codeHash != types.EmptyCodeHash && !ok {
 			f.contracts[codeHash] = func() ([]byte, error) {
-				return acc.Code, nil
+				return contracts[codeHash], nil
 			}
 		}
 		for slot, val := range acc.Storage {
@@ -279,7 +300,7 @@ func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 				return (common.Hash)(val), nil
 			}
 		}
-		for blockNumber, hash := range s.HeaderHashes {
+		for blockNumber, hash := range headerHashes {
 			f.headerHashes[uint64(blockNumber)] = func() (common.Hash, error) {
 				return hash, nil
 			}
@@ -288,19 +309,12 @@ func (f *rpcFetcher) loadTestdataState(tb testing.TB, chainID uint64) error {
 	return nil
 }
 
-func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
+func (f *rpcFetcher) storeTestdataState(chainID uint64) (err error) {
 	if atomic.LoadUint32(&f.dirty) == 0 {
-		return nil // the state has not been modified
+		return nil // if no new state was fetched, we do not need to store it
 	}
 
-	dir := getTbFilepath(tb)
-	fn := filepath.Join(dir,
-		"testdata",
-		"w3vm",
-		fmt.Sprintf("%d_%v.json", chainID, f.blockNumber),
-	)
-
-	// build state
+	// read fetcher state
 	f.mux.RLock()
 	f.mux2.RLock()
 	f.mux3.RLock()
@@ -308,130 +322,256 @@ func (f *rpcFetcher) storeTestdataState(tb testing.TB, chainID uint64) error {
 	defer f.mux2.RUnlock()
 	defer f.mux3.RUnlock()
 
-	s := &testdataState{
-		Accounts:     make(map[common.Address]*account, len(f.accounts)),
-		HeaderHashes: make(map[hexutil.Uint64]common.Hash, len(f.headerHashes)),
-	}
-
-	for addr, acc := range f.accounts {
-		acc, err := acc()
+	var (
+		state        = make(testdataState)
+		contracts    = make(testdataContracts)
+		headerHashes = make(testdataHeaderHashes)
+	)
+	for addr, accFunc := range f.accounts {
+		acc, err := accFunc()
 		if err != nil {
 			continue
 		}
 
-		s.Accounts[addr] = &account{
+		state[addr] = &testdataAccount{
 			Nonce:   hexutil.Uint64(acc.Nonce),
 			Balance: (*hexutil.U256)(acc.Balance),
 		}
 		if !bytes.Equal(acc.CodeHash, types.EmptyCodeHash[:]) {
-			s.Accounts[addr].Code, _ = f.contracts[common.BytesToHash(acc.CodeHash)]()
+			codeHash := common.BytesToHash(acc.CodeHash)
+			state[addr].CodeHash = codeHash
+			contracts[codeHash], _ = f.contracts[codeHash]()
 		}
 	}
 
-	for storageKey, storageVal := range f.storage {
-		storageVal, err := storageVal()
+	for storageKey, storageValFunc := range f.storage {
+		storageVal, err := storageValFunc()
 		if err != nil {
 			continue
 		}
 
-		if acc, ok := s.Accounts[storageKey.addr]; !ok {
-			s.Accounts[storageKey.addr] = &account{Storage: map[w3hexutil.Hash]w3hexutil.Hash{}}
-		} else if acc.Storage == nil {
-			s.Accounts[storageKey.addr].Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
+		if _, ok := state[storageKey.addr]; !ok {
+			state[storageKey.addr] = &testdataAccount{
+				Storage: make(map[w3hexutil.Hash]w3hexutil.Hash),
+			}
+		} else if state[storageKey.addr].Storage == nil {
+			state[storageKey.addr].Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
 		}
-		s.Accounts[storageKey.addr].Storage[w3hexutil.Hash(storageKey.slot)] = w3hexutil.Hash(storageVal)
+		state[storageKey.addr].Storage[w3hexutil.Hash(storageKey.slot)] = w3hexutil.Hash(storageVal)
 	}
 
-	for blockNumber, hash := range f.headerHashes {
-		hash, err := hash()
+	for blockNumber, hashFunc := range f.headerHashes {
+		hash, err := hashFunc()
 		if err != nil {
 			continue
 		}
-		s.HeaderHashes[hexutil.Uint64(blockNumber)] = hash
+		headerHashes[hexutil.Uint64(blockNumber)] = hash
 	}
 
-	globalStateStoreMux.Lock()
-	defer globalStateStoreMux.Unlock()
-	// merge state
-	dstState, ok := globalStateStore[fn]
-	if ok {
-		if modified := mergeStates(dstState, s); !modified {
-			return nil
-		}
-	} else {
-		dstState = s
-		globalStateStore[fn] = s
-	}
+	// lock testdata files
+	testdataMutex.Lock()
+	defer testdataMutex.Unlock()
+	testdataLock.Lock()
+	defer testdataLock.Unlock()
 
-	// create directory, if it does not exist
-	dirPath := filepath.Dir(fn)
-	if _, err := os.Stat(dirPath); errors.Is(err, os.ErrNotExist) {
-		if err := os.MkdirAll(dirPath, 0o775); err != nil {
-			return err
-		}
-	}
-
-	file, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o664)
-	if err != nil {
+	// load current testdata state
+	stateFn := fmt.Sprintf("%d_%v.json", chainID, f.blockNumber)
+	var otherState testdataState
+	if _, err = readTestdata(stateFn, &otherState, f.stateFileModTime); err != nil {
 		return err
 	}
-	defer file.Close()
 
-	dec := json.NewEncoder(file)
-	dec.SetIndent("", "\t")
-	if err := dec.Encode(dstState); err != nil {
+	var otherContracts testdataContracts
+	if _, err = readTestdata("contracts.json", &otherContracts, f.contractsFileModTime); err != nil {
 		return err
 	}
+
+	headerHashesFn := fmt.Sprintf("%d_header_hashes.json", chainID)
+	var otherHeaderHashes testdataHeaderHashes
+	if _, err = readTestdata(headerHashesFn, &otherHeaderHashes, f.headerHashesFileModTime); err != nil {
+		return err
+	}
+
+	// merge
+	if err := state.Merge(otherState); err != nil {
+		return fmt.Errorf("failed to merge testdata state: %w", err)
+	}
+
+	if err := contracts.Merge(otherContracts); err != nil {
+		return fmt.Errorf("failed to merge testdata contracts: %w", err)
+	}
+
+	if err := headerHashes.Merge(otherHeaderHashes); err != nil {
+		return fmt.Errorf("failed to merge testdata header hashes: %w", err)
+	}
+
+	// write testdata files
+	if err := writeTestdata(stateFn, state); err != nil {
+		return err
+	}
+	if err := writeTestdata("contracts.json", contracts); err != nil {
+		return err
+	}
+	if err := writeTestdata(headerHashesFn, headerHashes); err != nil {
+		return err
+	}
+
 	return nil
-}
-
-type testdataState struct {
-	Accounts     map[common.Address]*account    `json:"accounts"`
-	HeaderHashes map[hexutil.Uint64]common.Hash `json:"headerHashes,omitempty"`
-}
-
-type account struct {
-	Nonce   hexutil.Uint64                    `json:"nonce"`
-	Balance *hexutil.U256                     `json:"balance"`
-	Code    hexutil.Bytes                     `json:"code"`
-	Storage map[w3hexutil.Hash]w3hexutil.Hash `json:"storage,omitempty"`
-}
-
-// mergeStates merges the source state into the destination state and returns
-// whether the destination state has been modified.
-func mergeStates(dst, src *testdataState) (modified bool) {
-	// merge accounts
-	for addr, acc := range src.Accounts {
-		if dstAcc, ok := dst.Accounts[addr]; !ok {
-			dst.Accounts[addr] = acc
-			modified = true
-		} else {
-			if dstAcc.Storage == nil {
-				dstAcc.Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
-			}
-
-			for slot, storageVal := range acc.Storage {
-				if _, ok := dstAcc.Storage[slot]; !ok {
-					dstAcc.Storage[slot] = storageVal
-					modified = true
-				}
-			}
-			dst.Accounts[addr] = dstAcc
-		}
-	}
-
-	// merge header hashes
-	for blockNumber, hash := range src.HeaderHashes {
-		if _, ok := dst.HeaderHashes[blockNumber]; !ok {
-			dst.HeaderHashes[blockNumber] = hash
-			modified = true
-		}
-	}
-
-	return modified
 }
 
 type storageKey struct {
 	addr common.Address
 	slot common.Hash
+}
+
+// testdataState maps accounts to their state at a specific block in a specific
+// chain.
+type testdataState map[common.Address]*testdataAccount
+
+func (s testdataState) Merge(other testdataState) error {
+	for addr, otherAccount := range other {
+		if existingAccount, ok := s[addr]; ok {
+			if err := existingAccount.Merge(otherAccount); err != nil {
+				return fmt.Errorf("account conflict for address %s: %w", addr, err)
+			}
+		} else {
+			s[addr] = otherAccount
+		}
+	}
+	return nil
+}
+
+// testdataAccount represents the state of a single account.
+type testdataAccount struct {
+	Nonce    hexutil.Uint64                    `json:"nonce"`
+	Balance  *hexutil.U256                     `json:"balance"`
+	CodeHash common.Hash                       `json:"codeHash,omitzero"`
+	Storage  map[w3hexutil.Hash]w3hexutil.Hash `json:"storage,omitempty"`
+}
+
+func (a *testdataAccount) codeHash() common.Hash {
+	if a.CodeHash == w3.Hash0 {
+		return types.EmptyCodeHash
+	}
+	return a.CodeHash
+}
+
+func (a *testdataAccount) Merge(other *testdataAccount) error {
+	if a.Nonce != other.Nonce {
+		return fmt.Errorf("nonce conflict: %d != %d", a.Nonce, other.Nonce)
+	}
+	if (*uint256.Int)(a.Balance).Cmp((*uint256.Int)(other.Balance)) != 0 {
+		return fmt.Errorf("balance conflict: %s != %s", a.Balance, other.Balance)
+	}
+	if a.CodeHash != other.CodeHash {
+		return fmt.Errorf("code hash conflict: %s != %s", a.CodeHash, other.CodeHash)
+	}
+
+	// Merge storage maps
+	if a.Storage == nil {
+		a.Storage = make(map[w3hexutil.Hash]w3hexutil.Hash)
+	}
+	for slot, value := range other.Storage {
+		if existingValue, ok := a.Storage[slot]; ok {
+			if existingValue != value {
+				return fmt.Errorf("storage conflict at slot %s: %s != %s",
+					(common.Hash)(slot), (common.Hash)(existingValue), (common.Hash)(value),
+				)
+			}
+		} else {
+			a.Storage[slot] = value
+		}
+	}
+
+	return nil
+}
+
+// testdataContracts maps code hashes to their code.
+type testdataContracts map[common.Hash]hexutil.Bytes
+
+func (c testdataContracts) Merge(other testdataContracts) error {
+	for hash, code := range other {
+		if existingCode, ok := c[hash]; ok {
+			if !bytes.Equal(existingCode, code) {
+				return fmt.Errorf("bytecode conflict for code hash %s", hash)
+			}
+		} else {
+			c[hash] = code
+		}
+	}
+	return nil
+}
+
+// testdataHeaderHashes maps block numbers to their hashes for a specific chain.
+type testdataHeaderHashes map[hexutil.Uint64]common.Hash
+
+func (h testdataHeaderHashes) Merge(other testdataHeaderHashes) error {
+	for blockNumber, hash := range other {
+		if existingHash, ok := h[blockNumber]; ok {
+			if existingHash != hash {
+				return fmt.Errorf("header hash conflict for block %d", blockNumber)
+			}
+		} else {
+			h[blockNumber] = hash
+		}
+	}
+	return nil
+}
+
+func readTestdata(filename string, data any, onlyIfModifiedAfter time.Time) (time.Time, error) {
+	path := testdataPath(filename)
+
+	// get file info first
+	info, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return time.Time{}, nil
+	} else if err != nil {
+		return time.Time{}, err
+	}
+
+	if info.ModTime().Before(onlyIfModifiedAfter) {
+		return info.ModTime(), nil // file was NOT modified after "onlyIfModifiedAfter"
+	}
+
+	// open and read file
+	f, err := os.Open(path)
+	if err != nil {
+		return time.Time{}, err
+	}
+	defer f.Close()
+
+	if err := json.NewDecoder(f).Decode(data); err != nil {
+		return time.Time{}, fmt.Errorf("decode json %s: %w", filename, err)
+	}
+	return info.ModTime(), nil
+}
+
+func writeTestdata(filename string, data any) error {
+	path := testdataPath(filename)
+
+	// create "testdata/w3vm"-dir, if it does not exist yet
+	dir := filepath.Dir(path)
+	if _, err := os.Stat(dir); errors.Is(err, os.ErrNotExist) {
+		if err := os.MkdirAll(dir, 0o775); err != nil {
+			return err
+		}
+	}
+
+	// create or open file
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o664)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "\t")
+	if err := enc.Encode(data); err != nil {
+		return fmt.Errorf("encode json %s: %w", filename, err)
+	}
+	return nil
+}
+
+func testdataPath(filename string) string {
+	return filepath.Join(mod.Root, "testdata", "w3vm", filename)
 }
