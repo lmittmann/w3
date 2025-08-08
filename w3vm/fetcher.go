@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
@@ -212,7 +214,27 @@ func NewTestingRPCFetcher(tb testing.TB, chainID uint64, client *w3.Client, bloc
 		tb.Fatalf("w3vm: failed to load state from testdata: %v", err)
 	}
 
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
+	var storingStarted atomic.Bool
+	storingDone := make(chan struct{})
+
+	// handle signals in a goroutine
+	go func() {
+		sig := <-sigCh
+		if storingStarted.Load() {
+			<-storingDone // cleanup already started, wait for it to complete
+		}
+		// re-send the signal after cleanup is done
+		signal.Stop(sigCh)
+		syscall.Kill(syscall.Getpid(), sig.(syscall.Signal))
+	}()
+
 	tb.Cleanup(func() {
+		storingStarted.Store(true)
+		defer close(storingDone)
+
 		if err := fetcher.storeTestdataState(chainID); err != nil {
 			tb.Fatalf("w3vm: failed to write state to testdata: %v", err)
 		}
