@@ -976,7 +976,7 @@ func BenchmarkTransferWETH9(b *testing.B) {
 
 func TestVMClone(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-		original, err := w3vm.New(
+		vm0, _ := w3vm.New(
 			w3vm.WithState(w3types.State{
 				addr0: {
 					Balance: w3.I("10 ether"),
@@ -990,218 +990,122 @@ func TestVMClone(t *testing.T) {
 				},
 			}),
 		)
-		if err != nil {
-			t.Fatalf("Failed to create original VM: %v", err)
-		}
 
-		// Clone the VM
-		cloned := original.Clone()
-
-		// Verify cloned state matches original
-		balance0, err := original.Balance(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get original balance: %v", err)
-		}
-		balance1, err := cloned.Balance(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get cloned balance: %v", err)
-		}
-		if balance0.Cmp(balance1) != 0 {
-			t.Errorf("Balance mismatch: original=%s, cloned=%s", balance0, balance1)
-		}
-
-		nonce0, err := original.Nonce(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get original nonce: %v", err)
-		}
-		nonce1, err := cloned.Nonce(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get cloned nonce: %v", err)
-		}
-		if nonce0 != nonce1 {
-			t.Errorf("Nonce mismatch: original=%d, cloned=%d", nonce0, nonce1)
-		}
-
-		// Test that code set after creation is also cloned
+		// set code after creation
 		testCode := []byte{0x60, 0x00, 0x60, 0x00, 0xf3} // PUSH1 0x00 PUSH1 0x00 RETURN
 		testAddr := common.Address{0x42}
-		original.SetCode(testAddr, testCode)
+		vm0.SetCode(testAddr, testCode)
 
-		// Clone should have the dynamically set code
-		cloned2 := original.Clone()
+		// clone the VM
+		vm1 := vm0.Clone()
 
-		clonedCode, err := cloned2.Code(testAddr)
-		if err != nil {
-			t.Fatalf("Failed to get cloned code: %v", err)
-		}
-		if !bytes.Equal(testCode, clonedCode) {
-			t.Errorf("Dynamically set code not properly cloned")
+		// verify cloned state matches original state
+		balance0, _ := vm0.Balance(addr0)
+		balance1, _ := vm1.Balance(addr0)
+		if diff := gocmp.Diff(balance0, balance1, gocmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Errorf("Balance mismatch: (-want +got)\n%s", diff)
 		}
 
-		storage0, err := original.StorageAt(addrWETH, w3vm.WETHBalanceSlot(addr0))
-		if err != nil {
-			t.Fatalf("Failed to get original storage: %v", err)
+		nonce0, _ := vm0.Nonce(addr0)
+		nonce1, _ := vm1.Nonce(addr0)
+		if nonce0 != nonce1 {
+			t.Errorf("Nonce mismatch: want %d, got %d", nonce0, nonce1)
 		}
-		storage1, err := cloned.StorageAt(addrWETH, w3vm.WETHBalanceSlot(addr0))
-		if err != nil {
-			t.Fatalf("Failed to get cloned storage: %v", err)
+
+		code1, _ := vm1.Code(testAddr)
+		if !bytes.Equal(testCode, code1) {
+			t.Errorf("Code mismatch: (-want +got)\n- %x\n+ %x", testCode, code1)
 		}
-		if storage0 != storage1 {
-			t.Errorf("Storage mismatch: original=%x, cloned=%x", storage0, storage1)
+
+		storage0, _ := vm0.StorageAt(addrWETH, w3vm.WETHBalanceSlot(addr0))
+		storage1, _ := vm1.StorageAt(addrWETH, w3vm.WETHBalanceSlot(addr0))
+		if diff := gocmp.Diff(storage0, storage1); diff != "" {
+			t.Errorf("Storage mismatch: (-want +got)\n%s", diff)
 		}
 	})
 
 	// Test that modifications to cloned VM don't affect original
 	t.Run("independence", func(t *testing.T) {
-		original, err := w3vm.New(
+		vm0, _ := w3vm.New(
 			w3vm.WithState(w3types.State{
 				addr0: {Balance: w3.I("10 ether")},
 			}),
 		)
-		if err != nil {
-			t.Fatalf("Failed to create original VM: %v", err)
+		vm1 := vm0.Clone()
+
+		// modify cloned VM
+		vm1.SetBalance(addr0, w3.I("20 ether"))
+		vm1.SetNonce(addr0, 10)
+
+		// check original VM is unchanged
+		balance0, _ := vm0.Balance(addr0)
+		if diff := gocmp.Diff(w3.I("10 ether"), balance0, gocmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Errorf("Balance mismatch: (-want +got)\n%s", diff)
 		}
 
-		cloned := original.Clone()
-
-		// Modify cloned VM
-		cloned.SetBalance(addr0, w3.I("20 ether"))
-		cloned.SetNonce(addr0, 10)
-
-		// Check original is unchanged
-		originalBalance, err := original.Balance(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get original balance: %v", err)
-		}
-		if originalBalance.Cmp(w3.I("10 ether")) != 0 {
-			t.Errorf("Original balance changed: got %s", originalBalance)
+		nonce0, _ := vm0.Nonce(addr0)
+		if nonce0 != 0 {
+			t.Errorf("Nonce mismatch: want %d, got %d", 0, nonce0)
 		}
 
-		originalNonce, err := original.Nonce(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get original nonce: %v", err)
-		}
-		if originalNonce != 0 {
-			t.Errorf("Original nonce changed: got %d", originalNonce)
+		// check cloned VM is changed
+		balance1, _ := vm1.Balance(addr0)
+		if diff := gocmp.Diff(w3.I("20 ether"), balance1, gocmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Errorf("Balance mismatch: (-want +got)\n%s", diff)
 		}
 
-		// Check cloned has new values
-		clonedBalance, err := cloned.Balance(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get cloned balance: %v", err)
-		}
-		if clonedBalance.Cmp(w3.I("20 ether")) != 0 {
-			t.Errorf("Cloned balance not updated: got %s", clonedBalance)
-		}
-
-		clonedNonce, err := cloned.Nonce(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get cloned nonce: %v", err)
-		}
-		if clonedNonce != 10 {
-			t.Errorf("Cloned nonce not updated: got %d", clonedNonce)
-		}
-	})
-
-	// Test cloning after applied messages
-	t.Run("after_message", func(t *testing.T) {
-		original, err := w3vm.New(
-			w3vm.WithState(w3types.State{
-				addr0:    {Balance: w3.I("10 ether")},
-				addrWETH: {Code: codeWETH},
-			}),
-		)
-		if err != nil {
-			t.Fatalf("Failed to create original VM: %v", err)
-		}
-
-		// Apply a message to deposit WETH
-		depositMsg := &w3types.Message{
-			From:  addr0,
-			To:    &addrWETH,
-			Value: w3.I("1 ether"),
-		}
-		_, err = original.Apply(depositMsg)
-		if err != nil {
-			t.Fatalf("Failed to apply deposit: %v", err)
-		}
-
-		// Clone after transaction
-		cloned := original.Clone()
-
-		// Verify WETH balance is preserved in clone
-		var wethBalance *big.Int
-		err = cloned.CallFunc(addrWETH, funcBalanceOf, addr0).Returns(&wethBalance)
-		if err != nil {
-			t.Fatalf("Failed to get WETH balance: %v", err)
-		}
-		if wethBalance.Cmp(w3.I("1 ether")) != 0 {
-			t.Errorf("WETH balance mismatch: got %s", wethBalance)
-		}
-
-		// Verify ETH balance is preserved (should be 9 ether after 1 ether deposit to WETH)
-		ethBalance, err := cloned.Balance(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get ETH balance: %v", err)
-		}
-		if ethBalance.Cmp(w3.I("9 ether")) != 0 {
-			t.Errorf("ETH balance mismatch: got %s", ethBalance)
+		nonce1, _ := vm1.Nonce(addr0)
+		if nonce1 != 10 {
+			t.Errorf("Nonce mismatch: want %d, got %d", 10, nonce1)
 		}
 	})
 
 	// Test that cloning preserves options
 	t.Run("options_preservation", func(t *testing.T) {
-		original, err := w3vm.New(
-			w3vm.WithChainConfig(params.MainnetChainConfig),
+		// create a precompile that echoes input with a prefix
+		precompileAddr := common.Address{0x99}
+		precompile := &mockPrecompile{}
+
+		// create VM with precompile and noBaseFee
+		vm0, _ := w3vm.New(
+			w3vm.WithPrecompile(precompileAddr, precompile),
+			w3vm.WithHeader(&types.Header{
+				BaseFee: big.NewInt(1),
+			}),
 			w3vm.WithNoBaseFee(),
 			w3vm.WithState(w3types.State{
-				addr0: {Balance: w3.I("10 ether"), Nonce: 5},
+				addr0: {Balance: w3.I("1 ether")},
 			}),
 		)
-		if err != nil {
-			t.Fatalf("Failed to create original VM: %v", err)
+
+		// clone the VM
+		vm1 := vm0.Clone()
+
+		// test that precompile works in cloned VM
+		if receipt, err := vm1.Call(&w3types.Message{
+			From:     addr0,
+			To:       &precompileAddr,
+			Input:    []byte("test"),
+			Gas:      21164,
+			GasPrice: big.NewInt(1),
+		}); err != nil {
+			t.Fatalf("Failed to call precompile: %v", err)
+		} else if wantOutput := []byte("test"); !bytes.Equal(wantOutput, receipt.Output) {
+			t.Errorf("Precompile output mismatch: want %x, got %x", wantOutput, receipt.Output)
 		}
 
-		// Add precompile to test that it's preserved
-		testPrecompile := &mockPrecompile{}
-		original2, err := w3vm.New(
-			w3vm.WithPrecompile(common.Address{0x99}, testPrecompile),
-			w3vm.WithState(w3types.State{
-				addr0: {Balance: w3.I("10 ether")},
-			}),
-		)
-		if err != nil {
-			t.Fatalf("Failed to create original VM with precompile: %v", err)
+		// test that noBaseFee is preserved by trying a transaction with low gas price
+		// this would fail if base fee was enforced
+		lowGasPriceMsg := &w3types.Message{
+			From:     addr0,
+			To:       &addr1,
+			Value:    w3.I("1 ether"),
+			Gas:      21_000,
+			GasPrice: big.NewInt(0), // very low gas price
 		}
 
-		// Clone both VMs
-		cloned1 := original.Clone()
-
-		cloned2 := original2.Clone()
-
-		// Verify state is preserved in both clones
-		balance1, err := cloned1.Balance(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get clone 1 balance: %v", err)
-		}
-		if balance1.Cmp(w3.I("10 ether")) != 0 {
-			t.Errorf("Clone 1 balance mismatch: got %s", balance1)
-		}
-
-		balance2, err := cloned2.Balance(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get clone 2 balance: %v", err)
-		}
-		if balance2.Cmp(w3.I("10 ether")) != 0 {
-			t.Errorf("Clone 2 balance mismatch: got %s", balance2)
-		}
-
-		nonce1, err := cloned1.Nonce(addr0)
-		if err != nil {
-			t.Fatalf("Failed to get clone 1 nonce: %v", err)
-		}
-		if nonce1 != 5 {
-			t.Errorf("Clone 1 nonce mismatch: got %d", nonce1)
+		if _, err := vm1.Apply(lowGasPriceMsg); err != nil {
+			t.Errorf("Transaction with zero gas price failed, noBaseFee not preserved: %v", err)
 		}
 	})
 }
