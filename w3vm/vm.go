@@ -413,6 +413,16 @@ func defaultBlockContext() *vm.BlockContext {
 	}
 }
 
+// Clone returns a copy of the VM and its state. The cloned VM is independent of
+// the original VM, and state changes do not affect the original VM.
+func (vm *VM) Clone() *VM {
+	return &VM{
+		opts:    vm.opts,
+		txIndex: vm.txIndex,
+		db:      vm.db.Copy(),
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VM Option ///////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -587,12 +597,6 @@ func WithFetcher(fetcher Fetcher) Option {
 // State is stored in the testdata directory of the tests package.
 func WithTB(tb testing.TB) Option {
 	return func(vm *VM) { vm.opts.tb = tb }
-}
-
-// Clone creates a new VM with a copy of the current VM's options and a snapshot of its state.
-func (vm *VM) Clone() *VM {
-	clonedOpts := *vm.opts
-	return &VM{opts: &clonedOpts, txIndex: vm.txIndex, db: vm.Snapshot()}
 }
 
 // WithJumpDestCache sets the jump destination analysis cache for the VM.
