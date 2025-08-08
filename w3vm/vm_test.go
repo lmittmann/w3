@@ -992,7 +992,7 @@ func TestVMClone(t *testing.T) {
 		)
 
 		// set code after creation
-		testCode := []byte{0x60, 0x00, 0x60, 0x00, 0xf3} // PUSH1 0x00 PUSH1 0x00 RETURN
+		testCode := w3.B("0x5f5ff3") // PUSH0 PUSH0 RETURN
 		testAddr := common.Address{0x42}
 		vm0.SetCode(testAddr, testCode)
 
