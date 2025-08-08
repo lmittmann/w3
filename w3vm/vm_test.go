@@ -974,4 +974,145 @@ func BenchmarkTransferWETH9(b *testing.B) {
 	})
 }
 
+func TestVMClone(t *testing.T) {
+	t.Run("basic", func(t *testing.T) {
+		vm0, _ := w3vm.New(
+			w3vm.WithState(w3types.State{
+				addr0: {
+					Balance: w3.I("10 ether"),
+					Nonce:   5,
+				},
+				addrWETH: {
+					Code: codeWETH,
+					Storage: w3types.Storage{
+						w3vm.WETHBalanceSlot(addr0): common.BigToHash(w3.I("1 ether")),
+					},
+				},
+			}),
+		)
+
+		// set code after creation
+		testCode := w3.B("0x5f5ff3") // PUSH0 PUSH0 RETURN
+		testAddr := common.Address{0x42}
+		vm0.SetCode(testAddr, testCode)
+
+		// clone the VM
+		vm1 := vm0.Clone()
+
+		// verify cloned state matches original state
+		balance0, _ := vm0.Balance(addr0)
+		balance1, _ := vm1.Balance(addr0)
+		if diff := gocmp.Diff(balance0, balance1, gocmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Errorf("Balance mismatch: (-want +got)\n%s", diff)
+		}
+
+		nonce0, _ := vm0.Nonce(addr0)
+		nonce1, _ := vm1.Nonce(addr0)
+		if nonce0 != nonce1 {
+			t.Errorf("Nonce mismatch: want %d, got %d", nonce0, nonce1)
+		}
+
+		code1, _ := vm1.Code(testAddr)
+		if !bytes.Equal(testCode, code1) {
+			t.Errorf("Code mismatch: (-want +got)\n- %x\n+ %x", testCode, code1)
+		}
+
+		storage0, _ := vm0.StorageAt(addrWETH, w3vm.WETHBalanceSlot(addr0))
+		storage1, _ := vm1.StorageAt(addrWETH, w3vm.WETHBalanceSlot(addr0))
+		if diff := gocmp.Diff(storage0, storage1); diff != "" {
+			t.Errorf("Storage mismatch: (-want +got)\n%s", diff)
+		}
+	})
+
+	// Test that modifications to cloned VM don't affect original
+	t.Run("independence", func(t *testing.T) {
+		vm0, _ := w3vm.New(
+			w3vm.WithState(w3types.State{
+				addr0: {Balance: w3.I("10 ether")},
+			}),
+		)
+		vm1 := vm0.Clone()
+
+		// modify cloned VM
+		vm1.SetBalance(addr0, w3.I("20 ether"))
+		vm1.SetNonce(addr0, 10)
+
+		// check original VM is unchanged
+		balance0, _ := vm0.Balance(addr0)
+		if diff := gocmp.Diff(w3.I("10 ether"), balance0, gocmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Errorf("Balance mismatch: (-want +got)\n%s", diff)
+		}
+
+		nonce0, _ := vm0.Nonce(addr0)
+		if nonce0 != 0 {
+			t.Errorf("Nonce mismatch: want %d, got %d", 0, nonce0)
+		}
+
+		// check cloned VM is changed
+		balance1, _ := vm1.Balance(addr0)
+		if diff := gocmp.Diff(w3.I("20 ether"), balance1, gocmp.AllowUnexported(big.Int{})); diff != "" {
+			t.Errorf("Balance mismatch: (-want +got)\n%s", diff)
+		}
+
+		nonce1, _ := vm1.Nonce(addr0)
+		if nonce1 != 10 {
+			t.Errorf("Nonce mismatch: want %d, got %d", 10, nonce1)
+		}
+	})
+
+	// Test that cloning preserves options
+	t.Run("options_preservation", func(t *testing.T) {
+		// create a precompile that echoes input with a prefix
+		precompileAddr := common.Address{0x99}
+		precompile := &mockPrecompile{}
+
+		// create VM with precompile and noBaseFee
+		vm0, _ := w3vm.New(
+			w3vm.WithPrecompile(precompileAddr, precompile),
+			w3vm.WithHeader(&types.Header{
+				BaseFee: big.NewInt(1),
+			}),
+			w3vm.WithNoBaseFee(),
+			w3vm.WithState(w3types.State{
+				addr0: {Balance: w3.I("1 ether")},
+			}),
+		)
+
+		// clone the VM
+		vm1 := vm0.Clone()
+
+		// test that precompile works in cloned VM
+		if receipt, err := vm1.Call(&w3types.Message{
+			From:     addr0,
+			To:       &precompileAddr,
+			Input:    []byte("test"),
+			Gas:      21164,
+			GasPrice: big.NewInt(1),
+		}); err != nil {
+			t.Fatalf("Failed to call precompile: %v", err)
+		} else if wantOutput := []byte("test"); !bytes.Equal(wantOutput, receipt.Output) {
+			t.Errorf("Precompile output mismatch: want %x, got %x", wantOutput, receipt.Output)
+		}
+
+		// test that noBaseFee is preserved by trying a transaction with low gas price
+		// this would fail if base fee was enforced
+		lowGasPriceMsg := &w3types.Message{
+			From:     addr0,
+			To:       &addr1,
+			Value:    w3.I("1 ether"),
+			Gas:      21_000,
+			GasPrice: big.NewInt(0), // very low gas price
+		}
+
+		if _, err := vm1.Apply(lowGasPriceMsg); err != nil {
+			t.Errorf("Transaction with zero gas price failed, noBaseFee not preserved: %v", err)
+		}
+	})
+}
+
+type mockPrecompile struct{}
+
+func (m *mockPrecompile) RequiredGas(input []byte) uint64  { return 100 }
+func (m *mockPrecompile) Run(input []byte) ([]byte, error) { return input, nil }
+
 func ptr[T any](t T) *T { return &t }
