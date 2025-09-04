@@ -1114,5 +1114,6 @@ type mockPrecompile struct{}
 
 func (m *mockPrecompile) RequiredGas(input []byte) uint64  { return 100 }
 func (m *mockPrecompile) Run(input []byte) ([]byte, error) { return input, nil }
+func (m *mockPrecompile) Name() string                     { return "mockPrecompile" }
 
 func ptr[T any](t T) *T { return &t }
