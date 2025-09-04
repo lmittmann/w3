@@ -93,8 +93,8 @@ func (vm *VM) ApplyTx(tx *types.Transaction, hooks ...*tracing.Hooks) (*Receipt,
 }
 
 func (v *VM) apply(msg *w3types.Message, isCall bool, hooks *tracing.Hooks) (*Receipt, error) {
-	if v.db.Error() != nil {
-		return nil, ErrFetch
+	if err := v.db.Error(); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrFetch, err)
 	}
 
 	var db vm.StateDB
@@ -216,8 +216,8 @@ func (cff *CallFuncFactory) Returns(returns ...any) error {
 // Nonce returns the nonce of the given address.
 func (vm *VM) Nonce(addr common.Address) (uint64, error) {
 	nonce := vm.db.GetNonce(addr)
-	if vm.db.Error() != nil {
-		return 0, fmt.Errorf("%w: failed to fetch nonce of %s", ErrFetch, addr)
+	if err := vm.db.Error(); err != nil {
+		return 0, fmt.Errorf("%w: nonce of %s: %v", ErrFetch, addr, err)
 	}
 	return nonce, nil
 }
@@ -230,8 +230,8 @@ func (vm *VM) SetNonce(addr common.Address, nonce uint64) {
 // Balance returns the balance of the given address.
 func (vm *VM) Balance(addr common.Address) (*big.Int, error) {
 	balance := vm.db.GetBalance(addr)
-	if vm.db.Error() != nil {
-		return nil, fmt.Errorf("%w: failed to fetch balance of %s", ErrFetch, addr)
+	if err := vm.db.Error(); err != nil {
+		return nil, fmt.Errorf("%w: balance of %s: %v", ErrFetch, addr, err)
 	}
 	return balance.ToBig(), nil
 }
@@ -244,8 +244,8 @@ func (vm *VM) SetBalance(addr common.Address, balance *big.Int) {
 // Code returns the code of the given address.
 func (vm *VM) Code(addr common.Address) ([]byte, error) {
 	code := vm.db.GetCode(addr)
-	if vm.db.Error() != nil {
-		return nil, fmt.Errorf("%w: failed to fetch code of %s", ErrFetch, addr)
+	if err := vm.db.Error(); err != nil {
+		return nil, fmt.Errorf("%w: code of %s: %v", ErrFetch, addr, err)
 	}
 	return code, nil
 }
@@ -258,8 +258,8 @@ func (vm *VM) SetCode(addr common.Address, code []byte) {
 // StorageAt returns the state of the given address at the give storage slot.
 func (vm *VM) StorageAt(addr common.Address, slot common.Hash) (common.Hash, error) {
 	val := vm.db.GetState(addr, slot)
-	if vm.db.Error() != nil {
-		return w3.Hash0, fmt.Errorf("%w: failed to fetch storage of %s at %s", ErrFetch, addr, slot)
+	if err := vm.db.Error(); err != nil {
+		return w3.Hash0, fmt.Errorf("%w: storage of %s at %s: %v", ErrFetch, addr, slot, err)
 	}
 	return val, nil
 }
