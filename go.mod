@@ -1,14 +1,14 @@
 module github.com/lmittmann/w3
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/ethereum/go-ethereum v1.16.2
+	github.com/ethereum/go-ethereum v1.16.3
 	github.com/gofrs/flock v0.12.1
 	github.com/google/go-cmp v0.7.0
 	github.com/holiman/uint256 v1.3.2
-	golang.org/x/time v0.12.0
+	golang.org/x/time v0.13.0
 )
 
 require (
