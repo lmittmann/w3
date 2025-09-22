@@ -21,6 +21,7 @@ afterSwap(address sender, (address currency0, address currency1, uint24 fee, int
 allowance(address owner, address spender)	uint256
 allowance(address user, address token, address spender)	uint160 amount, uint48 expiration, uint48 nonce
 allPairsLength()	uint256
+AlreadyUnlocked()
 approve(address spender, uint256 amount)	bool success
 asset()	address assetTokenAddress
 balanceOf(address user, uint256 subaccount, uint32 binId)	uint128 lpToken
@@ -72,6 +73,8 @@ createPermissioned(uint64 feeAIn, uint64 feeBIn, uint16 tickSpacing, uint32 look
 createPermissioned(uint64 feeAIn, uint64 feeBIn, uint16 tickSpacing, uint32 lookback, address tokenA, address tokenB, int32 activeTick, uint8 kinds, address accessor, bool permissionedLiquidity, bool permissionedSwap)	address pool
 crossLmTick(int24 tick, bool zeroForOne)
 cumulativeSum()	uint256
+CurrenciesOutOfOrderOrEqual(address currency0, address currency1)
+CurrencyNotSettled()
 curveTricryptoSwapCallback(address payer, address receiver, address sellToken, uint256 sellAmount, uint256 buyAmount)
 cut()	uint256 wad
 D_ma_time()	uint256
@@ -247,6 +250,7 @@ lookupPermissioned(uint256 startIndex, uint256 endIndex)	address[] pools
 LSP8CannotSendToAddressZero()
 ma_exp_time()	uint256
 ma_last_time()	uint256
+ManagerLocked()
 maverickV2SwapCallback(address tokenIn, uint256 amountIn, uint256 amountOut, bytes data)
 max(uint256, uint256)	uint256
 maxDeposit(address receiver)	uint256 maxAssets
@@ -266,11 +270,13 @@ modifyLiquidity((address currency0, address currency1, uint24 fee, int24 tickSpa
 multicall(bytes32 previousBlockhash, bytes[] data)	bytes[] results
 multicall(bytes[] data)	bytes[] results
 multicall(uint256 deadline, bytes[] data)	bytes[] results
+MustClearExactPositiveDelta()
 N_COINS()	uint256
 name()	string
 newton_D(uint256 ANN, uint256 gamma, uint256[3] x_unsorted, uint256 K0_prev)	uint256
 nextTokenId()	uint256 nextTokenId_
 nonces(address)	uint256
+NonzeroNativeValue()
 NoSlice()
 offpeg_fee_multiplier()	uint256
 onERC721Received(address operator, address from, uint256 tokenId, bytes data)	bytes4
@@ -301,6 +307,7 @@ PoolKindNotSupported(uint256 kinds, uint256 kind)
 PoolLocked()
 PoolMigrateBinFirst()
 PoolMinimumLiquidityNotMet()
+PoolNotInitialized()
 poolPermissionedCount()	uint256 _poolCount
 PoolReservesExceedMaximum(uint256 amount)
 PoolSenderNotAccessor(address sender, address accessor)
@@ -326,6 +333,7 @@ protocolFeeReceiver()	address
 protocolFeesAccrued(address currency)	uint256 amount
 protocolLendingFeeRateD18()	uint256
 quote(uint256 amountA, uint256 reserveA, uint256 reserveB)	uint256 amountB
+QuoteSwap(uint256 amount)
 ramp_A(uint256 future_A, uint256 future_time)
 readFromStorage(bytes32 slot)	uint256 result
 redeem(uint256 shares, address receiver, address owner)	uint256 assets
@@ -417,6 +425,7 @@ swap(address recipient, bool zeroForOne, int256 amountSpecified, uint160 sqrtPri
 swap(address recipient, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, uint256 trackingCode)	int256 amount0, int256 amount1
 swap(uint256 amount0Out, uint256 amount1Out, address to, bytes data)
 swapAggregate((uint256 expiry, address takerAddress, address[] makerAddresses, uint256[] makerNonces, address[][] takerTokens, address[][] makerTokens, uint256[][] takerAmounts, uint256[][] makerAmounts, address receiver, bytes commands, uint256 flags) order, (bytes signatureBytes, uint256 flags)[] makersSignatures, uint256 filledTakerAmount)
+SwapAmountCannotBeZero()
 swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline)	uint256[] amounts
 swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline)	uint256[] amounts
 swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline)
@@ -439,6 +448,8 @@ sync()
 sync(address currency)
 take(address currency, address to, uint256 amount)
 tickSpacing()	int24
+TickSpacingTooLarge(int24 tickSpacing)
+TickSpacingTooSmall(int24 tickSpacing)
 ToAddressOutOfBounds()
 ToAddressOverflow()
 token()	address
@@ -470,6 +481,8 @@ transferOwnership(address newOwner)
 transferTokens((address from, address receiver, address[] tokens, uint256[] amounts, uint256[] nftIds, bytes tokenTransferTypes, uint16 fillPercent) transferData)
 trim()	uint256 wad
 UnableToClaim()
+UnauthorizedDynamicLPFeeUpdate()
+UnexpectedRevertBytes(bytes revertData)
 uniswapV3Swap(uint256 amount, uint256 minReturn, uint256[] pools)	uint256 returnAmount
 uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes data)
 UnknownForkId(uint8 forkId)
