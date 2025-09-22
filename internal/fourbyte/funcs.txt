@@ -217,6 +217,7 @@ InsufficientETH()
 InsufficientToken()
 InvalidAmount(uint256 maxAmount)
 InvalidBips()
+InvalidCaller()
 InvalidCommandType(uint256 commandType)
 InvalidCurve(uint256 x, uint256 y)
 InvalidOffset()
@@ -278,6 +279,7 @@ nextTokenId()	uint256 nextTokenId_
 nonces(address)	uint256
 NonzeroNativeValue()
 NoSlice()
+NotEnoughLiquidity(bytes32 poolId)
 offpeg_fee_multiplier()	uint256
 onERC721Received(address operator, address from, uint256 tokenId, bytes data)	bytes4
 onSwap((uint8 kind, address tokenIn, address tokenOut, uint256 amount, bytes32 poolId, uint256 lastChangeBlock, address from, address to, bytes userData) swapRequest, uint256[] balances, uint256 indexIn, uint256 indexOut)	uint256 amount
@@ -328,9 +330,11 @@ price_oracle(uint256 i)	uint256
 protocolFeeA()	uint128
 protocolFeeB()	uint128
 protocolFeeController()	address
+ProtocolFeeCurrencySynced()
 protocolFeeRatioD3()	uint8
 protocolFeeReceiver()	address
 protocolFeesAccrued(address currency)	uint256 amount
+ProtocolFeeTooLarge(uint24 fee)
 protocolLendingFeeRateD18()	uint256
 quote(uint256 amountA, uint256 reserveA, uint256 reserveB)	uint256 amountB
 QuoteSwap(uint256 amount)
