@@ -8,7 +8,7 @@ require (
 	github.com/gofrs/flock v0.12.1
 	github.com/google/go-cmp v0.7.0
 	github.com/holiman/uint256 v1.3.2
-	golang.org/x/time v0.13.0
+	golang.org/x/time v0.14.0
 )
 
 require (
