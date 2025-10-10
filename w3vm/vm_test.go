@@ -944,24 +944,24 @@ func BenchmarkTransferWETH9(b *testing.B) {
 
 	b.Run("geth", func(b *testing.B) {
 		stateDB, _ := state.New(common.Hash{}, state.NewDatabaseForTesting())
-		stateDB.SetCode(addrWETH, codeWETH)
+		stateDB.SetCode(addrWETH, codeWETH, tracing.CodeChangeGenesis)
 		stateDB.SetState(addrWETH, w3vm.WETHBalanceSlot(addr0), common.BigToHash(w3.I("1 ether")))
 
 		b.ResetTimer()
 		for i := range b.N {
 			msg := &core.Message{
-				To:               &addrWETH,
-				From:             addr0,
-				Nonce:            uint64(i),
-				Value:            new(big.Int),
-				GasLimit:         100_000,
-				GasPrice:         new(big.Int),
-				GasFeeCap:        new(big.Int),
-				GasTipCap:        new(big.Int),
-				Data:             input,
-				AccessList:       nil,
-				SkipNonceChecks:  false,
-				SkipFromEOACheck: false,
+				To:                    &addrWETH,
+				From:                  addr0,
+				Nonce:                 uint64(i),
+				Value:                 new(big.Int),
+				GasLimit:              100_000,
+				GasPrice:              new(big.Int),
+				GasFeeCap:             new(big.Int),
+				GasTipCap:             new(big.Int),
+				Data:                  input,
+				AccessList:            nil,
+				SkipNonceChecks:       false,
+				SkipTransactionChecks: false,
 			}
 			evm := vm.NewEVM(blockCtx, stateDB, params.AllEthashProtocolChanges, vm.Config{NoBaseFee: true})
 			gp := new(core.GasPool).AddGas(math.MaxUint64)

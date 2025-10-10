@@ -68,7 +68,7 @@ func New(opts ...Option) (*VM, error) {
 			vm.db.SetBalance(addr, uint256.MustFromBig(acc.Balance), tracing.BalanceIncreaseGenesisBalance)
 		}
 		if acc.Code != nil {
-			vm.db.SetCode(addr, acc.Code)
+			vm.db.SetCode(addr, acc.Code, tracing.CodeChangeUnspecified)
 		}
 		for slot, val := range acc.Storage {
 			vm.db.SetState(addr, slot, val)
@@ -252,7 +252,7 @@ func (vm *VM) Code(addr common.Address) ([]byte, error) {
 
 // SetCode sets the code of the given address.
 func (vm *VM) SetCode(addr common.Address, code []byte) {
-	vm.db.SetCode(addr, code)
+	vm.db.SetCode(addr, code, tracing.CodeChangeUnspecified)
 }
 
 // StorageAt returns the state of the given address at the give storage slot.
@@ -350,7 +350,7 @@ func (v *VM) buildMessage(msg *w3types.Message, skipAccChecks bool) (*core.Messa
 		BlobHashes:            msg.BlobHashes,
 		SetCodeAuthorizations: msg.SetCodeAuthorizations,
 		SkipNonceChecks:       skipAccChecks,
-		SkipFromEOACheck:      skipAccChecks,
+		SkipTransactionChecks: skipAccChecks,
 	}, nil
 }
 
