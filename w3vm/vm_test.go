@@ -820,7 +820,7 @@ func TestVMApply_Integration(t *testing.T) {
 					if err := testClient.Call(
 						eth.BlockByNumber(blockNumber).Returns(&block),
 						eth.BlockReceipts(blockNumber).Returns(&receipts),
-					); err != nil {
+					); err != nil || len(block.Transactions()) == len(receipts) {
 						t.Fatalf("Failed to fetch block and receipts: %v", err)
 					}
 
