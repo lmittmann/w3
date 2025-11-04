@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/ethereum/go-ethereum v1.16.5
+	github.com/ethereum/go-ethereum v1.16.6
 	github.com/gofrs/flock v0.13.0
 	github.com/google/go-cmp v0.7.0
 	github.com/holiman/uint256 v1.3.2
@@ -13,6 +13,7 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.13.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
