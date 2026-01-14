@@ -101,3 +101,21 @@ func TestAccessList(t *testing.T) {
 		},
 	})
 }
+
+func TestSimulateV1(t *testing.T) {
+	rpctest.RunTestCases(t, []rpctest.TestCase[*eth.SimulateV1Response]{
+		{
+			Golden: "simulate_v1",
+			Call: eth.SimulateV1(&w3types.Message{
+				To:   w3.APtr("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+				Func: funcBalanceOf,
+				Args: []any{w3.A("0x000000000000000000000000000000000000c0Fe")},
+			}, nil, nil),
+			WantRet: &eth.SimulateV1Response{
+				ReturnData: make([]byte, 32),
+				GasUsed:    23750,
+				Logs:       []*types.Log{},
+			},
+		},
+	})
+}
