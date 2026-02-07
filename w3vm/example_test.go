@@ -87,6 +87,7 @@ func ExampleVM_fakeTokenBalance() {
 	if _, err := vm.Apply(&w3types.Message{
 		From: addrA,
 		To:   &addrWETH,
+		Gas:  100_000,
 		Func: funcTransfer,
 		Args: []any{addrB, w3.I("10 ether")},
 	}); err != nil {
