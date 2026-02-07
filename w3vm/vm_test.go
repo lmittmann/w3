@@ -323,8 +323,8 @@ func TestVMApply_Hook(t *testing.T) {
 	}
 
 	vm.Apply(&w3types.Message{To: &addrWETH, Value: w3.Big1}, hook)
-	vm.Apply(&w3types.Message{To: nil, Input: w3.B("0xfe")}, hook)     // fault
-	vm.Apply(&w3types.Message{To: nil, Input: w3.B("0x5f5ff3")}, hook) // deploy empty contract
+	vm.Apply(&w3types.Message{To: nil, Input: w3.B("0xfe")}, hook)                 // fault
+	vm.Apply(&w3types.Message{To: nil, Input: w3.B("0x61dead5f5260025ff3")}, hook) // deploy non-empty contract with bytecode 0xdead
 
 	for i, field := range []string{
 		"OnEnter", "OnExit", "OnOpcode", "OnFault", "OnGasChange", // vm event hooks
