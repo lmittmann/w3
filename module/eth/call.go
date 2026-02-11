@@ -52,6 +52,22 @@ func AccessList(msg *w3types.Message, blockNumber *big.Int) w3types.RPCCallerFac
 	)
 }
 
+// SimulateV1 requests a simulation of the given message at the given blockNumber.
+// If blockNumber is nil, the simulation at the latest known block is requested.
+// SimulateV1 returns detailed simulation results including return data, gas used, and logs.
+func SimulateV1(msg *w3types.Message, blockNumber *big.Int, overrides w3types.State) w3types.RPCCallerFactory[*SimulateV1Response] {
+	args := []any{msg, module.BlockNumberArg(blockNumber)}
+	if overrides != nil {
+		args = append(args, overrides)
+	}
+
+	return module.NewFactory(
+		"eth_simulateV1",
+		args,
+		module.WithArgsWrapper[*SimulateV1Response](msgArgsWrapper),
+	)
+}
+
 type AccessListResponse struct {
 	AccessList types.AccessList
 	GasUsed    uint64
@@ -71,6 +87,32 @@ func (resp *AccessListResponse) UnmarshalJSON(data []byte) error {
 
 	resp.AccessList = alResp.AccessList
 	resp.GasUsed = uint64(alResp.GasUsed)
+	return nil
+}
+
+// SimulateV1Response represents the response from eth_simulateV1.
+type SimulateV1Response struct {
+	ReturnData []byte       `json:"returnData"`
+	GasUsed    uint64       `json:"gasUsed"`
+	Logs       []*types.Log `json:"logs"`
+}
+
+// UnmarshalJSON implements the [json.Unmarshaler].
+func (resp *SimulateV1Response) UnmarshalJSON(data []byte) error {
+	type simulateV1Response struct {
+		ReturnData hexutil.Bytes  `json:"returnData"`
+		GasUsed    hexutil.Uint64 `json:"gasUsed"`
+		Logs       []*types.Log   `json:"logs"`
+	}
+
+	var simResp simulateV1Response
+	if err := json.Unmarshal(data, &simResp); err != nil {
+		return err
+	}
+
+	resp.ReturnData = simResp.ReturnData
+	resp.GasUsed = uint64(simResp.GasUsed)
+	resp.Logs = simResp.Logs
 	return nil
 }
 
