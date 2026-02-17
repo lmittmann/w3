@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/state/snapshot"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/trie"
-	"github.com/ethereum/go-ethereum/trie/utils"
 	"github.com/ethereum/go-ethereum/triedb"
 	"github.com/holiman/uint256"
 )
@@ -90,15 +89,10 @@ func (db *db) OpenStorageTrie(common.Hash, common.Address, common.Hash, state.Tr
 	panic("not implemented")
 }
 
-func (db *db) ContractCode(addr common.Address, codeHash common.Hash) ([]byte, error) {
-	return db.Code(addr, codeHash)
+func (db *db) Has(addr common.Address, codeHash common.Hash) bool {
+	code, err := db.Code(addr, codeHash)
+	return err == nil && len(code) > 0
 }
-
-func (db *db) ContractCodeSize(addr common.Address, codeHash common.Hash) (int, error) {
-	return db.CodeSize(addr, codeHash)
-}
-
-func (*db) PointCache() *utils.PointCache { panic("not implemented") }
 
 func (*db) TrieDB() *triedb.Database { return fakeTrieDB }
 
