@@ -112,7 +112,7 @@ func rCopy(dst, src reflect.Value) error {
 }
 
 func set(dst, src reflect.Value) error {
-	if src.Kind() != reflect.Ptr && dst.Kind() == reflect.Ptr {
+	if src.Kind() != reflect.Pointer && dst.Kind() == reflect.Pointer {
 		src = reference(src)
 	} else if src.Kind() == reflect.Pointer && dst.Kind() != reflect.Pointer {
 		src = src.Elem()

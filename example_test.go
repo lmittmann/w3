@@ -150,7 +150,7 @@ func ExampleClient_batchBlocks() {
 	blocks := make([]*types.Block, nBlocks)
 	calls := make([]w3types.RPCCaller, batchSize)
 	for i := 0; i < nBlocks; i += batchSize {
-		for j := 0; j < batchSize; j++ {
+		for j := range batchSize {
 			blockNumber := new(big.Int).SetUint64(uint64(startBlock + i + j))
 			calls[j] = eth.BlockByNumber(blockNumber).Returns(&blocks[i+j])
 		}

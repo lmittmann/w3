@@ -215,7 +215,7 @@ func BenchmarkVMSnapshot(b *testing.B) {
 				}),
 			)
 
-			for i := 0; i < runs; i++ {
+			for range runs {
 				_, err := vm.Apply(depositMsg)
 				if err != nil {
 					b.Fatalf("Failed to deposit: %v", err)

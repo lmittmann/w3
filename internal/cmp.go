@@ -9,13 +9,13 @@ func EquateErrors() cmp.Option {
 	return cmp.FilterValues(areConcreteErrors, cmp.Comparer(compareErrors))
 }
 
-func areConcreteErrors(x, y interface{}) bool {
+func areConcreteErrors(x, y any) bool {
 	_, ok1 := x.(error)
 	_, ok2 := y.(error)
 	return ok1 && ok2
 }
 
-func compareErrors(x, y interface{}) bool {
+func compareErrors(x, y any) bool {
 	xe := x.(error)
 	ye := y.(error)
 	return xe == nil && ye == nil || xe != nil && ye != nil && xe.Error() == ye.Error()

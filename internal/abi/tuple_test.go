@@ -25,7 +25,7 @@ func TestTupleMap(t *testing.T) {
 		{
 			Tuples: []any{Tuple1{}},
 			WantTuples: map[string]reflect.Type{
-				"Tuple1": reflect.TypeOf(Tuple1{}),
+				"Tuple1": reflect.TypeFor[Tuple1](),
 			},
 		},
 		{
@@ -43,8 +43,8 @@ func TestTupleMap(t *testing.T) {
 		{
 			Tuples: []any{Tuple1{}, Tuple2{}},
 			WantTuples: map[string]reflect.Type{
-				"Tuple1": reflect.TypeOf(Tuple1{}),
-				"Tuple2": reflect.TypeOf(Tuple2{}),
+				"Tuple1": reflect.TypeFor[Tuple1](),
+				"Tuple2": reflect.TypeFor[Tuple2](),
 			},
 		},
 	}

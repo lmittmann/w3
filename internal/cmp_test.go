@@ -11,7 +11,7 @@ import (
 
 func TestEquateErrors(t *testing.T) {
 	tests := []struct {
-		A, B      interface{}
+		A, B      any
 		WantEqual bool
 	}{
 		{

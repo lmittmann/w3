@@ -9,6 +9,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"maps"
 	"math/big"
 	"testing"
 	"time"
@@ -507,9 +508,7 @@ func (opts *options) Init() error {
 
 		// overwrite default precompiles
 		precompiles := vm.ActivePrecompiledContracts(rules)
-		for addr, contract := range opts.precompiles {
-			precompiles[addr] = contract
-		}
+		maps.Copy(precompiles, opts.precompiles)
 		opts.precompiles = precompiles
 	}
 
